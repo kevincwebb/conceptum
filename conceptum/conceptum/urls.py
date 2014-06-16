@@ -9,7 +9,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', TemplateView.as_view(template_name='base.html')),
-
+    url(r'^accounts/', include('registration.backends.default.urls')),
     # Examples:
     # url(r'^$', 'conceptum.views.home', name='home'),
     # url(r'^conceptum/', include('conceptum.foo.urls')),
