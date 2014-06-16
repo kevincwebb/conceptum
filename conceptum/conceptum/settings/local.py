@@ -18,7 +18,16 @@ TEMPLATE_DEBUG = DEBUG
 
 ########## EMAIL CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+#This probably only works on Oberlin computers
+#EMAIL_HOST = 'occs.oberlin.edu'
+#DEFAUL_FROM_EMAIL = 'brempel@occs.oberlin.edu'
+
+
+#EMAIL_HOST = 'localhost'
+#EMAIL_HOST_USER = 'brempel@localhost'
+
 ########## END EMAIL CONFIGURATION
 
 
