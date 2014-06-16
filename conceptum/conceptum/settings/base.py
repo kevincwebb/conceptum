@@ -190,10 +190,12 @@ DJANGO_APPS = (
     # Admin panel and documentation:
     'django.contrib.admin',
     # 'django.contrib.admindocs',
+    'reversion',
 )
 
 # Apps specific for this project go here.
 LOCAL_APPS = (
+    'exam',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
