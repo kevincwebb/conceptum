@@ -62,8 +62,12 @@ CACHES = {
 # See: http://django-debug-toolbar.readthedocs.org/en/latest/installation.html#explicit-setup
 INSTALLED_APPS += (
     'debug_toolbar',
-    'registration'
+    'django.contrib.auth',
+    'django.contrib.sites',
+    'registration',
 )
+
+ACCOUNT_ACTIVATION_DAYS = 7 # One-week activation window; you may, of course, use a different value.
 
 MIDDLEWARE_CLASSES += (
     'debug_toolbar.middleware.DebugToolbarMiddleware',
@@ -75,5 +79,18 @@ DEBUG_TOOLBAR_PATCH_SETTINGS = False
 INTERNAL_IPS = ('127.0.0.1',)
 ########## END TOOLBAR CONFIGURATION
 
+
 #Settings for django-registration
 ACCOUNT_ACTIVATION_DAYS = 2
+
+########## AUTH CONFIGURATION
+LOGIN_URL = '/accounts/login/'
+
+LOGOUT_URL = '/accounts/logout/'
+
+LOGIN_REDIRECT_URL = '/accounts/profile/'
+
+########## END AUTH CONFIGURATION
+
+
+>>>>>>> 149e456885b2d2d35596bce4b98744b493fab22c
