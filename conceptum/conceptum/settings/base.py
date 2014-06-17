@@ -191,7 +191,7 @@ DJANGO_APPS = (
     'django.contrib.admin',
     # 'django.contrib.admindocs',
     'reversion',
-    # 'django.comments'
+    'django_comments',
 
 )
 
