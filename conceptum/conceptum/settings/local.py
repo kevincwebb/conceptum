@@ -6,6 +6,8 @@ from os.path import join, normpath
 
 from .base import *
 
+import os
+
 
 ########## DEBUG CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#debug
@@ -20,17 +22,27 @@ TEMPLATE_DEBUG = DEBUG
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
 
 #using this backend prints emails to console instead of mailing them
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-#This probably only works on Oberlin computers
-#EMAIL_HOST = 'occs.oberlin.edu'
-#DEFAUL_FROM_EMAIL = 'brempel@occs.oberlin.edu'
-
-
-#EMAIL_HOST = 'localhost'
-#EMAIL_HOST_USER = 'brempel@localhost'
+#These settings should only work on Oberlin computers,
+#   but hopefully not much tweaking is required.
+#   Strangely, different versions of DEFAULT_FROM_EMAIL cause errors.
+EMAIL_HOST = 'mail.cs.oberlin.edu'
+EMAIL_HOST_USER = 'brempel'
+EMAIL_HOST_PASSWORD = os.environ["BEN_EHP"]
+DEFAUL_FROM_EMAIL = 'brempel@occs.cs.oberlin.edu'  
+EMAIL_USE_TLS = True
 
 ########## END EMAIL CONFIGURATION
+
+
+########## SITES CONFIGURATION
+
+#How to change "example.com" (and info about the sites framework):
+#http://stackoverflow.com/questions/5812985/django-password-reset-email-subject-line-contains-example-com
+SIDE_ID = 2
+
+########## END SITES CONFIGURATION
 
 
 ########## DATABASE CONFIGURATION
@@ -64,10 +76,7 @@ INSTALLED_APPS += (
     'debug_toolbar',
     'django.contrib.auth',
     'django.contrib.sites',
-    'registration',
 )
-
-ACCOUNT_ACTIVATION_DAYS = 7 # One-week activation window; you may, of course, use a different value.
 
 MIDDLEWARE_CLASSES += (
     'debug_toolbar.middleware.DebugToolbarMiddleware',
@@ -78,16 +87,3 @@ DEBUG_TOOLBAR_PATCH_SETTINGS = False
 # http://django-debug-toolbar.readthedocs.org/en/latest/installation.html
 INTERNAL_IPS = ('127.0.0.1',)
 ########## END TOOLBAR CONFIGURATION
-
-
-#Settings for django-registration
-ACCOUNT_ACTIVATION_DAYS = 2
-
-########## AUTH CONFIGURATION
-LOGIN_URL = '/accounts/login/'
-
-LOGOUT_URL = '/accounts/logout/'
-
-LOGIN_REDIRECT_URL = '/accounts/profile/'
-
-########## END AUTH CONFIGURATION
