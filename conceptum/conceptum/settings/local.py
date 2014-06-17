@@ -91,6 +91,3 @@ LOGOUT_URL = '/accounts/logout/'
 LOGIN_REDIRECT_URL = '/accounts/profile/'
 
 ########## END AUTH CONFIGURATION
-
-
->>>>>>> 149e456885b2d2d35596bce4b98744b493fab22c
