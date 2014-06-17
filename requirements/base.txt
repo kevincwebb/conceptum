@@ -7,3 +7,4 @@ logutils==0.3.3
 South==0.8.2
 django-reversion==1.8.1
 Pillow==2.4.0
+django-contrib-comments==1.5

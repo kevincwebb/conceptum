@@ -191,6 +191,8 @@ DJANGO_APPS = (
     'django.contrib.admin',
     # 'django.contrib.admindocs',
     'reversion',
+    'django_comments',
+
 )
 
 # Apps specific for this project go here.
