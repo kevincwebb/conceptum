@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+{% if user.is_authenticated %}
+<h2>Welcome {{ user }} </h2>
+You have successfully activated your account. 
+<br><br>
+	Check out your <a href = {% url 'registration_profile' %}> Profile </a>
+	
+	
+	 
+{% else %}
+	Activation Failure 
+{% endif %}
+{% endblock %}
