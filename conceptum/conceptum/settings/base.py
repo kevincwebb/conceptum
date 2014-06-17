@@ -192,6 +192,9 @@ DJANGO_APPS = (
     # 'django.contrib.admindocs',
     'reversion',
     'django_comments',
+    
+    # django-registration:
+    'registration'
 
 )
 
@@ -253,3 +256,12 @@ INSTALLED_APPS += (
 # Don't need to use South when setting up a test database.
 SOUTH_TESTS_MIGRATE = False
 ########## END SOUTH CONFIGURATION
+
+########## REGISTRATION CONFIGURATION
+
+ACCOUNT_ACTIVATION_DAYS = 2
+LOGIN_URL = '/accounts/login/'
+LOGOUT_URL = '/accounts/logout/'
+LOGIN_REDIRECT_URL = '/accounts/profile/'
+
+########## END REGISTRATION CONFIGURATION
