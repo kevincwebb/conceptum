@@ -4,6 +4,9 @@
 from os.path import abspath, basename, dirname, join, normpath
 from sys import path
 
+### Conceptum configuration. ###
+CI_COURSE = 'Test Course'
+###
 
 ########## PATH CONFIGURATION
 # Absolute filesystem path to the Django project directory:
