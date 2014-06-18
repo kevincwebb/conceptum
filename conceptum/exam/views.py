@@ -20,3 +20,11 @@ def description(request, exam_id):
                              { 'exam_desc': exam_desc,
                                'exam_id': exam_id},)
     return HttpResponse(template.render(context))
+
+def discuss(request, exam_id):
+    exam = Exam.objects.get(pk=exam_id)
+    template=loader.get_template('exam/discuss.html')
+    context = RequestContext(request,
+                             {'exam': exam,
+                              'exam_id': exam_id},)
+    return HttpResponse(template.render(context))
