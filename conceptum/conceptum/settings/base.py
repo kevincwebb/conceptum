@@ -191,8 +191,12 @@ DJANGO_APPS = (
     'django.contrib.admin',
     # 'django.contrib.admindocs',
     'reversion',
+
+    # order necessary to force django_comments
+    # to inherit threaded templates
+    'threadedcomments',
     'django_comments',
-    
+
     # django-registration:
     'registration'
 
