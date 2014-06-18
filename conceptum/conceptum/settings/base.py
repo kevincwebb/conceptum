@@ -269,3 +269,9 @@ LOGOUT_URL = '/accounts/logout/'
 LOGIN_REDIRECT_URL = '/accounts/profile/'
 
 ########## END REGISTRATION CONFIGURATION
+
+########## COMMENT CONFIGURATION
+
+COMMENTS_APP = 'threadedcomments'
+
+########## END COMMENT CONFIGURATION
