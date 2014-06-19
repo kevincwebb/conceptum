@@ -3,7 +3,7 @@
   to allow rendering the comments as tree.
 {% endcomment %}
 
-<h1>YO YO YO</h1>
+<!-- <h1>YO YO YO</h1> -->
 {% load threadedcomments_tags %}
 <div id="comments">
     {% for comment in comment_list|fill_tree|annotate_tree %}{% ifchanged comment.parent_id %}{% else %}</li>{% endifchanged %}{% if not comment.open and not comment.close %}</li>{% endif %}{% if comment.open %}
@@ -15,7 +15,11 @@
                 </dt>
                 <dd>
                     {{ comment.comment|linebreaks }}
+
                 </dd>
+                {% get_comment_count for comment as ccount %}
+                -----this comment has {{ ccount }} immediately-nested comments-----
+
             </dl>
             {% for close in comment.close %}</li></ul>{% endfor %}
     {% endfor %}
