@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="jumbotron">
+      <div class="container">
+        {% block jumbo %}
+        {% endblock jumbo %}
+      </div>
+    </div>
+
+    <div class="container">
+      {% block body %}
+      {% endblock body %}
+    </div>
+
+{% endblock %}
