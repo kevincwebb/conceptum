@@ -11,7 +11,7 @@ urlpatterns = patterns('',
     url(r'^$', 'conceptum.views.home', name='home'),
 
    
-    url(r'^user/', include('sky_visitor.urls')),
+    url(r'^user/', include('mysky_visitor.urls')),
     #url(r'^accounts/', include('registration.backends.default.urls')),
     #url(r'^accounts/profile/', TemplateView.as_view(template_name='registration/profile.html'), name = 'registration_profile'),
     

@@ -203,6 +203,7 @@ DJANGO_APPS = (
     # django-registration:
     'registration',
     'sky_visitor',
+    'mysky_visitor',
 
 )
 
