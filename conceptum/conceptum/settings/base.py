@@ -201,7 +201,8 @@ DJANGO_APPS = (
     'django_comments',
 
     # django-registration:
-    'registration'
+    'registration',
+    'sky_visitor',
 
 )
 
@@ -266,10 +267,10 @@ SOUTH_TESTS_MIGRATE = False
 
 ########## REGISTRATION CONFIGURATION
 
-ACCOUNT_ACTIVATION_DAYS = 2
-LOGIN_URL = '/accounts/login/'
-LOGOUT_URL = '/accounts/logout/'
-LOGIN_REDIRECT_URL = '/accounts/profile/'
+#ACCOUNT_ACTIVATION_DAYS = 2
+LOGIN_URL = '/'
+#LOGOUT_URL = '/accounts/logout/'
+LOGIN_REDIRECT_URL = '/'
 
 ########## END REGISTRATION CONFIGURATION
 

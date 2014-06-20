@@ -51,12 +51,12 @@
               <ul class="dropdown-menu">
                 <li><a href="">Profile (FIXME)</a></li>
                 <li class="divider"></li>
-                <li><a href="{% url "django.contrib.auth.views.logout" %}?next=/">Logout</a></li>
+                <li><a href="{% url "logout" %}?next=/">Logout</a></li>
               </ul>
             </li>
           </ul>
           {% else %}
-            <form class="navbar-form navbar-right" role="form" method="post" action="{% url "django.contrib.auth.views.login" %}?next={{request.path}}">
+            <form class="navbar-form navbar-right" role="form" method="post" action="{% url "login" %}?next={{request.path}}">
             {% csrf_token %}
               <div class="form-group">
                 <input id="id_username" maxlength="254" name="username" type="text" placeholder="Username" class="form-control">

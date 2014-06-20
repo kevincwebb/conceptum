@@ -9,9 +9,11 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', 'conceptum.views.home', name='home'),
-    url(r'^accounts/', include('registration.backends.default.urls')),
-    url(r'^accounts/profile/', TemplateView.as_view(template_name='registration/profile.html'), name = 'registration_profile'),
-
+    
+    url(r'^user/', include('sky_visitor.urls')),
+    #url(r'^accounts/', include('registration.backends.default.urls')),
+    #url(r'^accounts/profile/', TemplateView.as_view(template_name='registration/profile.html'), name = 'registration_profile'),
+    
     # Examples:
     # url(r'^conceptum/', include('conceptum.foo.urls')),
 
@@ -25,8 +27,11 @@ urlpatterns = patterns('',
     #It may be important that django.contrib.auth.urls come
     #       before registration.backends.default.urls, because
     #       there is some overlap
-    url(r'^accounts/', include('django.contrib.auth.urls')),
-    url(r'^accounts/', include('registration.backends.default.urls')),
+    
+   
+    #url(r'^accounts/', include('django.contrib.auth.urls')),
+    #url(r'^accounts/', include('registration.backends.default.urls')),
+    
 
 )
 
