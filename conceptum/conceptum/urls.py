@@ -12,16 +12,10 @@ urlpatterns = patterns('',
 
    
     url(r'^user/', include('mysky_visitor.urls')),
-    #url(r'^accounts/', include('registration.backends.default.urls')),
-    #url(r'^accounts/profile/', TemplateView.as_view(template_name='registration/profile.html'), name = 'registration_profile'),
-    
-
+    url(r'^accounts/', include('authtools.urls')),
 
     # This will likely move to an app later.  Prototyping for now.
     url(r'^landing/$', 'conceptum.views.landing', name='landing'),
-
-    url(r'^accounts/', include('registration.backends.default.urls')),
-    url(r'^accounts/profile/', TemplateView.as_view(template_name='registration/profile.html'), name = 'registration_profile'),
 
 
     # Examples:
@@ -33,14 +27,6 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
     url(r'^exams/', include('exam.urls')),
-
-    #It may be important that django.contrib.auth.urls come
-    #       before registration.backends.default.urls, because
-    #       there is some overlap
-    
-   
-    #url(r'^accounts/', include('django.contrib.auth.urls')),
-    #url(r'^accounts/', include('registration.backends.default.urls')),
     
 
 )

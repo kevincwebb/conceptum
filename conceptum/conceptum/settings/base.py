@@ -197,19 +197,19 @@ DJANGO_APPS = (
 
     # order necessary to force django_comments
     # to inherit threaded templates
-    'threadedcomments',
-    'django_comments',
-
-    # django-registration:
-    'registration',
+#    'threadedcomments',
+ #   'django_comments',
+  
     'sky_visitor',
-    'mysky_visitor',
+    'authtools',
+
 
 )
 
 # Apps specific for this project go here.
 LOCAL_APPS = (
     'exam',
+    'mysky_visitor',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -266,14 +266,21 @@ INSTALLED_APPS += (
 SOUTH_TESTS_MIGRATE = False
 ########## END SOUTH CONFIGURATION
 
-########## REGISTRATION CONFIGURATION
+########## USER CONFIGURATION (AUTHTOOLS)
 
-#ACCOUNT_ACTIVATION_DAYS = 2
-LOGIN_URL = '/'
-#LOGOUT_URL = '/accounts/logout/'
+AUTH_USER_MODEL = 'authtools.User'
+
+########## END USER CONFIGURATION
+
+
+
+########## SKY_VISITOR CONFIGURATION
+
+LOGIN_URL = 'login'
+# LOGOUT_URL = '/'
 LOGIN_REDIRECT_URL = '/'
 
-########## END REGISTRATION CONFIGURATION
+########## END SKY_VISITOR CONFIGURATION
 
 ########## COMMENT CONFIGURATION
 
