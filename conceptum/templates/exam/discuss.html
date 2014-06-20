@@ -3,14 +3,12 @@
 <h1> This Is a Discussion Of Exam {{ exam_id }} </h1>
 
 <p>
-{% get_comment_count for exam as ccount %}
-There are currently {{ ccount }} comments
 <p>
-<h3>Thread</h3>
+<h3>Thread for Exam {{ exam.id }}</h3>
 <p>
 
 {% render_comment_list for exam %}
 
 <p>
-<h3>Add a comment: </h3>
-{% render_comment_form for exam %}
+<h3>Add a comment for Exam {{ exam.id }}: </h3>
+{% render_comment_form for exam %} <!-- hypothesis: for top-level comments we don't need a parent id -->
