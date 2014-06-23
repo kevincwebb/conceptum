@@ -12,22 +12,24 @@
 <div class="container">
 
 <form class="form-horizontal" role="form" method="post">
-  {% csrf_token %}
+  
 
   <center><h2 class="form-horizontal-heading">Register an Account</h2></center>
 
   <div class="form-group">
 
-    <label for="id_username" class="col-sm-3 control-label">Username</label>
-    <div class="col-sm-9">
-      <input type="text" class="form-control" id="id_username" name="username" placeholder="Username" required autofocus />
-
-    </div>
+   
   </div>
   <div class="form-group">
     <label for="id_email" class="col-sm-3 control-label">Email</label>
     <div class="col-sm-9">
       <input type="email" class="form-control" id="id_email" placeholder="Email" name="email" required />
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="id_name" class="col-sm-3 control-label"> Name </label>
+    <div class="col-sm-9">
+      <input id="id_name" maxlength="255" name="name" type="text" class="form-control" placeholder="Full Name" required/>
     </div>
   </div>
   <div class="form-group">
@@ -83,6 +85,7 @@
   </div>
 
   <div class="submit">
+    {% csrf_token %}
     <button class="btn btn-lg btn-primary btn-block" type="submit">Register</button>
   </div>
 </form>
