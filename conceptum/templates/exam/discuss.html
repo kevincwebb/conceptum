@@ -1,14 +1,23 @@
+{% extends "jumbotron.html" %}
 {% load threadedcomments_tags %}
 
-<h1> This Is a Discussion Of Exam {{ exam_id }} </h1>
+{% block jumbo %}
 
-<p>
-<p>
-<h3>Thread for Exam {{ exam.id }}</h3>
-<p>
+<h1>Thread for Exam {{ exam_id }} </h1>
+{{ exam.description }}
 
-{% render_comment_list for exam %}
+{% endblock %}
 
-<p>
-<h3>Add a comment for Exam {{ exam.id }}: </h3>
-{% render_comment_form for exam %} <!-- hypothesis: for top-level comments we don't need a parent id -->
+{% block body %}
+<div class="container">
+  <div class="row">
+    {% render_comment_list for exam %}
+  </div>
+
+  <div class="row">
+    <h3>Add a comment for Exam {{ exam.id }}: </h3>
+  </div>
+</div>
+
+{% render_comment_form for exam %}
+{% endblock %}
