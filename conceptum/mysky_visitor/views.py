@@ -5,13 +5,15 @@ from django.core.urlresolvers import reverse
 from sky_visitor.views import InvitationStartView
 from sky_visitor.views import InvitationCompleteView
 from sky_visitor.views import RegisterView as BaseRegisterView
-from sky_visitor.forms import RegisterForm
+from sky_visitor.views import LoginView as BaseLoginView
 
 
 
 class RegisterView(BaseRegisterView):
     template_name = 'mysky_visitor/registration_form.html'
-   
+
+class LoginView(BaseLoginView):
+    template_name = 'mysky_visitor/login.html'
 
 class CustomInvitationStartView(InvitationStartView):
     template_name = 'exampleapp/invitation_start.html'
