@@ -16,20 +16,32 @@
 
   <center><h2 class="form-horizontal-heading">Register an Account</h2></center>
 
-  <div class="form-group">
 
-   
-  </div>
+
+  {% if form.non_field_errors %}
+    <ul>
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  
   <div class="form-group">
     <label for="id_email" class="col-sm-3 control-label">Email</label>
     <div class="col-sm-9">
-      <input type="email" class="form-control" id="id_email" placeholder="Email" name="email" required />
+      <input type="email" class="form-control" id="id_email" placeholder="Email" name="username" required autofocus>
+    </div>
+    <div id="id_email_errors">
+      {{ username.errors }}
     </div>
   </div>
   <div class="form-group">
     <label for="id_name" class="col-sm-3 control-label"> Name </label>
     <div class="col-sm-9">
-      <input id="id_name" maxlength="255" name="name" type="text" class="form-control" placeholder="Full Name" required/>
+      <input type="text" class="form-control" id="id_name" placeholder="Full Name" name="name" required/>
+    </div>
+    <div id="id_name_errors">
+      {{ name.errors }}
     </div>
   </div>
   <div class="form-group">
@@ -48,6 +60,9 @@
     <label for="id_password2" class="col-sm-3 control-label">Password</label>
     <div class="col-sm-9">
       <input type="password" class="form-control" id="id_password2" placeholder="Password (repeat)" name="password2" required />
+    </div>
+    <div id="id_password2_errors">
+      {{ password2.errors }}
     </div>
   </div>
 
