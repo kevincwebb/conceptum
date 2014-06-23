@@ -12,38 +12,57 @@
 <div class="container">
 
 <form class="form-horizontal" role="form" method="post">
-  {% csrf_token %}
+  
 
   <center><h2 class="form-horizontal-heading">Register an Account</h2></center>
 
-  <div class="form-group">
-    <label for="id_username" class="col-sm-3 control-label">Username</label>
-    <div class="col-sm-9">
-      <input type="text" class="form-control" id="id_username" placeholder="Username" required autofocus>
-    </div>
-  </div>
+
+
+  {% if form.non_field_errors %}
+    <ul>
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  
   <div class="form-group">
     <label for="id_email" class="col-sm-3 control-label">Email</label>
     <div class="col-sm-9">
-      <input type="email" class="form-control" id="id_email" placeholder="Email" required>
+      <input type="email" class="form-control" id="id_email" placeholder="Email" name="username" required autofocus>
+    </div>
+    <div id="id_email_errors">
+      {{ username.errors }}
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="id_name" class="col-sm-3 control-label"> Name </label>
+    <div class="col-sm-9">
+      <input type="text" class="form-control" id="id_name" placeholder="Full Name" name="name" required/>
+    </div>
+    <div id="id_name_errors">
+      {{ name.errors }}
     </div>
   </div>
   <div class="form-group">
     <label for="id_homepage" class="col-sm-3 control-label">Homepage</label>
     <div class="col-sm-9">
-      <input type="url" class="form-control" id="id_homepage" placeholder="Faculty homepage" required>
+      <input type="url" class="form-control" id="id_homepage" placeholder="Faculty homepage" name="homepage" required />
     </div>
   </div>
   <div class="form-group">
     <label for="id_password1" class="col-sm-3 control-label">Password</label>
     <div class="col-sm-9">
-      <input type="password" class="form-control" id="id_password1" placeholder="Password" required>
+      <input type="password" class="form-control" id="id_password1" placeholder="Password" name="password1" required />
     </div>
   </div>
   <div class="form-group">
     <label for="id_password2" class="col-sm-3 control-label">Password</label>
     <div class="col-sm-9">
-      <input type="password" class="form-control" id="id_password2" placeholder="Password (repeat)" required>
+      <input type="password" class="form-control" id="id_password2" placeholder="Password (repeat)" name="password2" required />
+    </div>
+    <div id="id_password2_errors">
+      {{ password2.errors }}
     </div>
   </div>
 
@@ -81,6 +100,7 @@
   </div>
 
   <div class="submit">
+    {% csrf_token %}
     <button class="btn btn-lg btn-primary btn-block" type="submit">Register</button>
   </div>
 </form>
