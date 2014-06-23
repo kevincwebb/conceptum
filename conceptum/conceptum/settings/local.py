@@ -27,11 +27,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 #These settings should only work on Oberlin computers,
 #   but hopefully not much tweaking is required.
 #   Strangely, different versions of DEFAULT_FROM_EMAIL cause errors.
-# EMAIL_HOST = 'mail.cs.oberlin.edu'
-# EMAIL_HOST_USER = 'brempel'
-# EMAIL_HOST_PASSWORD = os.environ["BEN_EHP"]
-# DEFAUL_FROM_EMAIL = 'brempel@occs.cs.oberlin.edu'
-# EMAIL_USE_TLS = True
+EMAIL_HOST = 'mail.cs.oberlin.edu'
+EMAIL_HOST_USER = 'brempel'
+EMAIL_HOST_PASSWORD = os.environ["BEN_EHP"]
+DEFAUL_FROM_EMAIL = 'brempel@occs.cs.oberlin.edu'
+EMAIL_USE_TLS = True
 
 ########## END EMAIL CONFIGURATION
 

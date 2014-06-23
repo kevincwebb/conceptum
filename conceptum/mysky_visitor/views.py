@@ -6,14 +6,30 @@ from sky_visitor.views import InvitationStartView
 from sky_visitor.views import InvitationCompleteView
 from sky_visitor.views import RegisterView as BaseRegisterView
 from sky_visitor.views import LoginView as BaseLoginView
+from sky_visitor.views import ChangePasswordView as BaseChangePasswordView
+from sky_visitor.views import ForgotPasswordView as BaseForgotPasswordView
 
 
 
 class RegisterView(BaseRegisterView):
     template_name = 'mysky_visitor/registration_form.html'
 
+
 class LoginView(BaseLoginView):
     template_name = 'mysky_visitor/login.html'
+
+    
+class ChangePasswordView(BaseChangePasswordView):
+    template_name = 'mysky_visitor/change_password.html'
+
+    
+class ForgotPasswordView(BaseForgotPasswordView):
+    
+    def form_valid(self, form):
+        user = form.user_cache[0]
+        self.send_email(user)
+        return super(ForgotPasswordView, self).form_valid(form)  # Do redirect
+
 
 class CustomInvitationStartView(InvitationStartView):
     template_name = 'exampleapp/invitation_start.html'
