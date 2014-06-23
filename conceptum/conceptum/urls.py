@@ -12,7 +12,6 @@ urlpatterns = patterns('',
 
    
     url(r'^user/', include('mysky_visitor.urls')),
-    url(r'^accounts/', include('authtools.urls')),
 
     # This will likely move to an app later.  Prototyping for now.
     url(r'^landing/$', 'conceptum.views.landing', name='landing'),
