@@ -39,11 +39,11 @@
           Text: {{ comment.comment }}
           <br>
           <br>
-          <button type="button" class="btn btn-default btn-sm" data-toggle="collapse" data-target="#comment{{ comment.id }}">
+          <button type="button" class="btn btn-default btn-sm" data-toggle="collapse" data-target="#c{{ comment.id }}">
             Reply to Comment
           </button>
 <br><br>
-          <div id="comment{{ comment.id }}" class="collapse">{% render_comment_form for comment.content_object with comment.id %}</div>
+          <div id="c{{ comment.id }}" class="collapse">{% render_comment_form for comment.content_object with comment.id %}</div>
 
           {% for close in comment.close %}
                </li></ul>
