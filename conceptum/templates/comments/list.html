@@ -31,9 +31,6 @@
                 <ul class="tree_comment">
         {% endif %}
 
-
-        <!-- <li class="comment_li" id="c{{ comment.id }}">{# c## is used by the absolute URL of the Comment model, so keep that as it is. #} -->
-
         <li id="c{{ comment.id }}">
 
           <h4><u>{{ comment.user_name }}</u>
@@ -41,15 +38,12 @@
           <small>{{ comment.submit_date|date:"d M Y, H:i" }}</small></h4>
           Text: {{ comment.comment }}
           <br>
-          <!-- <button type="button" class="btn btn-primary btn-sm">Reply to Comment</button> -->
-
-           <!-- <button type="button" class="btn btn-primary btm-sm" data-container="body" data-toggle="popover" data-placement="bottom" data-content="Yo!">Reply to Comment</button> -->
           <br>
-          <button type="button" class="btn btn-primary btn-sm" data-toggle="collapse" data-target="#demo{{ comment.id }}">
+          <button type="button" class="btn btn-default btn-sm" data-toggle="collapse" data-target="#comment{{ comment.id }}">
             Reply to Comment
           </button>
 <br><br>
-          <div id="demo{{ comment.id }}" class="collapse">{% render_comment_form for comment.content_object with comment.id %}</div>
+          <div id="comment{{ comment.id }}" class="collapse">{% render_comment_form for comment.content_object with comment.id %}</div>
 
           {% for close in comment.close %}
                </li></ul>
