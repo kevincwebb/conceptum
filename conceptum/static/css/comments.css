@@ -7,7 +7,4 @@ ul.tree_comment {
 
     margin-left: 2em;
 
-/* TODO: need to find a vertical pixel image to do background repeat-y to achieve tree-like layout */
-/* Use: http://odyniec.net/articles/turning-lists-into-trees/ */
-/* https://gist.github.com/clayzermk1/3317341 (is this license good for us?) */
 }
