@@ -10,7 +10,7 @@ admin.autodiscover()
 urlpatterns = patterns('',
     url(r'^$', 'conceptum.views.home', name='home'),
 
-   
+    url(r'^profile/$', TemplateView.as_view(template_name='profiles/profile.html')),
     url(r'^user/', include('mysky_visitor.urls')),
 
     # This will likely move to an app later.  Prototyping for now.

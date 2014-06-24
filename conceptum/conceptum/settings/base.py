@@ -202,6 +202,7 @@ DJANGO_APPS = (
   
     'sky_visitor',
     'authtools',
+    'simple_email_confirmation'
 
 
 )
@@ -210,6 +211,8 @@ DJANGO_APPS = (
 LOCAL_APPS = (
     'exam',
     'mysky_visitor',
+    'users',
+    'profiles'
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

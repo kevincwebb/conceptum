@@ -6,13 +6,16 @@
 {% if user.is_authenticated %}
 <h2>Welcome {{ user }} </h2>
     <div class ="profile-info">
-	This is {{ user }}'s profile.
+	This is your profile.
+    
+    {{ user.homepage }}
+    
 	<br><br><b>Options:<b>
-	<br><a href = {% url 'auth_logout' %}> Logout </a>
-	<br><a href = {% url 'auth_password_change' %}> Change Password </a>
+	<br><a href = {% url 'logout' %}> Logout </a>
+	<br><a href = {% url 'change_password' %}> Change Password </a>
 	
 	 
 {% else %}
-	Hello, please <a href={% url 'auth_login' %}> login </a> 
+	Hello, please <a href={% url 'login' %}> login </a> 
 {% endif %}
 {% endblock %}
