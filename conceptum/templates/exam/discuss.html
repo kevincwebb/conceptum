@@ -10,10 +10,14 @@
 
 {% block body %}
 
+{% get_comment_list for exam as clist %}
+{{ clist|length }} Comments
+<br>
+<br>
 <button type="button" class="btn btn-default btn-sm" data-toggle="collapse" data-target="#exam_comment_form">
-            Reply to Exam {{ exam_id }}
-          </button>
-<br><br>
+  Reply to Exam {{ exam_id }}
+</button>
+<br>
           <div id="exam_comment_form" class="collapse">{% render_comment_form for exam %}</div>
 
 <div class="container">
