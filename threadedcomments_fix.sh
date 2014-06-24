@@ -18,7 +18,7 @@ fi
 
 cd $dir/threadedcomments
 
-echo "Found \'django_comments\' in these files:"
+echo "Found \'django.contrib.comments\' in these files:"
 find . -name "*.py" -type f | xargs grep -l "django\.contrib\.comments"
 
 echo
