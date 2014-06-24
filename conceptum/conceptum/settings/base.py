@@ -197,9 +197,9 @@ DJANGO_APPS = (
 
     # order necessary to force django_comments
     # to inherit threaded templates
-#    'threadedcomments',
-#    'django_comments',
-  
+    'threadedcomments',
+    'django_comments',
+
     'sky_visitor',
     'authtools',
 
