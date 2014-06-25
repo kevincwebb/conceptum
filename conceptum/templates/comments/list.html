@@ -1,10 +1,15 @@
 {% load threadedcomments_tags %}
+{% load staticfiles %}
 
-<div class="comments_length">
-    <p>{{ comment_list|length }} Comments</p>
+<link href="{% static 'css/comments.css' %}" rel="stylesheet"> <!-- custom css for comment list -->
+
+<div class="container">
+    {# {{ comment_list|length }} Comments #}
 </div>
+<p>
+<p>
 
-<div class="comments">
+<div class="container">
     {% for comment in comment_list|fill_tree|annotate_tree %}
 
         {% ifchanged comment.parent_id %}
@@ -13,33 +18,38 @@
                 </li>
         {% endifchanged %}
 
+
+
         {% if not comment.open and not comment.close %}
                 </li>
         {% endif %}
 
+
+
         {% if comment.open %}
-                <ul>
+                <!-- <ul class="list-unstyled"> -->
+                <ul class="tree_comment">
         {% endif %}
 
-        <li class="comment_li" id="c{{ comment.id }}">{# c## is used by the absolute URL of the Comment model, so keep that as it is. #}
-            <div class="comment">
-                <div class="comment_info">
-                    <div class="comment_user">User: {{ comment.user_name }}</div>
-                    <div class="comment_data">Date: {{ comment.submit_date|date:"d M Y, H:i" }}</div>
-                </div>
-                <div class="comment_text">Text: {{ comment.comment }}</div>
-<p>
-                <div id="reply{{ comment.id }}comment" >
-                  <h5>Reply to Comment: "{{ comment.title }}"</h5>
-                  {% render_comment_form for comment.content_object with comment.id %} <!-- comment on c, parent_id = c.id -->
-                </div>
+        <li id="c{{ comment.id }}">
 
-            </div>
+          <h4><u>{{ comment.user_name }}</u>
+            <br>
+          <small>{{ comment.submit_date|date:"d M Y, H:i" }}</small></h4>
+          Text: {{ comment.comment }}
+          <br>
+          <br>
+          <button type="button" class="btn btn-default btn-sm" data-toggle="collapse" data-target="#comment{{ comment.id }}">
+            Reply to Comment
+          </button>
+<br><br>
+          <div id="comment{{ comment.id }}" class="collapse">{% render_comment_form for comment.content_object with comment.id %}</div>
+
+          {% for close in comment.close %}
+               </li></ul>
+          {% endfor %}
 
 
-        {% for close in comment.close %}
-                </li></ul>
-        {% endfor %}
 
     {% endfor %}
 </div>
