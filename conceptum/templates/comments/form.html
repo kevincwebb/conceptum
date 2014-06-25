@@ -2,7 +2,7 @@
 
 {% if user.is_authenticated %}
 
-    <form action="{% comment_form_target %}" method="post">
+    <form action="{% comment_form_target %}?next={% url 'discuss' exam.id %}" method="post">
     {% csrf_token %}
     <textarea cols="80" id="id_comment" name="comment" rows="4"></textarea>
     <div style="display:none;"> {{ form.honeypot }} </div>
@@ -13,7 +13,6 @@
     {{ form.parent }} <!-- added for threadedcomment compatibility -->
     <p class="submit">
     <input type="submit" name="post" class="submit-post" value="{% trans "Post" %}" />
-    <input type="submit" name="preview" class="submit-preview" value="{% trans "Preview" %}" />
   </p>
     </form>
 {% else %}

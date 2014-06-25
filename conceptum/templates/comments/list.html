@@ -35,8 +35,8 @@
 
           <h4><u>{{ comment.user_name }}</u>
             <br>
-          <small>{{ comment.submit_date|date:"d M Y, H:i" }}</small></h4>
-          Text: {{ comment.comment }}
+          <small>{{ comment.submit_date|date:"M d, Y - g:i a" }}</small></h4>
+          {{ comment.comment }}
           <br>
           <br>
           <button type="button" class="btn btn-default btn-sm" data-toggle="collapse" data-target="#comment{{ comment.id }}">

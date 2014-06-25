@@ -3,8 +3,8 @@
 
 {% block jumbo %}
 
-<h1>Thread for Exam {{ exam_id }} </h1>
-{{ exam.description }}
+<h1>Exam {{ exam_id }} <small> Discussion </small> </h1>
+More description can go here.
 
 {% endblock %}
 
@@ -14,12 +14,13 @@
 {{ clist|length }} Comments
 <br>
 <br>
-<button type="button" class="btn btn-default btn-sm" data-toggle="collapse" data-target="#exam_comment_form">
-  Reply to Exam {{ exam_id }}
+<button type="button" class="btn btn-primary btn-lg" data-toggle="collapse" data-target="#exam_comment_form">
+  Comment on Exam {{ exam_id }}
 </button>
-<br>
-          <div id="exam_comment_form" class="collapse">{% render_comment_form for exam %}</div>
 
+          <div id="exam_comment_form" class="collapse">{% render_comment_form for exam %}</div>
+<br>
+<br>
 <div class="container">
   <div class="row">
     {% render_comment_list for exam %}
