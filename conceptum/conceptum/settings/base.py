@@ -142,6 +142,10 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.tz',
     'django.contrib.messages.context_processors.messages',
     'django.core.context_processors.request',
+    
+    #allauth
+    'allauth.account.context_processors.account',
+    'allauth.socialaccount.context_processors.socialaccount',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#template-loaders
@@ -201,7 +205,11 @@ DJANGO_APPS = (
 #    'django_comments',
   
     'authtools',
-
+    'allauth',
+    'allauth.account',
+    # we barely need this, but there are template errors without it
+    'allauth.socialaccount',
+    
 
 
 )
@@ -211,7 +219,7 @@ LOCAL_APPS = (
     'exam',
 #    'users',
 #    'profiles'
-    'registration'
+
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -269,24 +277,32 @@ SOUTH_TESTS_MIGRATE = False
 ########## END SOUTH CONFIGURATION
 
 
-########## USER CONFIGURATION (AUTHTOOLS)
-
+########## USER CONFIGURATION
 AUTH_USER_MODEL = 'authtools.User'
 
+AUTHENTICATION_BACKENDS = (
+    # Needed to login by username in Django admin, regardless of `allauth`
+    "django.contrib.auth.backends.ModelBackend",
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    "allauth.account.auth_backends.AuthenticationBackend",
+)
 ########## END USER CONFIGURATION
 
 
-########## SKY_VISITOR CONFIGURATION
+########## ALLAUTH CONFIGURATION
+#LOGIN_REDIRECT_URL = '/'
 
-LOGIN_URL = 'login'
-# LOGOUT_URL = '/'
-LOGIN_REDIRECT_URL = '/'
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+#ACCOUNT_USER_DISPLAY = lambda user: user.get_full_name()
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_USERNAME_REQUIRED = False
 
-########## END SKY_VISITOR CONFIGURATION
+SOCIALACCOUNT_PROVIDERS = None
+########## END ALLAUTH CONFIGURATION
 
 
 ########## COMMENT CONFIGURATION
-
 COMMENTS_APP = 'threadedcomments'
-
 ########## END COMMENT CONFIGURATION
