@@ -2,7 +2,7 @@
 
 {% if user.is_authenticated %}
 
-    <form action="{% comment_form_target %}?next={% url 'discuss' exam.id %}" method="post">
+    <form action="{% comment_form_target %}" method="post">
     {% csrf_token %}
     <textarea cols="80" id="id_comment" name="comment" rows="4"></textarea>
     <div style="display:none;"> {{ form.honeypot }} </div>
@@ -11,8 +11,9 @@
     {{ form.timestamp }}
     {{ form.security_hash }}
     {{ form.parent }} <!-- added for threadedcomment compatibility -->
+    <input type="hidden" name="next" value="{% url 'discuss' exam.id %}" />
     <p class="submit">
-    <input type="submit" name="post" class="submit-post" value="{% trans "Post" %}" />
+    <button type="submit" class="btn btn-primary btn-xs" />Post Your Comment </button>
   </p>
     </form>
 {% else %}
