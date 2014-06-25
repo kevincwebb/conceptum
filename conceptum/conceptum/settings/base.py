@@ -202,6 +202,7 @@ DJANGO_APPS = (
   
     'sky_visitor',
     'authtools',
+    'qhonuskan_votes',
 
 
 )
