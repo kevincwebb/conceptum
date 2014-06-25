@@ -200,9 +200,8 @@ DJANGO_APPS = (
 #    'threadedcomments',
 #    'django_comments',
   
-    'sky_visitor',
     'authtools',
-    'simple_email_confirmation'
+
 
 
 )
@@ -210,9 +209,9 @@ DJANGO_APPS = (
 # Apps specific for this project go here.
 LOCAL_APPS = (
     'exam',
-    'mysky_visitor',
-    'users',
-    'profiles'
+#    'users',
+#    'profiles'
+    'registration'
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
