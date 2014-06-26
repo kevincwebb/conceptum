@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+{% if user.is_authenticated %}
+<h2>Welcome {{ user.name }} </h2>
+    <div class ="profile-info">
+	This is your profile.
+    
+    {{ user.homepage }}
+    
+	<br><br><b>Options:<b>
+	<br><a href = {% url 'account_logout' %}> Logout </a>
+	<br><a href = {% url 'account_change_password' %}> Change Password </a>
+	
+	 
+{% else %}
+	Hello, please <a href={% url 'login' %}> login </a> 
+{% endif %}
+{% endblock %}
