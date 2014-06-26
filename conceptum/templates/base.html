@@ -59,10 +59,10 @@
             <form class="navbar-form navbar-right" role="form" method="post" action="{% url "account_login" %}?next={{request.path}}">
             {% csrf_token %}
               <div class="form-group">
-                <input id="id_email" maxlength="254" name="username" type="email" placeholder="Email" class="form-control">
+                <input autofocus="autofocus" id="id_login" name="login" placeholder="E-mail address" type="email" class="form-control">
               </div>
               <div class="form-group">
-                <input id="id_password" name="password" type="password" placeholder="Password" class="form-control">
+                <input id="id_password" name="password" placeholder="Password" type="password" class="form-control">
               </div>
               <button type="submit" class="btn btn-success">Sign in</button>
             </form>

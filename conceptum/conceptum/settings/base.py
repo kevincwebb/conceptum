@@ -301,6 +301,8 @@ ACCOUNT_SIGNUP_FORM_CLASS = 'conceptum.forms.SignupForm'
 #ACCOUNT_USER_DISPLAY = lambda user: user.get_full_name()
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_ADAPTER = "conceptum.adapter.AccountAdapter"
 
 SOCIALACCOUNT_PROVIDERS = None
 ########## END ALLAUTH CONFIGURATION
