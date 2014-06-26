@@ -10,7 +10,7 @@ admin.autodiscover()
 urlpatterns = patterns('',
     url(r'^$', 'conceptum.views.home', name='home'),
 
-    url(r'^accounts/profile/$', TemplateView.as_view(template_name='profiles/profile.html')),
+    url(r'^accounts/profile/$', TemplateView.as_view(template_name='profiles/profile.html'), name='profile'),
     url(r'^accounts/', include('allauth.urls')),
 
 
