@@ -2,7 +2,8 @@ from django.conf.urls import patterns, include, url
 from django.conf.urls.static import static
 from django.conf import settings
 from django.views.generic import TemplateView
-
+from allauth.account.views import LoginView
+from custom_auth.forms import LoginForm
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
@@ -11,6 +12,7 @@ urlpatterns = patterns('',
     url(r'^$', 'conceptum.views.home', name='home'),
 
     url(r'^accounts/profile/$', TemplateView.as_view(template_name='profiles/profile.html'), name='profile'),
+    url(r'^accounts/login/$', LoginView.as_view(form_class=LoginForm), name="account_login"),
     url(r'^accounts/', include('allauth.urls')),
 
 
