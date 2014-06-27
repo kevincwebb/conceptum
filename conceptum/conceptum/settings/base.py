@@ -209,6 +209,7 @@ DJANGO_APPS = (
     'allauth',
     'allauth.account',
     # we barely need this, but there are template errors without it
+    # (of course we can just remove those parts from the templates)
     'allauth.socialaccount',
     
 
@@ -219,8 +220,8 @@ DJANGO_APPS = (
 LOCAL_APPS = (
     'exam',
 #    'users',
-#    'profiles'
-    'conceptum'
+    'profiles',
+    'conceptum',
 
 )
 

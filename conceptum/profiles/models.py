@@ -16,3 +16,12 @@ class ContributorProfile(models.Model):
     interest_in_devel = models.BooleanField("interested in CI development")
     interest_in_deploy = models.BooleanField("interested in CI deployment")
     text_info = models.TextField()
+
+    objects = ProfileManager()
+
+    #def __init__(self, profile_user, *args, **kwargs):
+    #    super(ContributorProfile, self).__init__(*args, **kwargs)
+    #    self.user = profile_user
+        
+    def __str__(self):
+        return "{name}'s profile".format(name=self.user.name)

@@ -1,5 +1,7 @@
 from allauth.account.adapter import DefaultAccountAdapter
-from allauth.utils import get_user_model
+
+
+from profiles.models import ContributorProfile
 
 
 class AccountAdapter(DefaultAccountAdapter):
@@ -9,4 +11,12 @@ class AccountAdapter(DefaultAccountAdapter):
         setattr(user, 'name', name)
         user.is_active = False
         user.save()
+        
+        #user_homepage = form.cleaned_data.get('homepage')
+        #user_profile = ContributorProfile(user=user,
+        #                                  homepage=user_homepage,
+        #                                  interest_in_devel=False,
+        #                                  interest_in_deploy=False,
+        #                                  text_info = "" )
+        #user_profile.save()
         return user
