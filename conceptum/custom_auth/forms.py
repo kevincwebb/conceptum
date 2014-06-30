@@ -1,5 +1,8 @@
 from django import forms
+
 from django.utils.translation import ugettext_lazy as _
+from allauth.account.forms import LoginForm as BaseLoginForm
+from django.contrib.auth import authenticate
 
 from profiles.models import ContributorProfile
 
@@ -48,3 +51,38 @@ class SignupForm(forms.Form):
                                           interest_in_deploy=user_i_deploy,
                                           text_info=user_text_info )
         user_profile.save()
+        
+class LoginForm(BaseLoginForm):
+    
+    #def clean(self):
+    #    try:
+    #        return super(LoginForm,self)
+    #    except forms.ValidationError:
+    #        if self._errors:
+    #            return
+    #        user = authenticate(**self.user_credentials())
+    #        self.user = user
+    #        return self.cleaned_data
+    #    
+    #
+    
+    def clean(self):
+        if self._errors:
+            return
+        user = authenticate(**self.user_credentials())
+        if user:
+            self.user = user
+        else:
+            if app_settings.AUTHENTICATION_METHOD \
+                    == AuthenticationMethod.EMAIL:
+                error = _("The e-mail address and/or password you specified"
+                          " are not correct.")
+            elif app_settings.AUTHENTICATION_METHOD \
+                    == AuthenticationMethod.USERNAME:
+                error = _("The username and/or password you specified are"
+                          " not correct.")
+            else:
+                error = _("The login and/or password you specified are not"
+                          " correct.")
+            raise forms.ValidationError(error)
+        return self.cleaned_data
