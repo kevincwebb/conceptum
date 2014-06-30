@@ -10,28 +10,23 @@
 
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-
 	{% if pending_profiles %}
       <ul>
       {% for profile in pending_profiles %}
-		<form action="{% url 'approve' profile.id %}" method="post">
+		<form action="{% url 'pending_action' profile.id %}" method="post">
 		  {% csrf_token %}
-		  <!--<input type="radio" name="profile" id="{{ profile.id_for_label }}" value="{{ profile.id }}" />-->
-		  {{ profile.id }}
-		  <button class="primaryAction" type="submit">{% trans "Approve" %}</button>
+		  {{ profile.id }} {{ profile.user.email }}
+		  <input type="submit" name="approve" value="Approve" />
+		  <input type="submit" name="reject" value="Reject" />
+		  <input type="submit" name="ignore" value="Ignore" />
 		</form>
 		<br />
       {% endfor %}
       </ul>
-
-
 	{% else %}
       <p>No unapproved users.</p>
-
 	
-{% endif %}
-	
-	 
+{% endif %}	 
 {% else %}
 	You do not have permission to view this page. This page is for staff only 
 {% endif %}

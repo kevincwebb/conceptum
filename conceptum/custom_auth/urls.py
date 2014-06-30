@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     url(r'^profile/$', TemplateView.as_view(template_name='profiles/profile.html'), name='profile'),
     url(r'^login/$', LoginView.as_view(form_class=LoginForm), name='account_login'),
     url(r'^pending/$', views.PendingUsersView.as_view(), name='pending_users'),
-    url(r'^approve/(?P<profile_id>\d+)/$', views.approve, name='approve'),
+    url(r'^pending/action/(?P<profile_id>\d+)/$', views.which_action, name='pending_action'),
+#    url(r'^approve/$', views.approve, name='approve'),
     url(r'^accounts/', include('allauth.urls')),
 )
