@@ -222,10 +222,7 @@ LOCAL_APPS = (
 #    'users',
     'profiles',
     'custom_auth',
-<<<<<<< HEAD
-=======
 
->>>>>>> e9d07365ec880e13f50ceeb3dd4d6fff0eb7cd6e
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

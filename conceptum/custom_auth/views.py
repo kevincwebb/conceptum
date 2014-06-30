@@ -33,3 +33,4 @@ def ignore(request, profile):
     """
     this method will delete the user and profile without notifying the user
     """
+    pass
