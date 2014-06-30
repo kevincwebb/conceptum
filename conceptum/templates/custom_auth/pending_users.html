@@ -6,15 +6,19 @@
 
 
 {% if user.is_staff %} {#not sure if this is the best place for this check#}
-<h2> Pending users: </h2>
+<h1> Pending Users </h1>
 
+<p> Hit "Approve" to accept user's signup request and alert them by email.
+<br> Hit "Reject" to deny user's request and alert them by email.
+<br>Hit "Ignore" to deny user's request but <b>not</b> send an email.</p>
+<hr>
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-
 
 	{% if pending_profiles %}
       <ul>
       {% for profile in pending_profiles %}
-		<form action="{% url 'approve' profile.id %}" method="post">
+
+		<form action="{% url 'pending_action' profile.id %}" method="post">
 		{% csrf_token %}
                 
                 <b>Email:</b>
@@ -42,21 +46,21 @@
                                 
                 <br><b> Other Info:</b>
                     <br>{{profile.text_info}}
-		  <br><br> <button class="btn btn-lg btn-primary" type="submit">{% trans "Approve" %}</button>
+                    <br><br>
+		 
+		  <input type="submit" name="approve" value="Approve" class="btn" />
+		  <input type="submit" name="reject" value="Reject" class="btn" />
+		  <input type="submit" name="ignore" value="Ignore" class= "btn" />
+
 		</form>
 		
                 <hr>
       {% endfor %}
       </ul>
-
-
 	{% else %}
       <p>No unapproved users.</p>
-
 	
-{% endif %}
-	
-	 
+{% endif %}	 
 {% else %}
 	You do not have permission to view this page. This page is for staff only 
 {% endif %}
