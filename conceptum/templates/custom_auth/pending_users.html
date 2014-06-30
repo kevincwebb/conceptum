@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+
+
+{% if user.is_staff %} {#not sure if this is the best place for this check#}
+<h2> Pending users: </h2>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+
+	{% if pending_profiles %}
+      <ul>
+      {% for profile in pending_profiles %}
+		<form action="{% url 'approve' profile.id %}" method="post">
+		  {% csrf_token %}
+		  <!--<input type="radio" name="profile" id="{{ profile.id_for_label }}" value="{{ profile.id }}" />-->
+		  {{ profile.id }}
+		  <button class="primaryAction" type="submit">{% trans "Approve" %}</button>
+		</form>
+		<br />
+      {% endfor %}
+      </ul>
+
+
+	{% else %}
+      <p>No unapproved users.</p>
+
+	
+{% endif %}
+	
+	 
+{% else %}
+	You do not have permission to view this page. This page is for staff only 
+{% endif %}
+{% endblock %}

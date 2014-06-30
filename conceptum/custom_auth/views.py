@@ -1,10 +1,16 @@
-from profiles.models import ContributorProfile
 from django.views import generic
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
+from django.contrib.auth.decorators import permission_required
 
 
-class UserApprovalView(generic.ListView):
-    template_name = 'custom_auth/user_approval.html'
-    context_object_name = 'unapproved_profiles'
+from profiles.models import ContributorProfile
+
+
+class PendingUsersView(generic.ListView):
+    template_name = 'custom_auth/pending_users.html'
+    context_object_name = 'pending_profiles'
     #model = ContributorProfile
   
 #    def get_queryset(self):
@@ -16,12 +22,17 @@ class UserApprovalView(generic.ListView):
     def get_queryset(self):
         return ContributorProfile.objects.filter(user__is_active__exact=False)
 
-def approve(request, profile):
+def approve(request, profile_id):
     """
     this method will set profile.user.is_active = True, save the user,
     and send an email to notify the user
     """
-    pass
+    if request.user.is_staff:
+        p = get_object_or_404(ContributorProfile, pk=profile_id)
+        p.user.is_active = True
+        p.user.save()
+    return HttpResponseRedirect(reverse('pending_users'))
+        
 
 def reject(request, profile):
     """
