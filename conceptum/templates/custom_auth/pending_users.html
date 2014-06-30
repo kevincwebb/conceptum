@@ -15,12 +15,37 @@
       <ul>
       {% for profile in pending_profiles %}
 		<form action="{% url 'approve' profile.id %}" method="post">
-		  {% csrf_token %}
-		  <!--<input type="radio" name="profile" id="{{ profile.id_for_label }}" value="{{ profile.id }}" />-->
-		  {{ profile.id }}
-		  <button class="primaryAction" type="submit">{% trans "Approve" %}</button>
+		{% csrf_token %}
+                
+                <b>Email:</b>
+                {{profile.user.email}}
+                </div>
+        
+                <br><b>Name:</b>
+                {{profile.user.name}}
+                
+                
+                <br><b>Homepage:</b>  
+                <a href = {{profile.homepage}}> {{profile.homepage}}</a>
+                <br><b>User Interest: </b>
+                
+                 {% if profile.interest_in_devel and profile.interest_in_deploy%}
+                    Wants To Develop and Deploy 
+                        {% elif profile.interest_in_devel %}
+                        Wants to Develop
+                            {% elif profile.interest_in_deploy%}
+                             Wants to Deploy
+                             {% else %}
+                                 None
+                             
+                                {% endif %}
+                                
+                <br><b> Other Info:</b>
+                    <br>{{profile.text_info}}
+		  <br><br> <button class="btn btn-lg btn-primary" type="submit">{% trans "Approve" %}</button>
 		</form>
-		<br />
+		
+                <hr>
       {% endfor %}
       </ul>
 
