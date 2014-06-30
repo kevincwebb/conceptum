@@ -1,6 +1,5 @@
 from allauth.account.adapter import DefaultAccountAdapter
 
-
 from profiles.models import ContributorProfile
 
 

@@ -3,13 +3,19 @@ from django.conf.urls.static import static
 from django.conf import settings
 from django.views.generic import TemplateView
 
-# Uncomment the next two lines to enable the admin:
+from custom_auth import views
+
+#Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
+
+
+
 
 urlpatterns = patterns('',
     url(r'^$', 'conceptum.views.home', name='home'),
 
+    url(r'^accounts/approve/$', views.UserApprovalView.as_view(), name='approve'),
     url(r'^accounts/profile/$', TemplateView.as_view(template_name='profiles/profile.html'), name='profile'),
     url(r'^accounts/', include('allauth.urls')),
 

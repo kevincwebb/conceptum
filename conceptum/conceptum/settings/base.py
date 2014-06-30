@@ -221,8 +221,7 @@ LOCAL_APPS = (
     'exam',
 #    'users',
     'profiles',
-    'conceptum',
-
+    'custom_auth',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -295,15 +294,14 @@ AUTHENTICATION_BACKENDS = (
 
 ########## ALLAUTH CONFIGURATION
 #LOGIN_REDIRECT_URL = '/'
-
+ACCOUNT_ADAPTER = "custom_auth.adapter.AccountAdapter"
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_SIGNUP_FORM_CLASS = 'conceptum.forms.SignupForm'
+ACCOUNT_SIGNUP_FORM_CLASS = 'custom_auth.forms.SignupForm'
 ACCOUNT_USER_DISPLAY = lambda user: user.get_full_name()
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-ACCOUNT_ADAPTER = "conceptum.adapter.AccountAdapter"
 
 SOCIALACCOUNT_PROVIDERS = None
 ########## END ALLAUTH CONFIGURATION
