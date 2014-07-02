@@ -1,11 +1,33 @@
 from django.views import generic
+from django.views.generic.base import TemplateView
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.core.mail import send_mail
-
 from profiles.models import ContributorProfile
+#from allauth.account.views import RedirectAuthenticatedUserMixin
+from django.shortcuts import redirect
 
+class AccountInactiveView(TemplateView):
+    #redirect_field_name = 'profile'
+    template_name = 'account/account_inactive.html'
+    
+    redirect_field_name = "profile"
+    
+    def get_redirect_url(self):
+        return self.redirect_field_name
+    
+    def get(self, request, *args, **kwargs):
+        '''
+        Overriding TemplateView.get() in order to
+        prevent active user from seeing inactive page
+        '''
+        # Redirect to Profile if user is active
+        if  self.request.user.is_active:
+            return redirect(self.get_redirect_url())
+        # Process normally if User is not activated yet
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
 
 class PendingUsersView(generic.ListView):
     template_name = 'custom_auth/pending_users.html'
@@ -18,8 +40,10 @@ def which_action(request, profile_id):
     if request.user.is_staff:
         profile = get_object_or_404(ContributorProfile, pk=profile_id)
         if 'approve_contrib' in request.POST:
+            #the pk for group can_contribCI is 1
             approve(request, profile, 1)
         elif 'approve_base' in request.POST:
+            #the pk for group can_useCI is 2
             approve(request,profile, 2)
         elif 'reject' in request.POST:
             reject(request, profile)
@@ -60,3 +84,5 @@ def ignore(request, profile):
         emailaddress.delete()
     profile.user.delete()
     profile.delete()
+    
+    

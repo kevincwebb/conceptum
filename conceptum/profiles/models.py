@@ -18,7 +18,7 @@ class ProfileManager(BaseUserManager):
 
 class ContributorProfile(models.Model):
     """
-    A user profile for contributors
+    A user profile for all users. Consider renaming to UserProfile. 
     """
     user = models.OneToOneField(settings.AUTH_USER_MODEL)  
     homepage = models.URLField(max_length=200)
