@@ -5,13 +5,11 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.core.mail import send_mail
 from profiles.models import ContributorProfile
-#from allauth.account.views import RedirectAuthenticatedUserMixin
 from django.shortcuts import redirect
 
+
 class AccountInactiveView(TemplateView):
-    #redirect_field_name = 'profile'
     template_name = 'account/account_inactive.html'
-    
     redirect_field_name = "profile"
     
     def get_redirect_url(self):
@@ -34,10 +32,7 @@ class PendingUsersView(generic.ListView):
     context_object_name = 'pending_profiles'
 
     def get_queryset(self):
-        return ContributorProfile.objects.filter(
-            user__is_active__exact=False).filter(
-            user__emailaddress__verified__exact=True)
-
+        return ContributorProfile.objects.filter(user__is_active__exact=False).filter(user__emailaddress__verified__exact=True)
 
 def which_action(request, profile_id):
     if request.user.is_staff:
