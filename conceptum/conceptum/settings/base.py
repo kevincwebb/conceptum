@@ -224,6 +224,9 @@ LOCAL_APPS = (
     'profiles',
     'custom_auth',
 
+    'cistage1',
+    'nodemanager',
+
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

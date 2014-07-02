@@ -3,7 +3,7 @@ from django.db import models
 # Used for underlying tree structure
 from mptt.models import MPTTModel, TreeForeignKey
 
-from django.contrib.auth.models import User
+from authtools.models import User
 
 # Only one CITreeInfo model can exist per tree. Every node in the CI
 # Tree is connected to it. It provides global information, such as:
@@ -13,8 +13,8 @@ from django.contrib.auth.models import User
 # TODO: maybe created by
 class CITreeInfo(models.Model):
 
-    admins = ManyToManyField(User)
-    users = ManyToManyField(User)
+    admins = models.ManyToManyField(User, related_name='admins')
+    users = models.ManyToManyField(User, related_name='users')
 
     # master tree is loaded on the landing page. there can only be one
     # at any given time.
@@ -32,7 +32,7 @@ class CITreeInfo(models.Model):
 class ConceptNode(MPTTModel):
 
     # gives information about the tree the node belongs to
-    citreeinfo = ForeignKey(CITreeInfo)
+    citreeinfo = models.ForeignKey(CITreeInfo)
         
     # required by mptt
     parent = TreeForeignKey('self', null=True, related_name='children')
