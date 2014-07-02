@@ -3,7 +3,6 @@ from django.shortcuts import render
 # For CI variable names.
 from django.conf import settings
 
-
-def home(request):
+def index(request):
     context = {'CI_COURSE': settings.CI_COURSE}
-    return render(request, 'home.html', context)
+    return render(request, 'cidev/index.html', context)
