@@ -24,6 +24,11 @@ class CITreeInfo(models.Model):
 # The ConceptNode functions as a single-type container for all data that
 # different node objects might need. We do this instead of inheritance
 # because django-mttp can only construct trees of 1 type.
+#
+# Concept Nodes hold whatever value has been given to them from a
+# vote. They can also hold voting processes that, if completed, will
+# spawn child nodes whose content contains whatever was chosen from
+# the voting process. 
 class ConceptNode(MPTTModel):
 
     # gives information about the tree the node belongs to
@@ -35,19 +40,21 @@ class ConceptNode(MPTTModel):
     # a node manages individual users
     user = models.ManyToManyField(User)
 
+    #add more types if desired
     nodetype = (
-        ('F', 'Free Entry'),
-        ('P', 'Pruning'),
-        ('R', 'Ranking'),
-        ('A', 'Active'),
-    ) #add more types (with necessary fields) if desired. make sure
-      #the fields are added to the concept node itself, or accessed
-      #via ForeignKey.
-
+        ('F', 'Free Entry'), #initial brainstorm
+        ('P', 'Pruning'), #create final voting set
+        ('R', 'Ranking'), #vote on set
+        ('C', 'Complete'), #compute optimal choices and close process
+    )
+    
+    # Whatever content was awarded to this node by the parent voting
+    # process
+    content = models.TextField(max_length=140)
 
     # TODO: Add Methods
 
-# These are entered by the user and are meant to represent
+# Atoms are entered by the user and are meant to represent
 # topics/concepts/module names that altogether will form a
 # hierarchical representation of a CI. They each link to one node and
 # one user. "Final Choice" represents whether or not an atom has
@@ -59,4 +66,4 @@ class ConceptAtom(models.Model):
 
     text = models.CharField(max_length=140)
     finalChoice = models.BooleanField(default=False)
-    rank = None #TODO: figure it out
+
