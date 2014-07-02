@@ -218,11 +218,11 @@ DJANGO_APPS = (
 
 # Apps specific for this project go here.
 LOCAL_APPS = (
+    'cidev',
+    'custom_auth',
     'exam',
 #    'users',
     'profiles',
-    'custom_auth',
-
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

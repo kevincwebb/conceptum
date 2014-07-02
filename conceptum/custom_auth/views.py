@@ -16,24 +16,29 @@ class PendingUsersView(generic.ListView):
             user__is_active__exact=False).filter(
             user__emailaddress__verified__exact=True)
 
+
 def which_action(request, profile_id):
     if request.user.is_staff:
         profile = get_object_or_404(ContributorProfile, pk=profile_id)
-        if 'approve' in request.POST:
-            approve(request, profile)
+        if 'approve_contrib' in request.POST:
+            approve(request, profile, 1)
+        elif 'approve_base' in request.POST:
+            approve(request,profile, 2)
         elif 'reject' in request.POST:
             reject(request, profile)
         elif 'ignore' in request.POST:
             ignore(request, profile)    
     return HttpResponseRedirect(reverse('pending_users'))
 
-def approve(request, profile):
+def approve(request, profile, group):
     """
     this method will set profile.user.is_active = True, save the user,
     and send an email to notify the user
     """   
     profile.user.is_active = True
+    profile.user.groups.add(group)
     profile.user.save()
+    
     #this doesn't work right yet
     send_mail('account_approved_subject.txt', 'account.approved_message.txt', 'from@example.com',
         [profile.user.email], fail_silently=False)
