@@ -31,12 +31,6 @@ class SignupForm(forms.Form):
                                 required=False,
                                 widget=forms.Textarea())
 
-
-
-#    def __init__(self, *args, **kwargs):
-#        super(SignupForm, self).__init__(*args, **kwargs)
-#        field_order = ['name', 'email']
-
     def signup(self, request, user):
         """
         Invoked at signup time to complete the signup of the user.
@@ -51,20 +45,9 @@ class SignupForm(forms.Form):
                                           interest_in_deploy=user_i_deploy,
                                           text_info=user_text_info )
         user_profile.save()
-        
+
+
 class LoginForm(BaseLoginForm):
-    
-    #def clean(self):
-    #    try:
-    #        return super(LoginForm,self)
-    #    except forms.ValidationError:
-    #        if self._errors:
-    #            return
-    #        user = authenticate(**self.user_credentials())
-    #        self.user = user
-    #        return self.cleaned_data
-    #    
-    #
     
     def clean(self):
         if self._errors:
@@ -73,16 +56,6 @@ class LoginForm(BaseLoginForm):
         if user:
             self.user = user
         else:
-            if app_settings.AUTHENTICATION_METHOD \
-                    == AuthenticationMethod.EMAIL:
-                error = _("The e-mail address and/or password you specified"
-                          " are not correct.")
-            elif app_settings.AUTHENTICATION_METHOD \
-                    == AuthenticationMethod.USERNAME:
-                error = _("The username and/or password you specified are"
-                          " not correct.")
-            else:
-                error = _("The login and/or password you specified are not"
-                          " correct.")
-            raise forms.ValidationError(error)
+            raise forms.ValidationError(_("The e-mail address and/or password you specified"
+                                          " are not correct."))
         return self.cleaned_data

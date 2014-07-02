@@ -12,7 +12,9 @@ class PendingUsersView(generic.ListView):
     context_object_name = 'pending_profiles'
 
     def get_queryset(self):
-        return ContributorProfile.objects.filter(user__is_active__exact=False)
+        return ContributorProfile.objects.filter(
+            user__is_active__exact=False).filter(
+            user__emailaddress__verified__exact=True)
 
 def which_action(request, profile_id):
     if request.user.is_staff:
