@@ -41,12 +41,15 @@ class ConceptNode(MPTTModel):
     user = models.ManyToManyField(User)
 
     #add more types if desired
-    nodetype = (
-        ('F', 'Free Entry'), #initial brainstorm
-        ('P', 'Pruning'), #create final voting set
-        ('R', 'Ranking'), #vote on set
-        ('C', 'Complete'), #compute optimal choices and close process
-    )
+    # NODECHOICES = (
+    #     ('F', 'Free Entry'), #initial brainstorm
+    #     ('P', 'Pruning'), #create final voting set
+    #     ('R', 'Ranking'), #vote on set and compute optimal choices
+    #     ('C', 'Complete'), #no more node-specific edits can be made
+    #)
+    nodetype = models.CharField(max_length=2)
+                                 # choices=NODECHOICES,
+                                 # default='C',)
     
     # Whatever content was awarded to this node by the parent voting
     # process
