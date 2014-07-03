@@ -41,7 +41,9 @@ class PendingUsersView(generic.ListView):
     context_object_name = 'pending_profiles'
 
     def get_queryset(self):
-        return ContributorProfile.objects.filter(user__is_active__exact=False).filter(user__emailaddress__verified__exact=True)
+        return ContributorProfile.objects.filter(
+            user__is_active__exact=False).filter(
+            user__emailaddress__verified__exact=True)
 
 def which_action(request, profile_id):
     if request.user.is_staff:
@@ -64,16 +66,16 @@ def approve(request, profile, group):
     and send an email to notify the user
     """
     
-    file = open(SITE_ROOT + os.path.sep + 'custom_auth/email/account_approved_subject.txt', 'r')
+    file = open(SITE_ROOT + os.path.sep + 'templates/custom_auth/email/account_approved_subject.txt', 'r')
     subject = file.read()
     file.close()
     
     if group == 2:
-        file = open(SITE_ROOT + os.path.sep + 'custom_auth/email/user_approved_message.txt', 'r')
+        file = open(SITE_ROOT + os.path.sep + 'templates/custom_auth/email/user_approved_message.txt', 'r')
         content = file.read()
         file.close()
     elif group == 1:
-        file = open(SITE_ROOT + os.path.sep + 'custom_auth/email/contrib_approved_message.txt', 'r')
+        file = open(SITE_ROOT + os.path.sep + 'templates/custom_auth/email/contrib_approved_message.txt', 'r')
         content = file.read()
         file.close()
     
@@ -91,10 +93,10 @@ def reject(request, profile):
     this method will send an email to notify the user, then delete the user and profile
     """
     
-    file = open(SITE_ROOT + os.path.sep + 'custom_auth/email/account_rejected_subject.txt', 'r')
+    file = open(SITE_ROOT + os.path.sep + 'templates/custom_auth/email/account_rejected_subject.txt', 'r')
     subject = file.read()
     file.close()
-    file = open(SITE_ROOT + os.path.sep + 'custom_auth/email/account_rejected_message.txt', 'r')
+    file = open(SITE_ROOT + os.path.sep + 'templates/custom_auth/email/account_rejected_message.txt', 'r')
     content = file.read()
     file.close()
     
@@ -105,9 +107,7 @@ def reject(request, profile):
     for emailaddress in profile.user.emailaddress_set.all():
         emailaddress.delete()
     profile.user.delete()
-    profile.delete()
-    #this doesn't work right yet
-    
+    profile.delete()    
 
 def ignore(request, profile):
     """
