@@ -201,7 +201,6 @@ DJANGO_APPS = (
 
     # order necessary to force django_comments
     # to inherit threaded templates
-
     'threadedcomments',
     'django_comments',
 
@@ -211,7 +210,9 @@ DJANGO_APPS = (
     # we barely need this, but there are template errors without it
     # (of course we can just remove those parts from the templates)
     'allauth.socialaccount',
-    
+
+    # Used as a tree structure for CI Stage 1
+    'mptt'
 
 
 )
@@ -223,6 +224,11 @@ LOCAL_APPS = (
     'exam',
 #    'users',
     'profiles',
+    'custom_auth',
+
+    'cistage1',
+    'nodemanager',
+
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
