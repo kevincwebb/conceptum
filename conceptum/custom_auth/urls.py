@@ -12,6 +12,8 @@ urlpatterns = patterns('',
     url(r'^pending/$', views.PendingUsersView.as_view(), name='pending_users'),
     url(r'^pending/action/(?P<profile_id>\d+)/$', views.which_action, name='pending_action'),
     url(r'^inactive/$', views.AccountInactiveView.as_view(), name='account_inactive'),
+    url(r"^confirm-email/$", views.EmailVerificationSentView.as_view(),
+        name="account_email_verification_sent"),
 #url(r'^approve/$', views.approve, name='approve'),
     url(r'^', include('allauth.urls')),
 )

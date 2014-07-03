@@ -6,10 +6,11 @@ from django.core.urlresolvers import reverse
 from django.core.mail import send_mail
 from profiles.models import ContributorProfile
 from django.shortcuts import redirect
+from conceptum.settings.base import SITE_ROOT
+import os
 
-
-class AccountInactiveView(TemplateView):
-    template_name = 'account/account_inactive.html'
+#A Template View that redirects to Profile for logged in users
+class RedirectView(TemplateView):
     redirect_field_name = "profile"
     
     def get_redirect_url(self):
@@ -21,11 +22,19 @@ class AccountInactiveView(TemplateView):
         prevent active user from seeing inactive page
         '''
         # Redirect to Profile if user is active
-        if  self.request.user.is_active:
+        if  self.request.user.is_authenticated():
             return redirect(self.get_redirect_url())
         # Process normally if User is not activated yet
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
+
+
+class EmailVerificationSentView(RedirectView):
+    template_name = 'account/verification_sent.html'
+    
+class AccountInactiveView(RedirectView):
+    template_name = 'account/account_inactive.html'
+    
 
 class PendingUsersView(generic.ListView):
     template_name = 'custom_auth/pending_users.html'
@@ -53,26 +62,52 @@ def approve(request, profile, group):
     """
     this method will set profile.user.is_active = True, save the user,
     and send an email to notify the user
-    """   
+    """
+    
+    file = open(SITE_ROOT + os.path.sep + 'custom_auth/email/account_approved_subject.txt', 'r')
+    subject = file.read()
+    file.close()
+    
+    if group == 2:
+        file = open(SITE_ROOT + os.path.sep + 'custom_auth/email/user_approved_message.txt', 'r')
+        content = file.read()
+        file.close()
+    elif group == 1:
+        file = open(SITE_ROOT + os.path.sep + 'custom_auth/email/contrib_approved_message.txt', 'r')
+        content = file.read()
+        file.close()
+    
     profile.user.is_active = True
     profile.user.groups.add(group)
     profile.user.save()
     
-    #this doesn't work right yet
-    send_mail('account_approved_subject.txt', 'account.approved_message.txt', 'from@example.com',
+    #change email from from@example.com to something useful
+    
+    send_mail(subject, content, 'from@example.com',
         [profile.user.email], fail_silently=False)
         
 def reject(request, profile):
     """
     this method will send an email to notify the user, then delete the user and profile
     """
+    
+    file = open(SITE_ROOT + os.path.sep + 'custom_auth/email/account_rejected_subject.txt', 'r')
+    subject = file.read()
+    file.close()
+    file = open(SITE_ROOT + os.path.sep + 'custom_auth/email/account_rejected_message.txt', 'r')
+    content = file.read()
+    file.close()
+    
+    #change email from from@example.com to something useful
+    send_mail(subject, content, 'from@example.com',
+        [profile.user.email], fail_silently=False)
+    
     for emailaddress in profile.user.emailaddress_set.all():
         emailaddress.delete()
     profile.user.delete()
     profile.delete()
     #this doesn't work right yet
-    send_mail('account_approved_subject.txt', 'account.approved_message.txt', 'from@example.com',
-        [profile.user.email], fail_silently=False)
+    
 
 def ignore(request, profile):
     """
