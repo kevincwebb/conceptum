@@ -12,9 +12,7 @@ urlpatterns = patterns('',
 
     url(r'^accounts/', include('custom_auth.urls')),
 
-    # This will likely move to an app later.  Prototyping for now.
-    url(r'^landing/$', 'conceptum.views.landing', name='landing'),
-
+    url(r'^cidev/', include('cidev.urls')),
 
     # Examples:
     # url(r'^conceptum/', include('conceptum.foo.urls')),

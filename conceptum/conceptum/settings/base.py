@@ -219,6 +219,8 @@ DJANGO_APPS = (
 
 # Apps specific for this project go here.
 LOCAL_APPS = (
+    'cidev',
+    'custom_auth',
     'exam',
 #    'users',
     'profiles',

@@ -8,9 +8,10 @@
 {% if user.is_staff %} {#not sure if this is the best place for this check#}
 <h1> Pending Users </h1>
 
-<p> Hit "Approve" to accept user's signup request and alert them by email.
-<br> Hit "Reject" to deny user's request and alert them by email.
-<br>Hit "Ignore" to deny user's request but <b>not</b> send an email.</p>
+<p> Hit "Approve as Contributor" to accept user's signup request, give them contributor permissions, and alert them by email.
+<p> Hit "Approve as User" to accept user's signup request, give them user permissions, and alert them by email.
+<p> Hit "Reject" to deny user's request and alert them by email.
+<p>Hit "Ignore" to deny user's request but <b>not</b> send an email.</p>
 <hr>
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
@@ -40,7 +41,7 @@
                             {% elif profile.interest_in_deploy%}
                              Wants to Deploy
                              {% else %}
-                                 None
+                                 None Specified
                              
                                 {% endif %}
                                 
@@ -50,7 +51,7 @@
 		 
 		  <input type="submit" name="approve_contrib" value="Approve as
                   Contributor" class="btn" />
-                  <input type="submit" name="approve_base" value="Approve as Base User" class="btn" />
+                  <input type="submit" name="approve_base" value="Approve as User" class="btn" />
 		  <input type="submit" name="reject" value="Reject" class="btn" />
 		  <input type="submit" name="ignore" value="Ignore" class= "btn" />
 

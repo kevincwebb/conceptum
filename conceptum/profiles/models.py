@@ -18,19 +18,19 @@ class ProfileManager(BaseUserManager):
 
 class ContributorProfile(models.Model):
     """
-    A user profile for contributors
+    A user profile for all users. Consider renaming to UserProfile. 
     """
     user = models.OneToOneField(settings.AUTH_USER_MODEL)  
-    homepage = models.URLField(max_length=200)
-    interest_in_devel = models.BooleanField("interested in CI development")
-    interest_in_deploy = models.BooleanField("interested in CI deployment")
-    text_info = models.TextField()
+    homepage = models.URLField(max_length=200, default="")
+    interest_in_devel = models.BooleanField("interested in CI development", default=False)
+    interest_in_deploy = models.BooleanField("interested in CI deployment", default=False)
+    text_info = models.TextField(default="")
     
     objects = ProfileManager()
     
     #def __init__(self, profile_user, *args, **kwargs):
     #    super(ContributorProfile, self).__init__(*args, **kwargs)
     #    self.user = profile_user
-        
+
     def __str__(self):
-        return "{name}'s profile".format(name=self.user.name)
+        return self.user.name
