@@ -45,6 +45,14 @@
   </div>
 
   <div class="form-group">
+    {{ form.institution.errors }}
+    <label for="id_institution" class="col-sm-3 control-label">Institution</label>
+    <div class="col-sm-9">
+      {{ form.institution }}
+   </div>
+  </div>
+  
+  <div class="form-group">
     {{ form.homepage.errors }}
     <label for="id_homepage" class="col-sm-3 control-label">Homepage</label>
     <div class="col-sm-9">

@@ -70,13 +70,6 @@ for a {{site_name}} account and sign in below:{% endblocktrans %}</p>
       {{ form.password }}
    </div>
   </div>
-  <div class="form-group">
-    {{ form.remember.errors }}
-    <label for="id_remember" class="col-sm-3 control-label">Remember me</label>
-    <div class="col-sm-9">
-      {{ form.remember }}
-   </div>
-  </div>
 
   {% if redirect_field_value %}
   <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
