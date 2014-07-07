@@ -6,7 +6,8 @@ from django.core.urlresolvers import reverse
 from django.core.mail import send_mail
 from profiles.models import ContributorProfile
 from django.shortcuts import redirect
-from conceptum.settings.base import SITE_ROOT
+#from conceptum.settings.base import SITE_ROOT
+from django.conf import settings
 import os
 
 #A Template View that redirects to Profile for logged in users
@@ -66,44 +67,42 @@ def approve(request, profile, group):
     and send an email to notify the user
     """
     
-    file = open(SITE_ROOT + os.path.sep + 'templates/custom_auth/email/account_approved_subject.txt', 'r')
+    file = open(settings.SITE_ROOT + os.path.sep +
+                'templates/custom_auth/email/account_approved_subject.txt', 'r')
     subject = file.read()
-    file.close()
-    
+    file.close()    
     if group == 2:
-        file = open(SITE_ROOT + os.path.sep + 'templates/custom_auth/email/user_approved_message.txt', 'r')
+        file = open(settings.SITE_ROOT + os.path.sep +
+                    'templates/custom_auth/email/user_approved_message.txt', 'r')
         content = file.read()
         file.close()
     elif group == 1:
-        file = open(SITE_ROOT + os.path.sep + 'templates/custom_auth/email/contrib_approved_message.txt', 'r')
+        file = open(settings.SITE_ROOT + os.path.sep +
+                    'templates/custom_auth/email/contrib_approved_message.txt', 'r')
         content = file.read()
         file.close()
     
     profile.user.is_active = True
     profile.user.groups.add(group)
     profile.user.save()
-    
-    #change email from from@example.com to something useful
-    
-    send_mail(subject, content, 'from@example.com',
+    send_mail(subject, content, settings.DEFAULT_FROM_EMAIL,
         [profile.user.email], fail_silently=False)
         
 def reject(request, profile):
     """
     this method will send an email to notify the user, then delete the user and profile
     """
-    
-    file = open(SITE_ROOT + os.path.sep + 'templates/custom_auth/email/account_rejected_subject.txt', 'r')
+    file = open(settings.SITE_ROOT + os.path.sep +
+                'templates/custom_auth/email/account_rejected_subject.txt', 'r')
     subject = file.read()
     file.close()
-    file = open(SITE_ROOT + os.path.sep + 'templates/custom_auth/email/account_rejected_message.txt', 'r')
+    file = open(settings.SITE_ROOT + os.path.sep +
+                'templates/custom_auth/email/account_rejected_message.txt', 'r')
     content = file.read()
     file.close()
     
-    #change email from from@example.com to something useful
-    send_mail(subject, content, 'from@example.com',
+    send_mail(subject, content, settings.DEFAULT_FROM_EMAIL,
         [profile.user.email], fail_silently=False)
-    
     for emailaddress in profile.user.emailaddress_set.all():
         emailaddress.delete()
     profile.user.delete()

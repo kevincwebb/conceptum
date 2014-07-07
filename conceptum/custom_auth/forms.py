@@ -14,6 +14,10 @@ class SignupForm(forms.Form):
                            widget=forms.TextInput(attrs={'placeholder': _('Your name'),
                                                          'autofocus': 'autofocus'}))
     
+    institution = forms.CharField(label=_("Institution"),
+                                  max_length=200,
+                                  widget=forms.TextInput(attrs={'placeholder': _('Institution')}))
+    
     homepage = forms.URLField(label=_("Homepage"),
                               max_length=200,
                               widget=forms.URLInput(attrs={'type': 'url',
@@ -35,11 +39,13 @@ class SignupForm(forms.Form):
         """
         Invoked at signup time to complete the signup of the user.
         """
+        user_institution = self.cleaned_data.get('institution')
         user_homepage = self.cleaned_data.get('homepage')
         user_i_devel = self.cleaned_data.get('interest_in_devel')
         user_i_deploy = self.cleaned_data.get('interest_in_deploy')
         user_text_info = self.cleaned_data.get('text_info')
         user_profile = ContributorProfile(user=user,
+                                          institution = user_institution,
                                           homepage=user_homepage,
                                           interest_in_devel=user_i_devel,
                                           interest_in_deploy=user_i_deploy,

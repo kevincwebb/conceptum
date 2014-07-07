@@ -3,6 +3,14 @@
 
 {% block content %}
 
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    {# flush messages, expected "You have successfully signed in" #}
+    {% endfor %}
+</ul>
+{% endif %}
+
 {% if user.is_authenticated %}
 <h2>Welcome {{ user.name }} </h2>
     <div class ="profile-info">

@@ -8,4 +8,13 @@
 <h1>{% trans "Your Account Will Be Activated Shortly" %}</h1>
 
 <p>{% trans "We are currently reviewing your information. You will get an Email when your account is approved." %}</p>
+
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    {# flush messages, expected "You have confirmed <email>" #}
+    {% endfor %}
+</ul>
+{% endif %}
+
 {% endblock %}

@@ -5,8 +5,6 @@ from django.utils.translation import ugettext_lazy as _
 from allauth.account.models import EmailAddress
 
 from profiles.models import ContributorProfile
-#from custom_auth.forms import LoginForm
-#from custom_auth import forms
 
 
 User = get_user_model()
@@ -93,12 +91,14 @@ class SignupFormTest(SimpleTestCase):
     def test_sign_up_correct(self):
         user_email = 'tsuc_email@test.com' # this must be unique from other tests
         user_name = 'Dave Test'
+        user_institution = 'Oberlin College'
         user_homepage = 'http://www.example.com/'
         user_password = 'password'
         
         # Try to sign up
         response = self.client.post('/accounts/signup/', {'email': user_email,
                                                           'name': user_name,
+                                                          'institution': user_institution,
                                                           'homepage': user_homepage,
                                                           'password1': user_password,
                                                           'password2': user_password})
@@ -116,11 +116,13 @@ class SignupFormTest(SimpleTestCase):
         # Check that User and Profile data saved
         self.assertEquals(user.name, user_name)
         self.assertEquals(profile.homepage, user_homepage)
+        self.assertEquals(profile.institution, user_institution)
         
     
     def test_sign_up_errors(self):
         user_email = 'tsue_email@test.com' # this must be unique from other tests
         user_name = 'Dave Test'
+        user_institution = 'Oberlin College'
         user_homepage = 'http://www.example.com/'
         user_password = 'password'
         
@@ -140,6 +142,7 @@ class SignupFormTest(SimpleTestCase):
         # Paswords don't match
         response = self.client.post('/accounts/signup/', {'email': user_email,
                                                           'name': user_name,
+                                                          'institution': user_institution,
                                                           'homepage': user_homepage,
                                                           'password1': user_password,
                                                           'password2': user_password+"wrong"})        
@@ -149,11 +152,13 @@ class SignupFormTest(SimpleTestCase):
         # Email not unique
         self.client.post('/accounts/signup/', {'email': user_email,
                                                           'name': user_name,
+                                                          'institution': user_institution,
                                                           'homepage': user_homepage,
                                                           'password1': user_password,
                                                           'password2': user_password})
         response = self.client.post('/accounts/signup/', {'email': user_email,
                                                           'name': user_name,
+                                                          'institution': user_institution,
                                                           'homepage': user_homepage,
                                                           'password1': user_password,
                                                           'password2': user_password})

@@ -37,6 +37,9 @@
 		
 	  <b>Name:</b>
 		{{profile.user.name}}<br>
+	
+	  <b>Institution:</b>
+		{{profile.institution}}<br>
 		
 	  <b>Homepage:</b>
 		<a href = {{profile.homepage}}> {{profile.homepage}}</a><br>
@@ -56,14 +59,13 @@
 		{{profile.text_info}}<br>
 	  <br>
 	   
-	  <input type="submit" name="approve_contrib" value="Approve as
-			  Contributor" class="btn" />
-			  <input type="submit" name="approve_base" value="Approve as User" class="btn" />
+	  <input type="submit" name="approve_contrib" value="Approve as Contributor" class="btn" />
+	  <input type="submit" name="approve_base" value="Approve as User" class="btn" />
 	  <input type="submit" name="reject" value="Reject" class="btn" />
 	  <input type="submit" name="ignore" value="Ignore" class= "btn" />
 	  
 	</form>
-
+  <hr>
   {% endfor %}
   </ul>
 {% else %}
