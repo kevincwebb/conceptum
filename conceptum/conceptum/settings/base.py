@@ -5,7 +5,7 @@ from os.path import abspath, basename, dirname, join, normpath
 from sys import path
 
 ### Conceptum configuration. ###
-CI_COURSE = 'Test Course'
+CI_COURSE = 'CS 2'
 ###
 
 ########## PATH CONFIGURATION
@@ -36,7 +36,7 @@ TEMPLATE_DEBUG = DEBUG
 ########## MANAGER CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#admins
 ADMINS = (
-    ('Your Name', 'your_email@example.com'),
+    ('Conceptum Admin', 'conceptum@cs.swarthmore.edu'),
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#managers
