@@ -205,6 +205,7 @@ DJANGO_APPS = (
     'django_comments',
 
     'authtools',
+<<<<<<< HEAD
     'allauth',
     'allauth.account',
     # we barely need this, but there are template errors without it
@@ -213,6 +214,9 @@ DJANGO_APPS = (
 
     # Used as a tree structure for CI Stage 1
 #    'mptt'
+=======
+    'qhonuskan_votes',
+>>>>>>> ac544b3a32bef81cc609b625058cf2d14e739d33
 
 
 )

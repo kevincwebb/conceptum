@@ -1,6 +1,11 @@
 from django.conf.urls import patterns, include, url
 from django.conf.urls.static import static
 from django.conf import settings
+from django.views.generic import TemplateView
+import qhonuskan_votes.urls #VOTING -temp
+
+
+# Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
 
@@ -24,6 +29,8 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
     url(r'^exams/', include('exam.urls')),
+    # VOTING -temp
+    url(r'^votes/', include(qhonuskan_votes.urls))
     
 
 )
