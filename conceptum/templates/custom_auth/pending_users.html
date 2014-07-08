@@ -3,8 +3,6 @@
 
 {% block content %}
 
-{% if user.is_staff %} {#This almost certainly is not the best place for this check#}
-
 <h1> Pending Users </h1>
 <ul>
   These users have requested conceptum accounts and have confirmed their emails.<br><br>
@@ -73,7 +71,4 @@
 {% endif %}
 <hr>
 
-{% else %} {#from top "if user.is_staff"#}
-	You do not have permission to view this page. This page is for staff only 
-{% endif %}
 {% endblock %}

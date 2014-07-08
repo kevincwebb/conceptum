@@ -4,6 +4,9 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.core.mail import send_mail
+from django.core.exceptions import PermissionDenied
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from profiles.models import ContributorProfile
 from django.shortcuts import redirect
 #from conceptum.settings.base import SITE_ROOT
@@ -41,27 +44,34 @@ class PendingUsersView(generic.ListView):
     template_name = 'custom_auth/pending_users.html'
     context_object_name = 'pending_profiles'
 
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        if not self.request.user.is_staff:
+            raise PermissionDenied
+        return super(PendingUsersView, self).dispatch(*args, **kwargs)
+
     def get_queryset(self):
         return ContributorProfile.objects.filter(
             user__is_active__exact=False).filter(
             user__emailaddress__verified__exact=True)
 
 def which_action(request, profile_id):
-    if request.user.is_staff:
-        profile = get_object_or_404(ContributorProfile, pk=profile_id)
-        if 'approve_contrib' in request.POST:
-            #the pk for group can_contribCI is 1
-            approve(request, profile, 1)
-        elif 'approve_base' in request.POST:
-            #the pk for group can_useCI is 2
-            approve(request,profile, 2)
-        elif 'reject' in request.POST:
-            reject(request, profile)
-        elif 'ignore' in request.POST:
-            ignore(request, profile)    
+    if not request.user.is_staff:
+        raise PermissionDenied
+    profile = get_object_or_404(ContributorProfile, pk=profile_id)
+    if 'approve_contrib' in request.POST:
+        #the pk for group can_contribCI is 1
+        approve(profile, 1)
+    elif 'approve_base' in request.POST:
+        #the pk for group can_useCI is 2
+        approve(profile, 2)
+    elif 'reject' in request.POST:
+        reject(profile)
+    elif 'ignore' in request.POST:
+        ignore(profile)    
     return HttpResponseRedirect(reverse('pending_users'))
 
-def approve(request, profile, group):
+def approve(profile, group):
     """
     this method will set profile.user.is_active = True, save the user,
     and send an email to notify the user
@@ -88,7 +98,7 @@ def approve(request, profile, group):
     send_mail(subject, content, settings.DEFAULT_FROM_EMAIL,
         [profile.user.email], fail_silently=False)
         
-def reject(request, profile):
+def reject(profile):
     """
     this method will send an email to notify the user, then delete the user and profile
     """
@@ -108,7 +118,7 @@ def reject(request, profile):
     profile.user.delete()
     profile.delete()    
 
-def ignore(request, profile):
+def ignore(profile):
     """
     this method will delete the user and profile without notifying the user
     """
