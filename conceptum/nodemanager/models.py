@@ -62,28 +62,13 @@ class ConceptNode(MPTTModel):
 # hierarchical representation of a CI. They each link to one node and
 # one user. "Final Choice" represents whether or not an atom has
 # passed the pruning process.
-class ConceptAtom(models.Model):
 
-    MAX_LENGTH = 140
+MAX_LENGTH = 140
+
+class ConceptAtom(models.Model):
 
     concept_node = models.ForeignKey(ConceptNode)
     user = models.ForeignKey(User)
 
     text = models.CharField(max_length=MAX_LENGTH)
     final_choice = models.BooleanField(default=False)
-
-    @classmethod
-    def create_atom(self, concept_node, user, text="", final_choice=False):
-
-        #check text
-        if len(text) > MAX_LENGTH:
-            print "Error: text entered is too long"
-            return
-
-        #check for valid user
-        concept_users = concept_node.ci_tree_info.users.all()
-        if user not in concept_users:
-            print "Error: user not associated with concept tree"
-            return
-
-        return ConceptAtom(concept_node, user, text, final_choice)

@@ -142,7 +142,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.tz',
     'django.contrib.messages.context_processors.messages',
     'django.core.context_processors.request',
-    
+
     #allauth
     'allauth.account.context_processors.account',
     'allauth.socialaccount.context_processors.socialaccount',
@@ -212,7 +212,7 @@ DJANGO_APPS = (
     'allauth.socialaccount',
 
     # Used as a tree structure for CI Stage 1
-#    'mptt'
+    'mptt'
 
 
 )
@@ -226,7 +226,7 @@ LOCAL_APPS = (
     'custom_auth',
 
     'cistage1',
-#    'nodemanager',
+    'nodemanager',
 
 )
 
