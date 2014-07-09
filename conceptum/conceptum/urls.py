@@ -9,6 +9,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', 'conceptum.views.home', name='home'),
+    url(r'^ci_info$', 'conceptum.views.ci_info', name='ci_info'),
 
     url(r'^accounts/', include('custom_auth.urls')),
 

@@ -11,7 +11,7 @@ class ContributorProfileAdmin(admin.ModelAdmin):
 	#	('Date information', {'fields': ['pub_date'], 'classes': ['collapse']}),
 	#]
 	#inlines = [ChoiceInline]
-	list_display = ('user', 'homepage', 'interest_in_devel', 'interest_in_deploy')
+	list_display = ('user', 'institution', 'homepage', 'interest_in_devel', 'interest_in_deploy')
 	#list_filter = ['pub_date']
 	#search_fields = ['question']
 

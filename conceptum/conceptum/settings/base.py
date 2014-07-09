@@ -5,7 +5,7 @@ from os.path import abspath, basename, dirname, join, normpath
 from sys import path
 
 ### Conceptum configuration. ###
-CI_COURSE = 'Test Course'
+CI_COURSE = 'CS 2'
 ###
 
 ########## PATH CONFIGURATION
@@ -36,7 +36,7 @@ TEMPLATE_DEBUG = DEBUG
 ########## MANAGER CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#admins
 ADMINS = (
-    ('Your Name', 'your_email@example.com'),
+    ('Conceptum Admin', 'conceptum@cs.swarthmore.edu'),
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#managers
@@ -212,7 +212,7 @@ DJANGO_APPS = (
     'allauth.socialaccount',
 
     # Used as a tree structure for CI Stage 1
-    'mptt'
+#    'mptt'
 
 
 )
@@ -222,12 +222,11 @@ LOCAL_APPS = (
     'cidev',
     'custom_auth',
     'exam',
-#    'users',
     'profiles',
     'custom_auth',
 
     'cistage1',
-    'nodemanager',
+#    'nodemanager',
 
 )
 
@@ -304,6 +303,7 @@ AUTHENTICATION_BACKENDS = (
 ACCOUNT_ADAPTER = "custom_auth.adapter.AccountAdapter"
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_SESSION_REMEMBER = False
 ACCOUNT_SIGNUP_FORM_CLASS = 'custom_auth.forms.SignupForm'
 ACCOUNT_USER_DISPLAY = lambda user: user.get_full_name()
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None

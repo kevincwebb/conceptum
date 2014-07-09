@@ -2,10 +2,22 @@
 
 {% block jumbo %}
 
-<h1>{{ CI_COURSE }}</h1>
-<p>This is a template for a simple marketing or informational website. It includes a large callout called a jumbotron and three supporting pieces of content. Use it as a starting point to create something more unique.</p>
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<h1>{{ CI_COURSE }}: Concept Inventory</h1>
+
+<p>We're working to collaboratively develop and deploy a concept inventory for
+{{ CI_COURSE }}.  If you're an educator who works on courses related to
+{{ CI_COURSE }}, we need your help!</p>
+
 <p><a class="btn btn-primary btn-lg" role="button" href="{% url "account_signup" %}">Sign up &raquo;</a>
-<a class="btn btn-default btn-lg" role="button">Learn more &raquo;</a></p>
+<a class="btn btn-default btn-lg" role="button" href="{% url "ci_info" %}">Learn more &raquo;</a></p>
 
 {% endblock %}
 
@@ -13,14 +25,23 @@
 
 <div class="row">
   <div class="col-md-6">
-    <h2>Heading</h2>
-    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+    <h2>Concept Inventories</h2>
+
+    <p>A concept inventory (CI) is an assessment that aims to evaluate
+    high-level student learning goals for a particular subject area.  CIs
+    elevate the level discourse within the educational community by providing a
+    mechanism for quantitative evaluation across pedagogical methods,
+    instructors, and institutions.</p>
+
+    <p><a class="btn btn-default" href="{% url "ci_info" %}" role="button">View details &raquo;</a></p>
   </div>
   <div class="col-md-6">
-    <h2>Heading</h2>
-    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+    <h2>About Conceptum</h2>
+
+    <p>Conceptum is an open source web platform for collaboratively developing
+    and deploying concept inventories.</p>
+
+    <p><a class="btn btn-default" href="https://github.com/kevincwebb/conceptum" role="button">View Conceptum homepage &raquo;</a></p>
   </div>
 </div>
 

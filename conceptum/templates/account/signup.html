@@ -2,23 +2,130 @@
 
 {% load url from future %}
 {% load i18n %}
+{% load static %}
 
 {% block head_title %}{% trans "Signup" %}{% endblock %}
 
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
 {% block content %}
-<h1>{% trans "Sign Up" %}</h1>
 
-<p>{% blocktrans %}Already have an account? Then please <a href="{{ login_url }}">sign in</a>.{% endblocktrans %}</p>
+<div class="container">
 
-<form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+<form class="form-horizontal" role="form" method="POST" action="{% url 'account_signup' %}">
   {% csrf_token %}
-  {{ form.as_p }}
+
+  <center>
+  <div class="form-horizontal-heading">
+    <h2>Sign Up</h2>
+    Already have an account? Then please <a href="{{ login_url }}">sign in</a>.
+  </div>
+  </center>
+
+  {{ form.non_field_errors }}
+
+  <div class="form-group">
+    {{ form.email.errors }}
+    <label for="id_email" class="col-sm-3 control-label">Email</label>
+    <div class="col-sm-9">
+      {{ form.email }}
+   </div>
+  </div>
+
+  <div class="form-group">
+    {{ form.name.errors }}
+    <label for="id_name" class="col-sm-3 control-label">Name</label>
+    <div class="col-sm-9">
+      {{ form.name }}
+   </div>
+  </div>
+
+  <div class="form-group">
+    {{ form.institution.errors }}
+    <label for="id_institution" class="col-sm-3 control-label">Institution</label>
+    <div class="col-sm-9">
+      {{ form.institution }}
+   </div>
+  </div>
+  
+  <div class="form-group">
+    {{ form.homepage.errors }}
+    <label for="id_homepage" class="col-sm-3 control-label">Homepage</label>
+    <div class="col-sm-9">
+      {{ form.homepage }}
+   </div>
+  </div>
+
+
+  <div class="checkboxes">
+    <div class="form-group">
+      <div class="col-sm-2">
+      </div>
+      <div class="col-sm-10">
+        <label>I am interested in...</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="col-sm-3">
+      </div>
+      {{ form.interest_in_devel.errors }}
+      <div class="col-sm-9">
+        {{ form.interest_in_devel }} &nbsp;
+      <label for="id_interest_in_devel">Helping to develop the concept inventory.</label>
+     </div>
+    </div>
+
+    <div class="form-group">
+      <div class="col-sm-3">
+      </div>
+      {{ form.interest_in_deploy.errors }}
+      <div class="col-sm-9">
+        {{ form.interest_in_deploy }} &nbsp;
+      <label for="id_interest_in_deploy">Deploying the concept inventory in my course.</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    {{ form.text_info.errors }}
+    <label for="id_text_info" class="col-sm-3 control-label">Anything else we should know?</label>
+    <div class="col-sm-9">
+      {{ form.text_info }}
+    </div>
+  </div>
+
+  <div class="form-group">
+    {{ form.password1.errors }}
+    <label for="id_password1" class="col-sm-3 control-label">Password</label>
+    <div class="col-sm-9">
+      {{ form.password1 }}
+   </div>
+  </div>
+
+  <div class="form-group">
+    {{ form.password2.errors }}
+    <label for="id_password2" class="col-sm-3 control-label">Password (again)</label>
+    <div class="col-sm-9">
+      {{ form.password2 }}
+   </div>
+  </div>
+
   {% if redirect_field_value %}
   <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
   {% endif %}
-  <button type="submit">{% trans "Sign Up" %} &raquo;</button>
+
+  <div class="submit">
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign Up</button>
+  </div>
+
 </form>
 
+</div> <!-- container -->
 
 {% endblock %}
 

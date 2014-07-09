@@ -1,3 +1,0 @@
-{% load account %}{% user_display user as user_display %}{% load i18n %}{% autoescape off %}{% blocktrans with current_site.name as site_name %}User {{ user_display }} at {{ site_name }} has been approved.
-
-{% endblocktrans %}{% endautoescape %}
