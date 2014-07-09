@@ -18,8 +18,8 @@ class CITreeInfo(models.Model):
 
     # master tree is loaded on the landing page. there can only be one
     # at any given time.
-    ismaster = models.BooleanField(default=False)
-    
+    is_master = models.BooleanField(default=False)
+
 
 # The ConceptNode functions as a single-type container for all data that
 # different node objects might need. We do this instead of inheritance
@@ -28,12 +28,12 @@ class CITreeInfo(models.Model):
 # Concept Nodes hold whatever value has been given to them from a
 # vote. They can also hold voting processes that, if completed, will
 # spawn child nodes whose content contains whatever was chosen from
-# the voting process. 
+# the voting process.
 class ConceptNode(MPTTModel):
 
     # gives information about the tree the node belongs to
-    citreeinfo = models.ForeignKey(CITreeInfo)
-        
+    ci_tree_info = models.ForeignKey(CITreeInfo)
+
     # required by mptt
     parent = TreeForeignKey('self', null=True, related_name='children')
 
@@ -47,10 +47,10 @@ class ConceptNode(MPTTModel):
     #     ('R', 'Ranking'), #vote on set and compute optimal choices
     #     ('C', 'Complete'), #no more node-specific edits can be made
     #)
-    nodetype = models.CharField(max_length=2)
+    node_type = models.CharField(max_length=2)
                                  # choices=NODECHOICES,
                                  # default='C',)
-    
+
     # Whatever content was awarded to this node by the parent voting
     # process
     content = models.TextField(max_length=140)
@@ -63,10 +63,27 @@ class ConceptNode(MPTTModel):
 # one user. "Final Choice" represents whether or not an atom has
 # passed the pruning process.
 class ConceptAtom(models.Model):
-    
-    conceptnode = models.ForeignKey(ConceptNode)
+
+    MAX_LENGTH = 140
+
+    concept_node = models.ForeignKey(ConceptNode)
     user = models.ForeignKey(User)
 
-    text = models.CharField(max_length=140)
-    finalChoice = models.BooleanField(default=False)
+    text = models.CharField(max_length=MAX_LENGTH)
+    final_choice = models.BooleanField(default=False)
 
+    @classmethod
+    def create_atom(self, concept_node, user, text="", final_choice=False):
+
+        #check text
+        if len(text) > MAX_LENGTH:
+            print "Error: text entered is too long"
+            return
+
+        #check for valid user
+        concept_users = concept_node.ci_tree_info.users.all()
+        if user not in concept_users:
+            print "Error: user not associated with concept tree"
+            return
+
+        return ConceptAtom(concept_node, user, text, final_choice)
