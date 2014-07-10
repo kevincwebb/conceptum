@@ -1,22 +1,32 @@
 from django.views.generic.base import TemplateView
+from django.views.generic import FormView
+from django.views.generic import ListView
 from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.core.urlresolvers import reverse_lazy
+from django.http import HttpResponseRedirect
+
+from profiles.models import ContributorProfile
+
+from .forms import EditProfileForm
+
 
 
 class ProfileView(TemplateView):
     template_name = 'profiles/profile.html'
-    redirect_field_name = "account_login"
+    model = ContributorProfile
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ProfileView, self).dispatch(*args, **kwargs)
     
-    def get_redirect_url(self):
-        return self.redirect_field_name
-    
-    def get(self, request, *args, **kwargs):
-        '''
-        Overriding TemplateView.get() in order to
-        prevent active user from seeing inactive page
-        '''
-        # Redirect to login if user is not logged in
-        if not self.request.user.is_authenticated():
-            return redirect(self.get_redirect_url())
-        # Process normally if User is logged in yet
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
+
+class EditProfileView(FormView):
+    template_name = 'profiles/edit.html'
+    form_class = EditProfileForm
+    success_url = reverse_lazy('profile')
+
+    def form_valid(self, form):
+        form.save(self.request)
+        return HttpResponseRedirect(self.get_success_url())

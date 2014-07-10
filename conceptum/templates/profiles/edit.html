@@ -1,0 +1,80 @@
+{% extends "account/base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Edit Profile" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    
+<form class="form-horizontal" role="form" method="POST" action="{% url 'edit_profile' %}">
+  {% csrf_token %}
+
+  <center>
+  <div class="form-horizontal-heading">
+    <h2>Edit Profile</h2>
+    {% trans 'Fields left blank will remain unchanged.' %}
+  </div>
+  </center>
+
+  {{ form.non_field_errors }}
+
+  <div class="form-group">
+    {{ form.name.errors }}
+    <label for="id_name" class="col-sm-3 control-label">Name</label>
+    {{ user.name }}
+    <div class="col-sm-9">
+      {{ form.name }}
+    </div>
+  </div>
+
+  <div class="form-group">
+    {{ form.institution.errors }}
+    <label for="id_institution" class="col-sm-3 control-label">Institution</label>
+    {{ user.profile.institution }}
+    <div class="col-sm-9">
+      {{ form.institution }}
+   </div>
+  </div>
+  
+  <div class="form-group">
+    {{ form.homepage.errors }}
+    <label for="id_homepage" class="col-sm-3 control-label">Homepage</label>
+    {{ user.profile.homepage }}
+    <div class="col-sm-9">
+      {{ form.homepage }}
+   </div>
+  </div>
+
+  <div class="form-group">
+    {{ form.text_info.errors }}
+    <label for="id_text_info" class="col-sm-3 control-label">Other Info</label>
+    {{ user.profile.text_info }}
+    <div class="col-sm-9">
+      {{ form.text_info }}
+    </div>
+  </div>
+
+  {% if redirect_field_value %}
+  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+  {% endif %}
+
+  <div class="submit">
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Save Changes</button>
+  </div>
+  <a href = {% url 'profile' %}> Cancel </a>
+
+</form>
+
+</div> <!-- container -->
+
+{% endblock %}
