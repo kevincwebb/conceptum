@@ -1,0 +1,16 @@
+{% load mptt_tags %}
+
+<h1>hello there!</h1>
+
+<ul>
+  {% recursetree master_tree_set %}
+        <li>
+          Yo: {{ master_tree_set.get().content }}
+          {% if not master_tree_set.is_leaf_node %}
+                <ul class="children">
+                  {{ children }}
+                </ul>
+          {% endif %}
+        </li>
+   {% endrecursetree %}
+</ul>
