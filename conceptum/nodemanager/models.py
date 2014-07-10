@@ -20,6 +20,16 @@ class CITreeInfo(models.Model):
     # at any given time.
     is_master = models.BooleanField(default=False)
 
+    # returns a query set. if it's empty, there is no master tree
+    @staticmethod
+    def get_master_tree_root(self):
+        nodes = ConceptNode.objects.filter(ci_tree_info==self)
+        if nodes:
+            return nodes[0].get_root()
+        else:
+            print "Error: Tree is empty or does not exist"
+            return None
+
 
 # The ConceptNode functions as a single-type container for all data that
 # different node objects might need. We do this instead of inheritance
@@ -55,7 +65,28 @@ class ConceptNode(MPTTModel):
     # process
     content = models.TextField(max_length=140)
 
-    # TODO: Add Methods
+
+    def get_final_choices(self):
+        all_choices =  ConceptAtom.objects.filter(concept_node=self.id)
+        return all_choices.filter(final_choice=True)
+
+    def users_contributed_set(self):
+        return user.all()
+
+    def is_valid_user(self, user):
+        if user in ci_tree_info.users.all() or user in ci_tree_info.admins.all():
+            return True
+        else:
+            return False
+
+    def is_active(self):
+        if not self.node_type == 'C':
+            return False
+        else:
+            return True
+
+
+
 
 # Atoms are entered by the user and are meant to represent
 # topics/concepts/module names that altogether will form a
