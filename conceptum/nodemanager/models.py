@@ -24,7 +24,7 @@ class CITreeInfo(models.Model):
     @staticmethod
     def get_master_tree_root():
         master_info = CITreeInfo.objects.filter(is_master=True)
-    if master_info:
+        if master_info:
             nodes = ConceptNode.objects.filter(ci_tree_info=master_info)
             if nodes:
                 return nodes[0].get_root()
