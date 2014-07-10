@@ -22,12 +22,17 @@ class CITreeInfo(models.Model):
 
     # returns a query set. if it's empty, there is no master tree
     @staticmethod
-    def get_master_tree_root(self):
-        nodes = ConceptNode.objects.filter(ci_tree_info==self)
-        if nodes:
-            return nodes[0].get_root()
+    def get_master_tree_root():
+        master_info = CITreeInfo.objects.filter(is_master=True)
+    if master_info:
+            nodes = ConceptNode.objects.filter(ci_tree_info=master_info)
+            if nodes:
+                return nodes[0].get_root()
+            else:
+                print "Error: Master Tree is empty (no root node)"
+                return None
         else:
-            print "Error: Tree is empty or does not exist"
+            print "Error: Master Tree does not exist"
             return None
 
 
@@ -71,19 +76,19 @@ class ConceptNode(MPTTModel):
         return all_choices.filter(final_choice=True)
 
     def users_contributed_set(self):
-        return user.all()
+        return self.user.all()
 
     def is_valid_user(self, user):
-        if user in ci_tree_info.users.all() or user in ci_tree_info.admins.all():
+        if user in self.ci_tree_info.users.all() or user in self.ci_tree_info.admins.all():
             return True
         else:
             return False
 
     def is_active(self):
         if not self.node_type == 'C':
-            return False
-        else:
             return True
+        else:
+            return False
 
 
 
