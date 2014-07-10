@@ -7,7 +7,9 @@ from nodemanager.models import CITreeInfo
 
 def landing(request):
 
-    master_tree_set = CITreeInfo.get_master_tree_root().get_descendants(include_self=True)
+    root = CITreeInfo.get_master_tree_root()
+    master_tree_set = root.get_descendants(include_self=True)
+    user = request.user
 
     template = loader.get_template('cistage1/landing.html')
     context = RequestContext(request,
