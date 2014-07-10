@@ -5,20 +5,32 @@
 
 {% if user.is_staff %} {#This almost certainly is not the best place for this check#}
 
+<div class="container">
+
 <h1> Pending Users </h1>
+
+<p class="lead"> These users have requested conceptum accounts and have
+confirmed their email addresses.</p>
+
 <ul>
-  These users have requested conceptum accounts and have confirmed their emails.<br><br>
-  <li>Select <b>Approve as User</b> to activate an account with basic permissions and notify the
-	user by email.</li>
-  <li>Select <b>Approve as Contributor</b> to activate an account with contributor permissions
-	and notify the user by email.
-  <br>(All Contributors are Users, with additional priviledges related to the development of the
-	CI.  All users can deploy the CI)</li>
-  <li>Select <b>Reject</b> or <b>Ignore</b> to delete a pending user's information from the database.
-  <br>Reject notifies the user by email, while Ignore deletes the user quietly.</li> 
-  <br>  
-  <li>Staff priviledges (like the ability to use this page) can only be assigned by superusers
-	through the admin page. </li> 
+
+  <li>Select <b>Approve for development</b> to activate an account with
+  contributor and deployment permissions.  The user will be notified by email.</li>
+  <br />
+
+  <li>Select <b>Approve for deployment</b> to activate an account with
+  deployment permissions.  The user will be notified by email.</li>
+  <br />
+
+  <li>Select <b>Reject</b> or <b>Ignore</b> to delete a pending user's
+  information from the database.  <br><b>Reject</b> notifies the user by email,
+  whereas <b>Ignore</b> deletes the user quietly.</li>
+
+  <br />
+
+  <li>Staff privileges (like the ability to use this page) can only be assigned by superusers
+	through the admin page. </li>
+
 </ul>
 
 <hr>
@@ -34,19 +46,19 @@
 	{% csrf_token %}
 	  <b>Email:</b>
 		{{profile.user.email}}<br>
-		
+
 	  <b>Name:</b>
 		{{profile.user.name}}<br>
-	
+
 	  <b>Institution:</b>
 		{{profile.institution}}<br>
-		
+
 	  <b>Homepage:</b>
 		<a href = {{profile.homepage}}> {{profile.homepage}}</a><br>
-		
+
 	  <b>User Interest:</b>
 		{% if profile.interest_in_devel and profile.interest_in_deploy%}
-		  Wants To Develop and Deploy 
+		  Wants To Develop and Deploy
 		{% elif profile.interest_in_devel %}
 		  Wants to Develop
 		{% elif profile.interest_in_deploy%}
@@ -54,26 +66,29 @@
 		{% else %}
 		  None Specified
 		{% endif %}<br>
-		
+
 	  <b> Other Info:</b><br>
 		{{profile.text_info}}<br>
 	  <br>
-	   
-	  <input type="submit" name="approve_contrib" value="Approve as Contributor" class="btn" />
-	  <input type="submit" name="approve_base" value="Approve as User" class="btn" />
-	  <input type="submit" name="reject" value="Reject" class="btn" />
-	  <input type="submit" name="ignore" value="Ignore" class= "btn" />
-	  
+
+	  <input type="submit" name="approve_contrib" value="Approve for development" class="btn btn-success" />
+	  <input type="submit" name="approve_base" value="Approve for deployment" class="btn btn-success" />
+	  <input type="submit" name="reject" value="Reject" class="btn btn-warning" />
+	  <input type="submit" name="ignore" value="Ignore" class="btn btn-danger" />
+
 	</form>
   <hr>
   {% endfor %}
   </ul>
 {% else %}
-  <p>No unapproved users.</p>	
+  <p>No unapproved users.</p>
 {% endif %}
 <hr>
 
+</div> <!-- container -->
+
 {% else %} {#from top "if user.is_staff"#}
-	You do not have permission to view this page. This page is for staff only 
+    {% include "permission_fail.html" %}
 {% endif %}
+
 {% endblock %}
