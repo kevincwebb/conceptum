@@ -7,13 +7,34 @@
         <li>
           <b>Content:</b> {{ node.content }}
           <br>
+          <b> Id: </b> {{ node.id }}
+          <br>
           <b>Voting Stage:</b> {{node.node_type}}
           <br>
+
           {% if user in node.users_contributed_set %}
           User has visited!
           {% else %}
           User has not visited here!
+          <br>
+
+          {% ifequal node.node_type 'F' %}
+                <a href="{% url 'free entry' node.id %}">Free Entry for Node {{ node.id }}</a>
+          {% endifequal %}
+
+          {% ifequal node.node_type 'P' %}
+                {% if user in node.admin_set %}
+                        <a href="{% url 'prune' node.id %}"> Prune for Node {{ node.id }}</a>
+                {% else %}
+                        User is not admin, but node is in pruning state
+                {% endif %}
+          {% endifequal %}
+
+          {% ifequal node.node_type 'R' %}
+                <a href="{% url 'rank' node.id %}">Ranking for Node {{ node.id }}</a>
+          {% endifequal %}
           {% endif %}
+
           <p>
           {% if not node.is_leaf_node %}
                 <ul class="children">

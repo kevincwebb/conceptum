@@ -78,6 +78,9 @@ class ConceptNode(MPTTModel):
     def users_contributed_set(self):
         return self.user.all()
 
+    def admin_set(self):
+        return self.ci_tree_info.admins.all()
+
     def is_valid_user(self, user):
         if user in self.ci_tree_info.users.all() or user in self.ci_tree_info.admins.all():
             return True
