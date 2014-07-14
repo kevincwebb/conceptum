@@ -20,6 +20,12 @@ class CITreeInfo(models.Model):
     # at any given time.
     is_master = models.BooleanField(default=False)
 
+    def __unicode__(self):
+        if self.is_master:
+            return "Master Tree Info"
+        else:
+            return "Tree Info"
+
     # returns a query set. if it's empty, there is no master tree
     @staticmethod
     def get_master_tree_root():
@@ -70,6 +76,8 @@ class ConceptNode(MPTTModel):
     # process
     content = models.TextField(max_length=140)
 
+    def __unicode__(self):
+        return self.content
 
     def get_final_choices(self):
         all_choices =  ConceptAtom.objects.filter(concept_node=self.id)
@@ -111,3 +119,6 @@ class ConceptAtom(models.Model):
 
     text = models.CharField(max_length=MAX_LENGTH)
     final_choice = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return self.text
