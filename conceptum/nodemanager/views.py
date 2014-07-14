@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.template import RequestContext, loader
 
@@ -6,7 +6,7 @@ from nodemanager.models import CITreeInfo, ConceptNode, ConceptAtom
 from nodemanager.forms import AtomForm
 # Create your views here.
 
-def entry(request, node_id):
+def entry(request, node_id, redirected=False):
 
     node = ConceptNode.objects.filter(pk=node_id).get()
     form = AtomForm();
@@ -15,7 +15,8 @@ def entry(request, node_id):
     context = RequestContext(request,
                              {'node': node,
                               'user': request.user,
-                              'form': form},)
+                              'form': form,
+                              'redirected': redirected},)
     return HttpResponse(template.render(context))
 
 def get_entry(request, node_id):
@@ -25,19 +26,23 @@ def get_entry(request, node_id):
     if request.method == 'POST':
         form = AtomForm(request.POST)
         if form.is_valid():
-            new_atom = ConceptAtom()
-            new_atom.text = form.cleaned_data['text']
-            new_atom.user = request.user
-            new_atom.concept_node = ConceptNode.objects.filter(pk=node_id).get()
+            new_atom = ConceptAtom(
+                concept_node=ConceptNode.objects.filter(pk=node_id).get(),
+                user=request.user,
+                text=form.cleaned_data['text'],
+                final_choice=False
+            )
+            # new_atom.text = form.cleaned_data['text']
+            # new_atom.user = request.user
+            # new_atom.concept_node =
             new_atom.save()
 
 
         print "i got this text:", form['text']
-        return HttpResponse("Got the (valid) entry!")
+        return redirect('redirected free entry',
+                        node_id=node_id, redirected=True)
     else:
         return HttpResponse("Uh oh, didn't get the entry.")
-
-
 
 def prune(request, node_id):
 

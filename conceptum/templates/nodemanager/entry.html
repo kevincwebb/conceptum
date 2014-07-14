@@ -1,5 +1,10 @@
 <h1>This is the Free Entry Page for Node {{ node.id }}</h1>
 
+{% if redirected %}
+<h5><font color="green">Your entry was submitted successfully!</font></h5>
+{% else %}
+{% endif %}
+
 {{ node.content }}
 
 <form action="{% url 'get entry' node.id %}" method="post">
