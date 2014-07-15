@@ -5,9 +5,13 @@
 {% block head_title %}{% trans "Account Signup Under Review" %}{% endblock %}
 
 {% block content %}
-<h1>{% trans "Your Account Will Be Activated Shortly" %}</h1>
 
-<p>{% trans "We are currently reviewing your information. You will get an Email when your account is approved." %}</p>
+<div class="container">
+
+<h1>Account Pending</h1>
+
+<p class="lead">We are currently reviewing your information. You will receive
+an email when your account is approved.</p>
 
 {% if messages %}
 <ul class="messages">
@@ -16,5 +20,9 @@
     {% endfor %}
 </ul>
 {% endif %}
+
+<p><a href="{% url 'home' %}" class="btn btn-primary" role="button">Return to home page &raquo;</a></p>
+
+</div> <!-- container -->
 
 {% endblock %}

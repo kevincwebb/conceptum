@@ -145,7 +145,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
     #allauth
     'allauth.account.context_processors.account',
-    'allauth.socialaccount.context_processors.socialaccount',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#template-loaders
@@ -207,9 +206,6 @@ DJANGO_APPS = (
     'authtools',
     'allauth',
     'allauth.account',
-    # we barely need this, but there are template errors without it
-    # (of course we can just remove those parts from the templates)
-    'allauth.socialaccount',
 
     # Used as a tree structure for CI Stage 1
     'mptt'
