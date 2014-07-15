@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h2> Interviews </h2>
+{% if interview_list %}
+    <ul>
+    {% for interview in interview_list %}
+        <li><a href="{% url 'interview_detail' interview.id %}">{{ interview }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No interviews are available.</p>
+{% endif %}
+
+
+{% endblock %}

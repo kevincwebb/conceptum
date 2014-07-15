@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+    
+{{ interview }} by {{ interview.uploaded_by }} <br><br>
+
+{% for excerpt in interview.excerpt_set.all %}
+    <b>Topic:</b> {{ excerpt.content_topic }} <br>
+    <b>Response:</b> {{ excerpt.response }} <br>
+    <br>
+{% endfor %}
+
+<a href = {% url 'interview_edit' object.id %}> Edit </a> <br>
+<a href = {% url 'interview_index' %}> Return to interview index </a>
+
+{% endblock %}

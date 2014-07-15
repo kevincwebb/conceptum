@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<form action="{% url 'interview_edit' object.id %}" method="post">{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="Submit" />
+</form>
+
+<br>
+<a href = {% url 'interview_detail' object.id %}> Cancel </a>
+
+{% endblock %}
