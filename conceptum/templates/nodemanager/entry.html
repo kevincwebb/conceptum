@@ -1,0 +1,16 @@
+<h1>This is the Free Entry Page for Node {{ node.id }}</h1>
+
+{% if redirected %}
+<h5><font color="green">Your entry was submitted successfully!</font></h5>
+{% else %}
+{% endif %}
+
+{{ node.content }}
+
+<form action="{% url 'get entry' node.id %}" method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <input type="submit" value="Submit">
+</form>
+
+<a href="{% url 'landing' %}">Go back to Stage 1 Landing Page</a>
