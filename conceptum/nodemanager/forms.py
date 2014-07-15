@@ -8,7 +8,7 @@ class AtomForm(ModelForm):
         fields = ['text']
 
     def clean_text(self):
-        data = self.cleaned_data['']
+        data = self.cleaned_data['text']
         if not data:
             raise forms.ValidationError("Can't have an empty Concept Atom!")
 
