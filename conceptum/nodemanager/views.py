@@ -6,6 +6,7 @@ from nodemanager.models import CITreeInfo, ConceptNode, ConceptAtom
 from nodemanager.forms import AtomForm
 # Create your views here.
 
+# Displays a form and allows users to enter new concept atoms.
 def entry(request, node_id, redirected=False):
 
     node = ConceptNode.objects.filter(pk=node_id).get()
@@ -19,6 +20,9 @@ def entry(request, node_id, redirected=False):
                               'redirected': redirected},)
     return HttpResponse(template.render(context))
 
+# Upon entering a concept form, get_entry() verifies it and prompts
+# the user to enter another, or returns a new form if the atom was
+# incorrectly entered
 def get_entry(request, node_id):
     if request.method == 'POST':
         form = AtomForm(request.POST)
@@ -39,6 +43,9 @@ def get_entry(request, node_id):
                   {'node': ConceptNode.objects.filter(pk=node_id).get(),
                    'user': request.user,
                    'form': form})
+
+def detail(request, node_id):
+    return HttpResponse("these are details")
 
 def prune(request, node_id):
 

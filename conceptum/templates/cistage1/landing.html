@@ -17,9 +17,18 @@
           {% else %}
           User has not visited here!
           <br>
+          {% endif %}
 
           {% ifequal node.node_type 'F' %}
-                <a href="{% url 'free entry' node.id %}">Free Entry for Node {{ node.id }}</a>
+
+                <a href="{% url 'detail' node.id %}">
+                {% if user in node.users_contributed_set %}
+                        View Final Choices for Node {{ node.id }}</a>
+                {% else %}
+                        Edit Choices for Node {{ node.id }}</a>
+                        <a href="{% url 'free entry' node.id %}">Add Choices to Node {{ node.id }}</a>
+                {% endif %}
+
           {% endifequal %}
 
           {% ifequal node.node_type 'P' %}
@@ -33,7 +42,6 @@
           {% ifequal node.node_type 'R' %}
                 <a href="{% url 'rank' node.id %}">Ranking for Node {{ node.id }}</a>
           {% endifequal %}
-          {% endif %}
 
           <p>
           {% if not node.is_leaf_node %}
