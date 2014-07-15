@@ -20,9 +20,6 @@ def entry(request, node_id, redirected=False):
     return HttpResponse(template.render(context))
 
 def get_entry(request, node_id):
-    print node_id
-    if not ConceptNode.objects.filter(pk=node_id).get() == None:
-        print "we have a concept node!"
     if request.method == 'POST':
         form = AtomForm(request.POST)
         if form.is_valid():
@@ -32,17 +29,16 @@ def get_entry(request, node_id):
                 text=form.cleaned_data['text'],
                 final_choice=False
             )
-            # new_atom.text = form.cleaned_data['text']
-            # new_atom.user = request.user
-            # new_atom.concept_node =
             new_atom.save()
+            return redirect('redirected free entry',
+                            node_id=node_id, redirected=True)
+        else:
+            form = AtomForm() #form wasn't valid so we make a new one
 
-
-        print "i got this text:", form['text']
-        return redirect('redirected free entry',
-                        node_id=node_id, redirected=True)
-    else:
-        return HttpResponse("Uh oh, didn't get the entry.")
+    return render(request, 'nodemanager/entry.html',
+                  {'node': ConceptNode.objects.filter(pk=node_id).get(),
+                   'user': request.user,
+                   'form': form})
 
 def prune(request, node_id):
 
