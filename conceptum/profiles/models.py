@@ -18,13 +18,9 @@ class ContributorProfile(models.Model):
     homepage = models.URLField(max_length=200, default="")
     interest_in_devel = models.BooleanField("interested in CI development", default=False)
     interest_in_deploy = models.BooleanField("interested in CI deployment", default=False)
-    text_info = models.TextField(default="")
+    text_info = models.TextField(default="", blank=True)
     
     objects = ProfileManager()
-    
-    #def __init__(self, profile_user, *args, **kwargs):
-    #    super(ContributorProfile, self).__init__(*args, **kwargs)
-    #    self.user = profile_user
 
     def __str__(self):
         return self.user.name

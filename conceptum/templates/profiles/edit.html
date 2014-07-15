@@ -22,7 +22,6 @@
   <center>
   <div class="form-horizontal-heading">
     <h2>Edit Profile</h2>
-    {% trans 'Fields left blank will remain unchanged.' %}
   </div>
   </center>
 
@@ -31,7 +30,6 @@
   <div class="form-group">
     {{ form.name.errors }}
     <label for="id_name" class="col-sm-3 control-label">Name</label>
-    {{ user.name }}
     <div class="col-sm-9">
       {{ form.name }}
     </div>
@@ -40,7 +38,6 @@
   <div class="form-group">
     {{ form.institution.errors }}
     <label for="id_institution" class="col-sm-3 control-label">Institution</label>
-    {{ user.profile.institution }}
     <div class="col-sm-9">
       {{ form.institution }}
    </div>
@@ -49,7 +46,6 @@
   <div class="form-group">
     {{ form.homepage.errors }}
     <label for="id_homepage" class="col-sm-3 control-label">Homepage</label>
-    {{ user.profile.homepage }}
     <div class="col-sm-9">
       {{ form.homepage }}
    </div>
@@ -58,7 +54,6 @@
   <div class="form-group">
     {{ form.text_info.errors }}
     <label for="id_text_info" class="col-sm-3 control-label">Other Info</label>
-    {{ user.profile.text_info }}
     <div class="col-sm-9">
       {{ form.text_info }}
     </div>

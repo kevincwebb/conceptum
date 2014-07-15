@@ -35,7 +35,8 @@ class RedirectView(TemplateView):
 
 class EmailVerificationSentView(RedirectView):
     template_name = 'account/verification_sent.html'
-    
+
+
 class AccountInactiveView(RedirectView):
     template_name = 'account/account_inactive.html'
     
@@ -54,6 +55,7 @@ class PendingUsersView(generic.ListView):
         return ContributorProfile.objects.filter(
             user__is_active__exact=False).filter(
             user__emailaddress__verified__exact=True)
+
 
 def which_action(request, profile_id):
     if not request.user.is_staff:

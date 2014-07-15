@@ -218,6 +218,7 @@ LOCAL_APPS = (
     'cidev',
     'custom_auth',
     'exam',
+    'interviews',
     'profiles',
     'custom_auth',
 
