@@ -25,7 +25,7 @@
                 {% if user in node.users_contributed_set %}
                         View Final Choices for Node {{ node.id }}</a>
                 {% else %}
-                        Edit Choices for Node {{ node.id }}</a>
+                        Edit/View Choices for Node {{ node.id }}</a><br>
                         <a href="{% url 'free entry' node.id %}">Add Choices to Node {{ node.id }}</a>
                 {% endif %}
 
