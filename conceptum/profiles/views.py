@@ -1,6 +1,5 @@
 from django.views.generic.base import TemplateView
 from django.views.generic import FormView
-from django.views.generic import ListView
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -26,6 +25,15 @@ class EditProfileView(FormView):
     template_name = 'profiles/edit.html'
     form_class = EditProfileForm
     success_url = reverse_lazy('profile')
+
+    def get_initial(self):
+        user = self.request.user
+        initial = { 'name' : user.name,
+                    'institution' : user.profile.institution,
+                    'homepage' : user.profile.homepage,
+                    'text_info' : user.profile.text_info }
+        return initial
+    
 
     def form_valid(self, form):
         form.save(self.request)
