@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 from django.core import mail
 from django.test import SimpleTestCase, TransactionTestCase
-#from django.utils.translation import ugettext_lazy as _
 
 from allauth.account.models import EmailAddress
 
@@ -93,18 +92,6 @@ class SimpleViewsTest(SimpleTestCase):
 
 class UserApprovalTest(TransactionTestCase):
     
-    #    SOON TO BE DELETED, currently kept as reference
-    #def create_unique_user(self, prefix, active=True, verified=True):
-    #    user = User.objects.create(email=prefix+'uat_email@test.com', is_active=active)
-    #    user.set_password('password')
-    #    user.save()
-    #    ContributorProfile.objects.create(user=user)
-    #    EmailAddress.objects.create(user=user,
-    #                                email=user.email,
-    #                                primary=True,
-    #                                verified=verified)
-    #    return user
-
     def create_basic_user(self, prefix='', active=True, verified=True):
         user, created = User.objects.get_or_create(email=prefix+'uat_email@test.com')
         user.is_active=active
@@ -128,7 +115,8 @@ class UserApprovalTest(TransactionTestCase):
         
         # Not logged in
         response = self.client.get('/accounts/pending/')
-        self.assertRedirects(response, '/accounts/login/?next=/accounts/pending/')
+        #self.assertRedirects(response, '/accounts/login/?next=/accounts/pending/')
+        self.assertEqual(response.status_code, 403)
         
         # Logged in, not staff
         self.assertTrue(self.client.login(email=staff_user.email, password='password'))

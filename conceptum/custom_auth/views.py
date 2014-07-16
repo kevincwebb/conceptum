@@ -1,55 +1,66 @@
-from django.views import generic
-from django.views.generic.base import TemplateView
+from django.views.generic import TemplateView, ListView
+#from django.views.generic.base import TemplateView
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.mail import send_mail
 from django.core.exceptions import PermissionDenied
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from profiles.models import ContributorProfile
+#from django.contrib.auth.decorators import login_required
+#from django.utils.decorators import method_decorator
 from django.shortcuts import redirect
-#from conceptum.settings.base import SITE_ROOT
 from django.conf import settings
 import os
 
+from braces.views import AnonymousRequiredMixin,\
+                         LoginRequiredMixin,\
+                         StaffuserRequiredMixin
+
+from profiles.models import ContributorProfile
+
 #A Template View that redirects to Profile for logged in users
-class RedirectView(TemplateView):
-    redirect_field_name = "profile"
-    
-    def get_redirect_url(self):
-        return self.redirect_field_name
-    
-    def get(self, request, *args, **kwargs):
-        '''
-        Overriding TemplateView.get() in order to
-        prevent active user from seeing inactive page
-        '''
-        # Redirect to Profile if user is active
-        if  self.request.user.is_authenticated():
-            return redirect(self.get_redirect_url())
-        # Process normally if User is not activated yet
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
+#class RedirectView(TemplateView):
+#    redirect_field_name = "profile"
+#    
+#    def get_redirect_url(self):
+#        return self.redirect_field_name
+#    
+#    def get(self, request, *args, **kwargs):
+#        '''
+#        Overriding TemplateView.get() in order to
+#        prevent active user from seeing inactive page
+#        '''
+#        # Redirect to Profile if user is active
+#        if  self.request.user.is_authenticated():
+#            return redirect(self.get_redirect_url())
+#        # Process normally if User is not activated yet
+#        context = self.get_context_data(**kwargs)
+#        return self.render_to_response(context)
 
 
-class EmailVerificationSentView(RedirectView):
+class EmailVerificationSentView(AnonymousRequiredMixin, TemplateView):
     template_name = 'account/verification_sent.html'
+    authenticated_redirect_url = reverse_lazy("profile")
 
 
-class AccountInactiveView(RedirectView):
+class AccountInactiveView(AnonymousRequiredMixin, TemplateView):
     template_name = 'account/account_inactive.html'
+    authenticated_redirect_url = reverse_lazy("profile")
     
 
-class PendingUsersView(generic.ListView):
+class PendingUsersView(LoginRequiredMixin,
+                       StaffuserRequiredMixin,
+                       ListView):
     template_name = 'custom_auth/pending_users.html'
     context_object_name = 'pending_profiles'
+    
+    # Raise a 403 if user is denied access
+    raise_exception = True
 
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        if not self.request.user.is_staff:
-            raise PermissionDenied
-        return super(PendingUsersView, self).dispatch(*args, **kwargs)
+    #@method_decorator(login_required)
+    #def dispatch(self, *args, **kwargs):
+    #    if not self.request.user.is_staff:
+    #        raise PermissionDenied
+    #    return super(PendingUsersView, self).dispatch(*args, **kwargs)
 
     def get_queryset(self):
         return ContributorProfile.objects.filter(

@@ -27,37 +27,15 @@
 
   {{ form.non_field_errors }}
 
-  <div class="form-group">
-    {{ form.name.errors }}
-    <label for="id_name" class="col-sm-3 control-label">Name</label>
-    <div class="col-sm-9">
-      {{ form.name }}
+  {% for field in form %}
+    <div class="form-group">
+      {{ field.errors }}
+      <label for="{{ field.id_for_label }}" class="col-sm-3 control-label">{{ field.label }}</label>
+      <div class="col-sm-9">
+        {{ field }}
+     </div>
     </div>
-  </div>
-
-  <div class="form-group">
-    {{ form.institution.errors }}
-    <label for="id_institution" class="col-sm-3 control-label">Institution</label>
-    <div class="col-sm-9">
-      {{ form.institution }}
-   </div>
-  </div>
-  
-  <div class="form-group">
-    {{ form.homepage.errors }}
-    <label for="id_homepage" class="col-sm-3 control-label">Homepage</label>
-    <div class="col-sm-9">
-      {{ form.homepage }}
-   </div>
-  </div>
-
-  <div class="form-group">
-    {{ form.text_info.errors }}
-    <label for="id_text_info" class="col-sm-3 control-label">Other Info</label>
-    <div class="col-sm-9">
-      {{ form.text_info }}
-    </div>
-  </div>
+  {% endfor %}
 
   {% if redirect_field_value %}
   <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />

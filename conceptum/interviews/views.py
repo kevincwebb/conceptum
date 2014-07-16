@@ -41,7 +41,7 @@ class AddView(LoginRequiredMixin, generic.CreateView):
     
     def get_success_url(self):
         return self.object.get_absolute_url()
-
+    
 
 class EditView(LoginRequiredMixin,
                UserPassesTestMixin,
@@ -50,7 +50,7 @@ class EditView(LoginRequiredMixin,
     template_name = 'interviews/edit.html'
     form_class = EditForm
     
-    # This setting tells UserPassesTestMixin to raise a 403 if test fails
+    # Raise a 403 if user is denied access
     raise_exception = True
     
     # Expected by UserPassesTestMixin
