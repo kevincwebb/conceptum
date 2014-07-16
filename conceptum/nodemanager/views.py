@@ -63,8 +63,6 @@ def detail(request, node_id):
                    'user': user,
                    'atoms': user_atoms,})
 
-
-
 def prune(request, node_id):
 
     node = getNode(node_id)
