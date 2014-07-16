@@ -10,6 +10,8 @@ urlpatterns = patterns('',
                 name='redirected free entry',),
             url(r'^(?P<node_id>\d+)/getentry', views.get_entry, name = 'get entry'),
 
+            url(r'^(?P<node_id>\d+)/detail$', views.detail, name='detail'),
+            url(r'^(?P<node_id>\d+)/finalsub$', views.add_finished_user, name='final sub'),
             url(r'^(?P<node_id>\d+)/prune$', views.prune, name='prune'),
 
             url(r'^(?P<node_id>\d+)/rank$', views.rank, name='rank'),
