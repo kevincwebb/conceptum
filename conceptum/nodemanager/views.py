@@ -17,16 +17,16 @@ def entry(request, node_id, redirected=False):
     user = request.user
     atoms = ConceptAtom.objects.filter(user=user)
 
-    form_params = {
-        'extra' : 5,
-    }
+    form_params = {'extra' : 5,
+                   'can_delete': True} #define constants later
     formset = formset_factory(AtomForm, **form_params)
+    filled_formset = formset(initial=[{'text': atom.text} for atom in atoms])
 
     template = loader.get_template('nodemanager/entry.html')
     context = RequestContext(request,
                              {'node': node,
                               'user': user,
-                              'formset': formset,
+                              'formset': filled_formset,
                               'redirected': redirected},)
     return HttpResponse(template.render(context))
 
@@ -36,14 +36,18 @@ def entry(request, node_id, redirected=False):
 def get_entry(request, node_id):
     if request.method == 'POST':
         formset = AtomFormSet(request.POST)
+
         if formset.is_valid():
 
+            # since all the concept atom text was already input into
+            # the initial form, they can all be deleted and
+            # re-added. it's wasteful at the DB-level, but that
+            # shouldn't be a concern right now.
+            ConceptAtom.objects.filter(user=request.user).delete()
             for form in formset:
-                print form.cleaned_data.get('text')#['text']
-
                 text = form.cleaned_data.get('text')
 
-                if text: #only non-empty forms have text
+                if text and form not in formset.deleted_forms:
                     new_atom = ConceptAtom(
                         concept_node=getNode(node_id),
                         user=request.user,

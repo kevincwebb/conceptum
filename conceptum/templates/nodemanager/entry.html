@@ -5,9 +5,9 @@
 {% else %}
 {% endif %}
 
-{{ node.content }}
+<b>Content:</b> {{ node.content }}
 
-
+<h3><u>Add Concept Atoms</u></h3>
 <form action="{% url 'get entry' node.id %}" method="post">
   {% csrf_token %}
   {% for form in formset %}
@@ -16,6 +16,8 @@
   {{ formset.management_form }}
   <input type="submit" value="Submit">
 </form>
+
+<h5><font color="blue">If you run out of space, just submit your entries and add more. Dynamic form addition is in the pipeline...</font></h5>
 
 <a href="{% url 'landing' %}">Back to Landing Page</a>
 <p>

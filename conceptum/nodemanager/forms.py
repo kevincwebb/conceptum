@@ -16,4 +16,4 @@ class AtomForm(ModelForm):
 
         return data
 
-AtomFormSet = formset_factory(AtomForm)
+AtomFormSet = formset_factory(AtomForm, can_delete=True)
