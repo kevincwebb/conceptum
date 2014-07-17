@@ -7,9 +7,13 @@
 
 {{ node.content }}
 
+
 <form action="{% url 'get entry' node.id %}" method="post">
   {% csrf_token %}
+  {% for form in formset %}
   {{ form.as_p }}
+  {% endfor %}
+  {{ formset.management_form }}
   <input type="submit" value="Submit">
 </form>
 
