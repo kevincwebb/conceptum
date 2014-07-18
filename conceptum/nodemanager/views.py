@@ -2,17 +2,14 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.template import RequestContext, loader
 from django.core.urlresolvers import reverse
-from django.forms.formsets import formset_factory
 
 from nodemanager.models import CITreeInfo, ConceptNode, ConceptAtom
 from nodemanager.forms import AtomForm, AtomFormSet
-# Create your views here.
 
 getNode = lambda node_id: ConceptNode.objects.filter(pk=node_id).get()
 
 # Displays a form and allows users to enter new concept atoms.
 def entry(request, node_id, redirected=False):
-
 
     node = getNode(node_id)
     user = request.user
@@ -46,6 +43,7 @@ def get_entry(request, node_id):
             # re-added. it's wasteful at the DB-level, but that
             # shouldn't be a concern right now.
             ConceptAtom.objects.filter(user=request.user).delete()
+
             for form in formset:
                 text = form.cleaned_data.get('text')
 
@@ -77,8 +75,6 @@ def prune(request, node_id):
                              {'node': node,
                               'user': request.user},)
     return HttpResponse(template.render(context))
-
-
 
 def rank(request, node_id):
     return HttpResponse("this is rank")
