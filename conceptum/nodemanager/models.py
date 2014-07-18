@@ -122,14 +122,9 @@ class ConceptNode(MPTTModel):
         return
 
     def is_stage_finished(self):
-        print "contributed: ", self.users_contributed_set()
-        print "all users: ", self.ci_tree_info.users.all()
-
         if list(self.users_contributed_set()) == list(self.ci_tree_info.users.all()):
-            print "they are the same!!"
             return True
         else:
-            print "they are not the same!!"
             return False
 
 
