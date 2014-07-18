@@ -68,22 +68,6 @@ def get_entry(request, node_id):
                    'user': request.user,
                    'form': form})
 
-def detail(request, node_id):
-
-    node = getNode(node_id)
-    user = request.user
-
-    user_atoms = ConceptAtom.objects.filter(user=user)
-    if user in node.users_contributed_set():
-        template = 'nodemanager/atomlist.html'
-    else:
-        template = 'nodemanager/editatomlist.html'
-
-    return render(request, template,
-                  {'node': node,
-                   'user': user,
-                   'atoms': user_atoms,})
-
 def prune(request, node_id):
 
     node = getNode(node_id)
