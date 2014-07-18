@@ -13,21 +13,23 @@ getNode = lambda node_id: ConceptNode.objects.filter(pk=node_id).get()
 # Displays a form and allows users to enter new concept atoms.
 def entry(request, node_id, redirected=False):
 
+
     node = getNode(node_id)
     user = request.user
     atoms = ConceptAtom.objects.filter(user=user)
-
-    form_params = {'extra' : 5,
-                   'can_delete': True} #define constants later
-    formset = formset_factory(AtomForm, **form_params)
-    filled_formset = formset(initial=[{'text': atom.text} for atom in atoms])
-
-    template = loader.get_template('nodemanager/entry.html')
     context = RequestContext(request,
                              {'node': node,
                               'user': user,
-                              'formset': filled_formset,
                               'redirected': redirected},)
+    if user in node.users_contributed_set():
+        template = loader.get_template('nodemanager/atomlist.html')
+        context['atoms'] = atoms
+    else:
+        formset = AtomFormSet(initial=[{'text': atom.text} for atom in atoms])
+        context['formset'] = formset
+        template = loader.get_template('nodemanager/entry.html')
+
+
     return HttpResponse(template.render(context))
 
 # Upon entering a concept form, get_entry() verifies it and prompts
