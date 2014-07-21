@@ -38,14 +38,6 @@ class DetailView(LoginRequiredMixin, generic.DetailView):
         to edit, i.e., this user is the original uploader or has staff privileges.
         The template should use the boolean user_can_edit to do this check
         """
-        #for excerpt in self.object.excerpt_set.all():
-        #    print "excerpt.interview= %s" % excerpt.interview
-        #    print "excerpt.response= %s" % excerpt.response
-        #    print "excerpt.object_id= %d" % excerpt.object_id
-        #    print "excerpt.content_type= %s" % excerpt.content_type
-        #    print "excerpt.content_object= %s" % excerpt.content_object
-        #    print "excerpt.content_object.id= %d" % excerpt.content_object.id
-        
         context = super(DetailView, self).get_context_data(**kwargs)
         context['user_can_edit'] = self.request.user.is_staff or self.request.user==self.object.uploaded_by
         return context

@@ -13,7 +13,6 @@ class DummyConcept(models.Model):
     def __str__(self):
         return self.name
 
-# use Interview.get_concept_list() or Excerpt.get_concept_list()
 def get_concept_list():
     """
     this method is temporary.  Its anticipated replacement is a method in the
