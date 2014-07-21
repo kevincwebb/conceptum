@@ -1,5 +1,3 @@
-import logging
-
 from django.shortcuts import get_object_or_404
 from django.core.urlresolvers import reverse_lazy
 from django.views import generic
@@ -13,39 +11,76 @@ from braces.views import LoginRequiredMixin, UserPassesTestMixin
 from .models import Interview
 from .forms import AddForm, EditForm
 
-logger = logging.getLogger(__name__)
 
 # TODO: check permissions to allow users into certain pages
 
 class IndexView(LoginRequiredMixin, generic.ListView):
-	template_name = 'interviews/index.html'
-	context_object_name = 'interview_list'
-	
-	def get_queryset(self):
-		return Interview.objects.all()
+    """
+    Lists all interviews in the database, click on an interview to go to its DetailView
+    """
+    template_name = 'interviews/index.html'
+    context_object_name = 'interview_list'
+
+    def get_queryset(self):
+        return Interview.objects.all()
 
 
 class DetailView(LoginRequiredMixin, generic.DetailView):
-	model=Interview
-	template_name = 'interviews/detail.html'
+    """
+    Displays all data for an interview.
+    """
+    model=Interview
+    template_name = 'interviews/detail.html'
+
+    def get_context_data(self, **kwargs):
+        """
+        The hyperlink to the edit page should only be visible if this user is allowed
+        to edit, i.e., this user is the original uploader or has staff privileges.
+        The template should use the boolean user_can_edit to do this check
+        """
+        #for excerpt in self.object.excerpt_set.all():
+        #    print "excerpt.interview= %s" % excerpt.interview
+        #    print "excerpt.response= %s" % excerpt.response
+        #    print "excerpt.object_id= %d" % excerpt.object_id
+        #    print "excerpt.content_type= %s" % excerpt.content_type
+        #    print "excerpt.content_object= %s" % excerpt.content_object
+        #    print "excerpt.content_object.id= %d" % excerpt.content_object.id
+        
+        context = super(DetailView, self).get_context_data(**kwargs)
+        context['user_can_edit'] = self.request.user.is_staff or self.request.user==self.object.uploaded_by
+        return context
 
 
 class AddView(LoginRequiredMixin, generic.CreateView):
+    """
+    FormView for a user to add an interview.
+    """
     model = Interview
     template_name = 'interviews/add.html'
     form_class = AddForm
 
     def form_valid(self, form):
+        """
+        Calls the AddForm save method, which takes the request as an argument
+        """
         self.object = form.save(self.request)
         return HttpResponseRedirect(self.get_success_url())
     
     def get_success_url(self):
+        """
+        Returns the result of the get_absolute_url method in the Interview model.
+        This redirects to the interview's detail page
+        """    
         return self.object.get_absolute_url()
     
 
 class EditView(LoginRequiredMixin,
                UserPassesTestMixin,
                generic.UpdateView):
+    """
+    FormView for a user to edit an existing interview.  Only the original uploader or
+    a staff user is allowed to edit an interview.
+    """
     model = Interview
     template_name = 'interviews/edit.html'
     form_class = EditForm
@@ -53,27 +88,53 @@ class EditView(LoginRequiredMixin,
     # Raise a 403 if user is denied access
     raise_exception = True
     
-    # Expected by UserPassesTestMixin
     def test_func(self, user):
+        """
+        This function is required by the UserPassesTestMixin.
+        Requires that the user is staff or the original uploader
+        """
         interview_id = self.kwargs['pk']
         interview = get_object_or_404(self.model, pk=interview_id)
         return (user.is_staff or user==interview.uploaded_by)
     
-    def dispatch(self, *args, **kwargs):
-        #interview_id = self.kwargs['pk']
-        #user = self.get_object_or_404(self.model,pk=interview_id)
-        #if not (self.request.user.is_staff or self.request.user==self.object.uploaded_by):
-        #    raise PermissionDenied
-        return super(EditView, self).dispatch(*args, **kwargs)
-        
+    def get_initial(self):
+        initial = {}
+        for excerpt in self.object.excerpt_set.all():
+            initial['response_%d' % excerpt.object_id] = excerpt.response
+        return initial
     
     def form_valid(self, form):
+        """
+        Calls the EditForm save method
+        """
         form.save()
         return HttpResponseRedirect(self.get_success_url())
     
     def get_success_url(self):
+        """
+        Returns the result of the get_absolute_url method in the Interview model.
+        This redirects to the interview's detail page
+        """
         return self.object.get_absolute_url()
 
     
-class DeleveView(LoginRequiredMixin, generic.DeleteView):
-    pass
+class DeleteView(LoginRequiredMixin,
+                 UserPassesTestMixin,
+                 generic.DeleteView):
+       
+    model = Interview
+    template_name = 'interviews/confirm_delete.html'
+    success_url = reverse_lazy('interview_index')
+    
+    # Raise a 403 if user is denied access
+    raise_exception = True
+    
+    def test_func(self, user):
+        """
+        This function is required by the UserPassesTestMixin.
+        Requires that the user is staff or the original uploader
+        """
+        interview_id = self.kwargs['pk']
+        interview = get_object_or_404(self.model, pk=interview_id)
+        return (user.is_staff or user==interview.uploaded_by)
+

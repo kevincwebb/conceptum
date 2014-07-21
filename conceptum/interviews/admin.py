@@ -8,7 +8,7 @@ class InterviewAdmin(admin.ModelAdmin):
 
 
 class ExcerptAdmin(admin.ModelAdmin):
-	list_display = ('content_topic', 'interview', 'response')
+	list_display = ('content_object', 'interview', 'response', 'object_id')
 
 
 admin.site.register(Interview, InterviewAdmin)

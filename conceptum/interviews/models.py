@@ -56,11 +56,10 @@ class Excerpt(models.Model):
     with a topic (this will probably be a Concept/ConceptNode) and an interview. 
     """
 
-    # the django example calls these fields 'content_type','object_id', and 'content_object'
-    # https://docs.djangoproject.com/en/1.6/ref/contrib/contenttypes/#generic-relations   
+    # Fields that relate to some sort of Topic, probably a ConceptNode
     content_type = models.ForeignKey(ContentType)
-    topic_id = models.PositiveIntegerField()
-    content_topic = generic.GenericForeignKey('content_type', 'topic_id')
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
     
     interview = models.ForeignKey(Interview)
     
