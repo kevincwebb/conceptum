@@ -9,6 +9,11 @@ def landing(request):
 
     root = CITreeInfo.get_master_tree_root()
     master_tree_set = root.get_descendants(include_self=True)
+
+    for node in master_tree_set:
+        if node.is_stage_finished():
+            node.transition_node_state()
+
     user = request.user
 
     template = loader.get_template('cistage1/landing.html')

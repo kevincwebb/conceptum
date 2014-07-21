@@ -32,11 +32,10 @@ class CITreeInfo(models.Model):
         master_info = CITreeInfo.objects.filter(is_master=True)
         if master_info:
             nodes = ConceptNode.objects.filter(ci_tree_info=master_info)
-            if nodes:
-                return nodes[0].get_root()
-            else:
+            if not nodes:
                 print "Error: Master Tree is empty (no root node)"
                 return None
+            return [node for node in nodes if node.is_root_node()].pop()
         else:
             print "Error: Master Tree does not exist"
             return None
@@ -101,7 +100,32 @@ class ConceptNode(MPTTModel):
         else:
             return False
 
+    # easy way of doing it for now, probably want to override __iter__
+    # of node_type for a cleaner solution that scales and maybe break
+    # up into separate functions
+    def transition_node_state(self):
 
+        #update node_type
+        if self.node_type == 'F':
+            self.node_type = 'P'
+        elif self.node_type == 'P':
+            self.node_type = 'R'
+        elif self.node_type == 'R':
+            self.node_type = 'C'
+
+        self.save()
+
+        #transition means a new voting process has begun so we scrub
+        #the contributed_users list
+        self.user.clear()
+
+        return
+
+    def is_stage_finished(self):
+        if list(self.users_contributed_set()) == list(self.ci_tree_info.users.all()):
+            return True
+        else:
+            return False
 
 
 # Atoms are entered by the user and are meant to represent

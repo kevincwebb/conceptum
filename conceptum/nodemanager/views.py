@@ -4,8 +4,7 @@ from django.template import RequestContext, loader
 from django.core.urlresolvers import reverse
 
 from nodemanager.models import CITreeInfo, ConceptNode, ConceptAtom
-from nodemanager.forms import AtomForm
-# Create your views here.
+from nodemanager.forms import AtomForm, AtomFormSet
 
 getNode = lambda node_id: ConceptNode.objects.filter(pk=node_id).get()
 
@@ -13,14 +12,21 @@ getNode = lambda node_id: ConceptNode.objects.filter(pk=node_id).get()
 def entry(request, node_id, redirected=False):
 
     node = getNode(node_id)
-    form = AtomForm();
-
-    template = loader.get_template('nodemanager/entry.html')
+    user = request.user
+    atoms = ConceptAtom.objects.filter(user=user)
     context = RequestContext(request,
                              {'node': node,
-                              'user': request.user,
-                              'form': form,
+                              'user': user,
                               'redirected': redirected},)
+    if user in node.users_contributed_set():
+        template = loader.get_template('nodemanager/atomlist.html')
+        context['atoms'] = atoms
+    else:
+        formset = AtomFormSet(initial=[{'text': atom.text} for atom in atoms])
+        context['formset'] = formset
+        template = loader.get_template('nodemanager/entry.html')
+
+
     return HttpResponse(template.render(context))
 
 # Upon entering a concept form, get_entry() verifies it and prompts
@@ -28,42 +34,37 @@ def entry(request, node_id, redirected=False):
 # incorrectly entered
 def get_entry(request, node_id):
     if request.method == 'POST':
-        form = AtomForm(request.POST)
-        if form.is_valid():
-            new_atom = ConceptAtom(
-                concept_node=getNode(node_id),
-                user=request.user,
-                text=form.cleaned_data['text'],
-                final_choice=False
-            )
-            new_atom.save()
+        formset = AtomFormSet(request.POST)
+
+        if formset.is_valid():
+
+            # since all the concept atom text was already input into
+            # the initial form, they can all be deleted and
+            # re-added. it's wasteful at the DB-level, but that
+            # shouldn't be a concern right now.
+            ConceptAtom.objects.filter(user=request.user).delete()
+
+            for form in formset:
+                text = form.cleaned_data.get('text')
+
+                if text and form not in formset.deleted_forms:
+                    new_atom = ConceptAtom(
+                        concept_node=getNode(node_id),
+                        user=request.user,
+                        text=form.cleaned_data['text'],
+                        final_choice=False
+                    )
+                    new_atom.save()
+
             return redirect('redirected free entry',
                             node_id=node_id, redirected=True)
         else:
-            form = AtomForm() #form wasn't valid so we make a new one
+            form = AtomFormSet(AtomForm, extra=5) #return new form
 
     return render(request, 'nodemanager/entry.html',
                   {'node': getNode(node_id),
                    'user': request.user,
                    'form': form})
-
-def detail(request, node_id):
-
-    node = getNode(node_id)
-    user = request.user
-
-    user_atoms = ConceptAtom.objects.filter(user=user)
-    if user in node.users_contributed_set():
-        template = 'nodemanager/atomlist.html'
-    else:
-        template = 'nodemanager/editatomlist.html'
-
-    return render(request, template,
-                  {'node': node,
-                   'user': user,
-                   'atoms': user_atoms,})
-
-
 
 def prune(request, node_id):
 
@@ -74,8 +75,6 @@ def prune(request, node_id):
                              {'node': node,
                               'user': request.user},)
     return HttpResponse(template.render(context))
-
-
 
 def rank(request, node_id):
     return HttpResponse("this is rank")

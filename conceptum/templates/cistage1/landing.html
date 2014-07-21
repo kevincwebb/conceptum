@@ -11,7 +11,13 @@
           <br>
           <b>Voting Stage:</b> {{node.node_type}}
           <br>
-
+          <b>Contributed Users:</b>
+                <ul>
+                  {% for user in node.users_contributed_set %}
+                  <li>{{ user }}</li>
+                  {% endfor %}
+                </ul>
+          <br>
           {% if user in node.users_contributed_set %}
           User has visited!
           {% else %}
@@ -21,12 +27,11 @@
 
           {% ifequal node.node_type 'F' %}
 
-                <a href="{% url 'detail' node.id %}">
+                <a href="{% url 'free entry' node.id %}">
                 {% if user in node.users_contributed_set %}
                         View Final Choices for Node {{ node.id }}</a>
                 {% else %}
-                        Edit/View Choices for Node {{ node.id }}</a><br>
-                        <a href="{% url 'free entry' node.id %}">Add Choices to Node {{ node.id }}</a>
+                        Edit/Add Choices for Node {{ node.id }}</a><br>
                 {% endif %}
 
           {% endifequal %}
