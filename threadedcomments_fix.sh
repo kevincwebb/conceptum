@@ -23,7 +23,13 @@ find . -name "*.py" -type f | xargs grep -l "django\.contrib\.comments"
 
 echo
 echo "Replacing..."
-find . -name "*.py" -type f | xargs sed -i s/"django\.contrib\.comments"/"django_comments"/g
+
+if [ $(uname) = "Darwin"] #Mac OSX has an older version of sed
+then
+    find . -name "*.py" -type f | xargs sed -i "" s/"django\.contrib\.comments"/"django_comments"/gp
+else
+    find . -name "*.py" -type f | xargs sed -i s/"django\.contrib\.comments"/"django_comments"/g
+fi
 
 echo "Done!"
 exit
