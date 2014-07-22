@@ -22,7 +22,7 @@ def entry(request, node_id, redirected=False):
         template = loader.get_template('nodemanager/atomlist.html')
         context['atoms'] = atoms
     else:
-        formset = AtomFormSet(initial=[{'text': atom.text} for atom in atoms])
+        formset = AtomFormSet(initial=[{'text': atom.text, 'pk': atom.pk} for atom in atoms])
         context['formset'] = formset
         template = loader.get_template('nodemanager/entry.html')
 
