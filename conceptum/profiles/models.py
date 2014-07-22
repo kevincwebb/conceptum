@@ -14,7 +14,7 @@ class ContributorProfile(models.Model):
     not just Contributors
     """
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile')
-    #institution = models.CharField(max_length=200, default="")
+    institution = models.CharField(max_length=200, default="")
     homepage = models.URLField(max_length=200, default="")
     interest_in_devel = models.BooleanField("interested in CI development", default=False)
     interest_in_deploy = models.BooleanField("interested in CI deployment", default=False)

@@ -29,15 +29,9 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
     url(r'^exams/', include('exam.urls')),
-<<<<<<< HEAD
-    # VOTING -temp
-    url(r'^votes/', include(qhonuskan_votes.urls))
-    
-
-=======
+    url(r'^votes/', include(qhonuskan_votes.urls)),
     url(r'^stage1/', include('cistage1.urls')),
     url(r'^interviews/', include('interviews.urls'))
->>>>>>> 0708f7118bdd48496d69b8a00b1b40c0aee0f0a3
 )
 
 # Uncomment the next line to serve media files in dev.
