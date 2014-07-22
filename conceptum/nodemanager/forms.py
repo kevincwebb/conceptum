@@ -6,7 +6,8 @@ from nodemanager.models import ConceptAtom
 
 class AtomForm(ModelForm):
 
-    pk = IntegerField(widget=HiddenInput(attrs={'readonly': True}))
+    pk = IntegerField(widget=HiddenInput(attrs={'readonly': True}),
+                      required=False)
 
     class Meta:
         model = ConceptAtom
@@ -18,6 +19,12 @@ class AtomForm(ModelForm):
             raise forms.ValidationError("Can't have an empty Concept Atom!")
 
         return data
+
+    # def clean_pk(self):
+    #     data = self.cleaned_data['pk']
+
+    #     if not data:
+    #         data = -1
 
 AtomFormSet = formset_factory(AtomForm,
                               can_delete=True,

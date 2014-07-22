@@ -8,7 +8,7 @@ from nodemanager.forms import AtomForm, AtomFormSet
 
 getNode = lambda node_id: ConceptNode.objects.filter(pk=node_id).get()
 
-# Displays a form and allows users to enter new concept atoms.
+# add/edit/remove interface for concept atoms
 def entry(request, node_id, redirected=False):
 
     node = getNode(node_id)
@@ -22,44 +22,47 @@ def entry(request, node_id, redirected=False):
         template = loader.get_template('nodemanager/atomlist.html')
         context['atoms'] = atoms
     else:
-        formset = AtomFormSet(initial=[{'text': atom.text, 'pk': atom.pk} for atom in atoms])
+        formset = AtomFormSet(initial=[{'text': atom.text,
+                                        'pk': atom.pk} for atom in atoms])
         context['formset'] = formset
         template = loader.get_template('nodemanager/entry.html')
 
 
     return HttpResponse(template.render(context))
 
-# Upon entering a concept form, get_entry() verifies it and prompts
-# the user to enter another, or returns a new form if the atom was
-# incorrectly entered
 def get_entry(request, node_id):
     if request.method == 'POST':
         formset = AtomFormSet(request.POST)
 
         if formset.is_valid():
-
-            # since all the concept atom text was already input into
-            # the initial form, they can all be deleted and
-            # re-added. it's wasteful at the DB-level, but that
-            # shouldn't be a concern right now.
-            ConceptAtom.objects.filter(user=request.user).delete()
-
             for form in formset:
-                text = form.cleaned_data.get('text')
+                form_text = form.cleaned_data.get('text')
+                pk = form.cleaned_data.get('pk')
 
-                if text and form not in formset.deleted_forms:
-                    new_atom = ConceptAtom(
-                        concept_node=getNode(node_id),
-                        user=request.user,
-                        text=form.cleaned_data['text'],
-                        final_choice=False
-                    )
-                    new_atom.save()
+                if form_text: #if there was initial data in the form
+
+                    if not pk: #new entries do not have a pk
+                        new_atom = ConceptAtom(
+                            concept_node=getNode(node_id),
+                            user=request.user,
+                            text=form_text,
+                            final_choice=False
+                        )
+                        new_atom.save()
+                        continue
+
+                    #if there is an associated pk, get the model instance
+                    atom = ConceptAtom.objects.filter(pk=pk).get()
+                    if not form_text == atom.text: #update if necessary
+                        atom.text = form_text
+                        atom.save()
+                    if form in formset.deleted_forms: #or delete it
+                        atom.delete()
 
             return redirect('redirected free entry',
                             node_id=node_id, redirected=True)
         else:
-            form = AtomFormSet(AtomForm, extra=5) #return new form
+            return redirect('free entry', node_id=node_id)
 
     return render(request, 'nodemanager/entry.html',
                   {'node': getNode(node_id),
