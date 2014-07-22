@@ -1,14 +1,20 @@
 from django.db import models
-from qhonuskan_votes.models import VotesField
+from qhonuskan_votes.models import VotesField, ObjectsWithScoresManager
+from qhonuskan_votes.models import vote_changed
 
-class MyModel(models.Model):
+
+class ThreadModel(models.Model):
+    """
+    An example model for voting.
+    """
+    text = models.TextField()
     votes = VotesField()
-    # Add objects before all other managers to avoid issues mention in http://stackoverflow.com/a/4455374/1462141
-    objects = models.Manager()
 
-    #For just a list of objects that are not ordered that can be customized.
+    objects = models.Manager()
     objects_with_scores = ObjectsWithScoresManager()
 
-    #For objects ordered by score.
-    sort_by_score = SortByScoresManager()
 
+def my_callback(sender, **kwargs):
+    print "vote_changed signal fired."
+
+vote_changed.connect(my_callback, dispatch_uid="vote_changed")
