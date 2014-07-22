@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Interview Detail" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    
+<div class="form-horizontal-heading">
+  <h2>Interviews</h2>
+</div>
+  
+{% if interview_list %}
+    <ul>
+    {% for interview in interview_list %}
+        <li><a href="{% url 'interview_detail' interview.id %}">{{ interview }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No interviews are available.</p>
+{% endif %}
+
+<a href = {% url 'interview_add' %} class="btn btn-primary"> Add an interview </a>
+
+</div> <!-- container -->
+
+{% endblock %}

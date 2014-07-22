@@ -10,6 +10,14 @@
 {% if user.emailaddress_set.all %}
 <p>{% trans 'The following e-mail addresses are associated with your account:' %}</p>
 
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
 <form action="{% url 'account_email' %}" class="email_list" method="post">
 {% csrf_token %}
 <fieldset class="blockLabels">
@@ -53,6 +61,8 @@
         {{ form.as_p}}
         <button name="action_add" type="submit">{% trans "Add E-mail" %}</button>
     </form>
+
+</br><a href = {% url 'profile' %}> Return to profile </a>
 
 {% endblock %}
 

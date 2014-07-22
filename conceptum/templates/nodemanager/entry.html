@@ -1,0 +1,25 @@
+<h1>This is the Free Entry Page for Node {{ node.id }}</h1>
+
+{% if redirected %}
+<h5><font color="green">Your entry was submitted successfully!</font></h5>
+{% else %}
+{% endif %}
+
+<b>Content:</b> {{ node.content }}
+
+<h3><u>Add Concept Atoms</u></h3>
+<form action="{% url 'get entry' node.id %}" method="post">
+  {% csrf_token %}
+  {% for form in formset %}
+  {{ form.as_p }}
+  {% endfor %}
+  {{ formset.management_form }}
+  <input type="submit" value="Submit">
+</form>
+
+<h5><font color="blue">If you run out of space, just submit your entries and add more. Dynamic form addition is in the pipeline...</font></h5>
+
+<a href="{% url 'landing' %}">Back to Landing Page</a>
+<p>
+<a href="{% url 'final sub' node.id %}">Final Submission</a>
+<font color="red">After clicking, you will not be able to edit or add concepts!</font>

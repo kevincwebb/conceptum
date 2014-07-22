@@ -1,29 +1,48 @@
-{% extends "base.html" %}
+{% extends "account/base.html" %}
+
+{% load url from future %}
 {% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Edit Profile" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
 
 {% block content %}
 
-{% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-    {# flush messages, expected "You have successfully signed in" #}
-    {% endfor %}
-</ul>
-{% endif %}
+<div class="container">
 
-{% if user.is_authenticated %}
-<h2>Welcome {{ user.name }} </h2>
-    <div class ="profile-info">
-	This is your profile.
+
+  <div class="horizontal-heading">
+    <h2>Welcome {{ user.name }}</h2>
+  </div>
+
     
-    {{ user.homepage }}
+    <b>Primary Email:</b>
+    {{ user.email }}<br>
+
+    <b>Name:</b>
+    {{ user.name }}<br>
+
+    <b>Institution:</b>
+    {{ user.profile.institution }}<br>    
     
+    <b>Homepage:</b>
+    {{ user.profile.homepage }}<br>
+    
+    <b>Other Info:</b>
+    {{ user.profile.text_info }}<br>
+
 	<br><br><b>Options:<b>
 	<br><a href = {% url 'account_logout' %}> Logout </a>
+    <br><a href = {% url 'edit_profile' %}> Edit Profile </a>
+	<br><a href = {% url 'account_email' %}> Manage Email Addresses </a>
 	<br><a href = {% url 'account_change_password' %}> Change Password </a>
-	
-	 
-{% else %}
-	Hello, please <a href={% url 'account_login' %}> login </a> 
-{% endif %}
+  
+</div> <!-- container -->
+
 {% endblock %}
