@@ -2,7 +2,7 @@ from lettuce import *
 from django.core.management import call_command
 from django.core.urlresolvers import reverse
 from django.test.client import Client
-from app.models import ThreadModel
+from voting.models import ThreadModel
 
 
 @before.all

@@ -1,5 +1,5 @@
 from django.shortcuts import render_to_response
-from app.models import ThreadModel
+from voting.models import ThreadModel
 from django.template import RequestContext
 
 
