@@ -20,12 +20,6 @@ class AtomForm(ModelForm):
 
         return data
 
-    # def clean_pk(self):
-    #     data = self.cleaned_data['pk']
-
-    #     if not data:
-    #         data = -1
-
 AtomFormSet = formset_factory(AtomForm,
                               can_delete=True,
                               extra=5,)
