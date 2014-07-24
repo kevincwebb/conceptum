@@ -35,3 +35,19 @@ class CreateMergeForm(forms.Form):
         required=False
     )
     new_atom_name = forms.CharField(max_length=140, required=False)
+
+    new_merge_id = 'new merge'
+    edit_merge_id = 'edit merge'
+
+    def clean(self):
+
+        cleaned_data = super(CreateMergeForm, self).clean()
+        new_atom_name = cleaned_data.get('new_atom_name')
+        merged_atom_choice = cleaned_data.get('merged_atoms')
+
+        if (new_atom_name and merged_atom_choice):
+            raise forms.ValidationError("Must either pick or create an atom to merge, cannot do both.")
+        elif (not new_atom_name and not merged_atom_choice):
+            raise forms.ValidationError("Must pick or create an atom to merge with, none entered.")
+
+        return cleaned_data

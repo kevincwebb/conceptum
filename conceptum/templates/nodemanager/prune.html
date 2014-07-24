@@ -3,7 +3,13 @@
 {{ node.content }}
 <form action="{% url 'get merge' node.id %}" method="post">
   {% csrf_token %}
+
+  {% if form.errors %}
+  <h3>Please correct the following error:</h3>
+  {{ form.non_field_errors }}
+  {% endif %}
+
   {{ form.as_p }}
-  <input type="submit" name="new_merge" value="New Merge">
-  <input type="submit" name="add_merge" value="Add to Merge">
+  <input type="submit" name="{{ form.new_merge_id }}" value="New Merge">
+  <input type="submit" name="{{ form.edit_merge_id }}" value="Add to Merge">
 </form>

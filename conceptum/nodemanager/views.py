@@ -83,14 +83,16 @@ def prune(request, node_id):
 
 def get_merge(request, node_id):
 
-    if request.method == 'POST':
+    node = getNode(node_id)
+    user = request.user
 
+    if request.method == 'POST':
 
         form = CreateMergeForm(request.POST)
 
         if form.is_valid():
 
-            if 'new_merge' in request.POST:
+            if form.new_merge_id in request.POST:
                 print "it's a new merge!"
                 print form.cleaned_data.get('new_atom_name')
             else:
@@ -99,12 +101,15 @@ def get_merge(request, node_id):
 
             print form.cleaned_data.get('free_atoms')
 
-            return redirect('prune', node_id=node_id)
+            return redirect('prune', node_id=node.id)
 
         else:
             print form.errors
 
-    return HttpResponse("merge didn't work!")
+            return render(request, 'nodemanager/prune.html',
+                          {'node': node,
+                           'user': user,
+                           'form': form})
 
 def rank(request, node_id):
     return HttpResponse("this is rank")
