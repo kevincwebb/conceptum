@@ -25,6 +25,13 @@ AtomFormSet = formset_factory(AtomForm,
 
 class CreateMergeForm(forms.Form):
 
-
-    atoms = forms.ModelMultipleChoiceField(queryset=ConceptAtom.objects.all(),
-                                           widget=forms.CheckboxSelectMultiple)
+    free_atoms = forms.ModelMultipleChoiceField(
+        queryset=ConceptAtom.get_unmerged_atoms(),
+        widget=forms.CheckboxSelectMultiple,
+    )
+    merged_atoms = forms.ModelChoiceField(
+        queryset=ConceptAtom.get_merge_top_level_atoms(),
+        widget=forms.RadioSelect,
+        required=False
+    )
+    new_atom_name = forms.CharField(max_length=140, required=False)

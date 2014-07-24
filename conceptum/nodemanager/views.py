@@ -85,12 +85,24 @@ def get_merge(request, node_id):
 
     if request.method == 'POST':
 
+
         form = CreateMergeForm(request.POST)
 
         if form.is_valid():
-            print form.cleaned_data.get('atoms')
+
+            if 'new_merge' in request.POST:
+                print "it's a new merge!"
+                print form.cleaned_data.get('new_atom_name')
+            else:
+                print "it's an edit merge!"
+                print form.cleaned_data.get('merged_atoms')
+
+            print form.cleaned_data.get('free_atoms')
 
             return redirect('prune', node_id=node_id)
+
+        else:
+            print form.errors
 
     return HttpResponse("merge didn't work!")
 

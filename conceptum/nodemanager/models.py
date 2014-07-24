@@ -151,3 +151,7 @@ class ConceptAtom(models.Model):
     @staticmethod
     def get_unmerged_atoms():
         return ConceptAtom.objects.filter(merged_atoms=None).filter(final_choice=False)
+
+    @staticmethod
+    def get_merge_top_level_atoms():
+        return ConceptAtom.objects.exclude(merged_atoms=None)
