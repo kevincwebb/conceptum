@@ -83,7 +83,16 @@ def prune(request, node_id):
 
 def get_merge(request, node_id):
 
-    return HttpResponse("got the merge!")
+    if request.method == 'POST':
+
+        form = CreateMergeForm(request.POST)
+
+        if form.is_valid():
+            print form.cleaned_data.get('atoms')
+
+            return redirect('prune', node_id=node_id)
+
+    return HttpResponse("merge didn't work!")
 
 def rank(request, node_id):
     return HttpResponse("this is rank")
