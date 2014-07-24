@@ -18,11 +18,11 @@ def get_concept_list():
     this method is temporary.  Its anticipated replacement is a method in the
     ConceptNode class that will return a list of leaf nodes.
     """
-    A, created = DummyConcept.objects.get_or_create(name='Concept A')
-    B, created = DummyConcept.objects.get_or_create(name='Concept B')
-    C, created = DummyConcept.objects.get_or_create(name='Concept C')
-    D, created = DummyConcept.objects.get_or_create(name='Concept D')
-    return [A,B,C,D]
+    DummyConcept.objects.get_or_create(name='Concept A')
+    DummyConcept.objects.get_or_create(name='Concept B')
+    DummyConcept.objects.get_or_create(name='Concept C')
+    DummyConcept.objects.get_or_create(name='Concept D')
+    return DummyConcept.objects.all()
 
 class Interview(models.Model):
     """
