@@ -4,7 +4,7 @@ from django.template import RequestContext, loader
 from django.core.urlresolvers import reverse
 
 from nodemanager.models import CITreeInfo, ConceptNode, ConceptAtom
-from nodemanager.forms import AtomForm, AtomFormSet
+from nodemanager.forms import AtomFormSet, CreateMergeForm
 
 getNode = lambda node_id: ConceptNode.objects.filter(pk=node_id).get()
 
@@ -72,12 +72,18 @@ def get_entry(request, node_id):
 def prune(request, node_id):
 
     node = getNode(node_id)
+    form = CreateMergeForm()
 
     template = loader.get_template('nodemanager/prune.html')
     context = RequestContext(request,
                              {'node': node,
-                              'user': request.user},)
+                              'user': request.user,
+                              'form': form},)
     return HttpResponse(template.render(context))
+
+def get_merge(request, node_id):
+
+    return HttpResponse("got the merge!")
 
 def rank(request, node_id):
     return HttpResponse("this is rank")

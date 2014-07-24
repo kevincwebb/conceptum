@@ -147,3 +147,7 @@ class ConceptAtom(models.Model):
 
     def __unicode__(self):
         return self.text
+
+    @staticmethod
+    def get_unmerged_atoms():
+        return ConceptAtom.objects.filter(merged_atoms=None).filter(final_choice=False)

@@ -12,6 +12,6 @@ urlpatterns = patterns('',
 
             url(r'^(?P<node_id>\d+)/finalsub$', views.add_finished_user, name='final sub'),
             url(r'^(?P<node_id>\d+)/prune$', views.prune, name='prune'),
-
+         url(r'^(?P<node_id>\d+)/getmerge', views.get_merge, name = 'get merge'),
             url(r'^(?P<node_id>\d+)/rank$', views.rank, name='rank'),
         )

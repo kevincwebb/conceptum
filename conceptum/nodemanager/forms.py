@@ -1,12 +1,11 @@
-from django.forms import ModelForm, HiddenInput, IntegerField
+from django import forms
 from django.forms.formsets import formset_factory
-#from django.forms.extras.widgets import HiddenInput
 
 from nodemanager.models import ConceptAtom
 
-class AtomForm(ModelForm):
+class AtomForm(forms.ModelForm):
 
-    pk = IntegerField(widget=HiddenInput(attrs={'readonly': True}),
+    pk = forms.IntegerField(widget=forms.HiddenInput(attrs={'readonly': True}),
                       required=False)
 
     class Meta:
@@ -23,3 +22,9 @@ class AtomForm(ModelForm):
 AtomFormSet = formset_factory(AtomForm,
                               can_delete=True,
                               extra=5,)
+
+class CreateMergeForm(forms.Form):
+
+
+    atoms = forms.ModelMultipleChoiceField(queryset=ConceptAtom.objects.all(),
+                                           widget=forms.CheckboxSelectMultiple)
