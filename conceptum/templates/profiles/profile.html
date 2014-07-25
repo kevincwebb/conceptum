@@ -37,7 +37,17 @@
     <b>Other Info:</b>
     {{ user.profile.text_info }}<br>
 
-	<br><br><b>Options:<b>
+    <br>
+    {% if user.profile.is_contrib %}
+      You have Contributor privileges, which means you can access features of the website
+      for developing the CI.  You can also deploy the CI when it is finished.
+    {% else %}
+      You do not have Contributor privileges, but you can deploy the CI when it is finished.
+      If you would like to help develop the CI, please contact us.
+    {% endif %}
+    
+	<br><br>
+    <b>Options:<b>
 	<br><a href = {% url 'account_logout' %}> Logout </a>
     <br><a href = {% url 'edit_profile' %}> Edit Profile </a>
 	<br><a href = {% url 'account_email' %}> Manage Email Addresses </a>

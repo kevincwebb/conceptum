@@ -15,20 +15,23 @@ concept_list = get_concept_list()
 def set_up_user():
     """
     A function to be called by setUp in order to get a user for all authenticated activity.
+    This function creates a User and related ContributorProfile and EmailAddress, and
+    returns the new user object
     
-    This function creates a User and related ContributorProfile and EmailAddress.
-    The user has is_active=True and password='password', the emailaddress has verified=True.
-    
-    Returns the new user object.
-
-    TODO: ContributorProfile.can_contrib????    
+    Important attributes of the user:
+        password='password'
+        is_active=True
+        is_staff=False
+        profile.is_contrib=False
+        
+    EmailAddress has verified=True.
     """
     user, created = User.objects.get_or_create(email='interview_email@test.com',
                                                     name='Dave Test',
                                                     is_active=True)
-    user.set_password('password')
-    user.save()
     if created:
+        user.set_password('password')
+        user.save()
         ContributorProfile.objects.create(user=user,
                                           institution='Test University',
                                           homepage='http://www.test.com/',
@@ -37,6 +40,12 @@ def set_up_user():
                                     email=user.email,
                                     primary=True,
                                     verified=True)
+    else:
+        # just in case permissions have been modified
+        user.is_staff = False
+        user.save()
+        user.profile.is_contrib = False
+        user.profile.save()
     return user
 
 def get_or_create_interview(user, interviewee='Dr. Test', date=datetime.date(2014,01,01)):
@@ -78,8 +87,14 @@ class ViewsPermissionsTest(SimpleTestCase):
         response = self.client.get(reverse('interview_index'))
         self.assertRedirects(response, '/accounts/login/?next=/interviews/')
         
-        # User logged in
+        # User logged in, not contrib
         self.client.login(email=self.user.email, password='password')
+        response = self.client.get(reverse('interview_index'))
+        self.assertEqual(response.status_code, 403)
+        
+        # User is contrib
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
         response = self.client.get(reverse('interview_index'))
         self.assertEqual(response.status_code, 200)
     
@@ -93,11 +108,17 @@ class ViewsPermissionsTest(SimpleTestCase):
         response = self.client.get(reverse('interview_detail', args=(interview.id,)))
         self.assertRedirects(response, '/accounts/login/?next=/interviews/%s/' % interview.id)
         
-        # User logged in
+        # User logged in, not contrib
         self.client.login(email=self.user.email, password='password')
         response = self.client.get(reverse('interview_detail', args=(interview.id,)))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 403)
 
+        # User is contrib
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
+        response = self.client.get(reverse('interview_detail', args=(interview.id,)))
+        self.assertEqual(response.status_code, 200)
+        
     def test_add_view(self):
         """
         User must be authenticated* to view this page
@@ -107,8 +128,14 @@ class ViewsPermissionsTest(SimpleTestCase):
         response = self.client.get(reverse('interview_add'))
         self.assertRedirects(response, '/accounts/login/?next=/interviews/add/')
         
-        # User logged in
+        # User logged in, not contrib
         self.client.login(email=self.user.email, password='password')
+        response = self.client.get(reverse('interview_add'))
+        self.assertEqual(response.status_code, 403)
+        
+        # User is contrib
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
         response = self.client.get(reverse('interview_add'))
         self.assertEqual(response.status_code, 200)
         
@@ -121,6 +148,7 @@ class ViewsPermissionsTest(SimpleTestCase):
                                    is_active=True)
         uploader.set_password('password')
         uploader.save()
+        ContributorProfile.objects.create(user=uploader, is_contrib=True)
         interview = get_or_create_interview(uploader)
         
         # Unauthenticated user (anonymous)
@@ -158,6 +186,7 @@ class ViewsPermissionsTest(SimpleTestCase):
                                    is_active=True)
         uploader.set_password('password')
         uploader.save()
+        ContributorProfile.objects.create(user=uploader, is_contrib=True)        
         interview = get_or_create_interview(uploader)
         
         # Unauthenticated user (anonymous)
@@ -189,6 +218,8 @@ class ViewsPermissionsTest(SimpleTestCase):
 class ViewsTest(TestCase):
     def setUp(self):
         self.user = set_up_user()
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
         self.client.login(email=self.user.email, password='password')
 
     def test_index_view_with_no_interviews(self):

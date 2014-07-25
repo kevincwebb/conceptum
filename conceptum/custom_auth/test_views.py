@@ -156,6 +156,7 @@ class UserApprovalTest(TransactionTestCase):
         self.assertRedirects(response, '/accounts/pending/')
         user = User.objects.get(pk=user.id) # (make user match the database)
         self.assertTrue(user.is_active)
+        self.assertTrue(user.profile.is_contrib)
         
         # Test that email has been sent.
         self.assertEqual(len(mail.outbox), 1)
@@ -183,6 +184,7 @@ class UserApprovalTest(TransactionTestCase):
         self.assertRedirects(response, '/accounts/pending/')
         user = User.objects.get(pk=user.id) # (make user match the database)
         self.assertTrue(user.is_active)
+        self.assertFalse(user.profile.is_contrib)
         
         # Test that email has been sent.
         self.assertEqual(len(mail.outbox), 1)

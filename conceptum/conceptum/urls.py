@@ -15,13 +15,9 @@ urlpatterns = patterns('',
 
     url(r'^cidev/', include('cidev.urls')),
 
-    # Examples:
-    # url(r'^conceptum/', include('conceptum.foo.urls')),
-
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
     url(r'^exams/', include('exam.urls')),
     url(r'^stage1/', include('cistage1.urls')),
