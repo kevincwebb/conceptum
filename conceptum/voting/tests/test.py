@@ -22,7 +22,7 @@ def given_following_users_exist(step):
         user.save()
 
 
-@step(u'I logined as "([^"]*)"')
+@step(u'I logged in as "([^"]*)"')
 def login(step, username):
     if username == 'I':
         pass

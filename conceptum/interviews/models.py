@@ -3,6 +3,8 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.core.urlresolvers import reverse
+from qhonuskan_votes.models import VotesField, ObjectsWithScoresManager
+from qhonuskan_votes.models import vote_changed
 
 class DummyConcept(models.Model):
     """
@@ -33,13 +35,17 @@ class Interview(models.Model):
     See https://docs.djangoproject.com/en/1.6/topics/db/queries/#following-relationships-backward
     """
     
+
+
     interviewee = models.CharField(max_length=255)
     
     date_of_interview = models.DateField()
     
-    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL)
+   # uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL)
     
     date_uploaded = models.DateField(auto_now_add=True)
+
+    votes = VotesField()
     
     def __str__(self):
         return "Interview with {person} on {date}".format(
