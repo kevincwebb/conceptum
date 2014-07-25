@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.contenttypes.models import ContentType, ContentTypeManager
+from django.contrib.contenttypes import generic
 
 # import reversion
 
@@ -18,7 +20,7 @@ class Exam(models.Model):
     name = models.CharField(max_length=EXAM_NAME_LENGTH)
     description = models.CharField(max_length=EXAM_DESC_LENGTH)
     randomize = models.BooleanField('randomize question order', default=False)
-
+    
     def __unicode__(self):
         return self.name
 
@@ -41,6 +43,12 @@ class Question(models.Model):
     Abstract base class that represents one question within an exam.
     """
     exam = models.ForeignKey(Exam)
+    
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+
+    
     question = models.CharField(max_length=QUESTION_LENGTH)
     image = models.ImageField(upload_to=question_imageupload_to, blank=True)
     rank = models.IntegerField(null=True)

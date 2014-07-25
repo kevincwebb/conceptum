@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.contenttypes.generic import GenericTabularInline, GenericStackedInline 
 
 from .models import (
     Exam,
@@ -9,14 +10,18 @@ from .models import (
 
 import reversion
 
-
+class FreeResponseInLine(admin.TabularInline):
+    model = FreeResponseQuestion
+    fields = ('content_object',)
+    readonly_fields = ('content_object',)
+    
 class ExamAdmin(reversion.VersionAdmin):
-    pass
+    inlines = [FreeResponseInLine,]
 
 
 class FreeResponseQuestionAdmin(reversion.VersionAdmin):
-    pass
-
+    list_display = ('exam', 'content_type', 'content_object', 'question', 'image', 'rank', 'optional',)
+    
 
 class MultipleChoiceOptionAdmin(reversion.VersionAdmin):
     pass

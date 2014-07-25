@@ -13,6 +13,7 @@ class DummyConcept(models.Model):
     def __str__(self):
         return self.name
 
+
 def get_concept_list():
     """
     this method is temporary.  Its anticipated replacement is a method in the
@@ -22,7 +23,11 @@ def get_concept_list():
     B, created = DummyConcept.objects.get_or_create(name='Concept B')
     C, created = DummyConcept.objects.get_or_create(name='Concept C')
     D, created = DummyConcept.objects.get_or_create(name='Concept D')
-    return [A,B,C,D]
+
+    all_concepts = DummyConcept.objects.all()
+    return all_concepts
+    
+
 
 class Interview(models.Model):
     """
