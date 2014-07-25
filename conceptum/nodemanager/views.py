@@ -69,12 +69,12 @@ def get_entry(request, node_id):
                    'user': request.user,
                    'form': form})
 
-def prune(request, node_id):
+def merge(request, node_id):
 
     node = getNode(node_id)
     form = CreateMergeForm()
 
-    template = loader.get_template('nodemanager/prune.html')
+    template = loader.get_template('nodemanager/merge.html')
     context = RequestContext(request,
                              {'node': node,
                               'user': request.user,
@@ -92,7 +92,6 @@ def get_merge(request, node_id):
 
         if form.is_valid():
 
-            # TODO: DB code goes here
             if form.new_merge_id in request.POST:
                 new_atom = ConceptAtom(concept_node=node,
                                        user=user,
@@ -102,16 +101,13 @@ def get_merge(request, node_id):
                 new_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
             else:
                 curr_atom = form.cleaned_data.get('merged_atoms')
-                curr_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
 
-            print form.cleaned_data.get('free_atoms')
+         curr_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
 
-            return redirect('prune', node_id=node.id)
+                return redirect('merge', node_id=node.id)
 
         else:
-            print form.errors
-
-            return render(request, 'nodemanager/prune.html',
+            return render(request, 'nodemanager/merge.html',
                           {'node': node,
                            'user': user,
                            'form': form})
