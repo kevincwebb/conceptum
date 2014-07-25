@@ -16,20 +16,23 @@ User = get_user_model()
 def set_up_user():
     """
     A function to be called by setUp in order to get a user for all authenticated activity.
+    This function creates a User and related ContributorProfile and EmailAddress, and
+    returns the new user object
     
-    This function creates a User and related ContributorProfile and EmailAddress.
-    The user has is_active=True and password='password', the emailaddress has verified=True.
-    
-    Returns the new user object.
-
-    TODO: ContributorProfile.can_contrib????   
+    Important attributes of the user:
+        password='password'
+        is_active=True
+        is_staff=False
+        profile.is_contrib=False
+        
+    EmailAddress has verified=True.
     """
     user, created = User.objects.get_or_create(email='interview_email@test.com',
                                                     name='Dave Test',
                                                     is_active=True)
-    user.set_password('password')
-    user.save()
     if created:
+        user.set_password('password')
+        user.save()
         ContributorProfile.objects.create(user=user,
                                           institution='Test University',
                                           homepage='http://www.test.com/',
@@ -38,6 +41,12 @@ def set_up_user():
                                     email=user.email,
                                     primary=True,
                                     verified=True)
+    else:
+        # just in case permissions have been modified
+        user.is_staff = False
+        user.save()
+        user.profile.is_contrib = False
+        user.profile.save()
     return user
 
 def get_or_create_interview(user, interviewee='Dr. Test', date=datetime.date(2014,01,01)):
@@ -66,6 +75,8 @@ def create_excerpt(interview, index=0, response='This is a response'):
 class FormsTest(TestCase):
     def setUp(self):
         self.user = set_up_user()
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
         self.client.login(email=self.user.email, password='password')
 
     def test_add_form_correct(self):

@@ -8,13 +8,16 @@ from django.http import HttpResponseRedirect
 
 from braces.views import LoginRequiredMixin, UserPassesTestMixin
 
+from profiles.mixins import ContribRequiredMixin
 from .models import Interview
 from .forms import AddForm, EditForm
 
 
 # TODO: check permissions to allow users into certain pages
 
-class IndexView(LoginRequiredMixin, generic.ListView):
+class IndexView(LoginRequiredMixin,
+                ContribRequiredMixin,
+                generic.ListView):
     """
     Lists all interviews in the database, click on an interview to go to its DetailView
     """
@@ -25,7 +28,9 @@ class IndexView(LoginRequiredMixin, generic.ListView):
         return Interview.objects.all()
 
 
-class DetailView(LoginRequiredMixin, generic.DetailView):
+class DetailView(LoginRequiredMixin,
+                 ContribRequiredMixin,
+                 generic.DetailView):
     """
     Displays all data for an interview.
     """
@@ -43,7 +48,9 @@ class DetailView(LoginRequiredMixin, generic.DetailView):
         return context
 
 
-class AddView(LoginRequiredMixin, generic.CreateView):
+class AddView(LoginRequiredMixin,
+              ContribRequiredMixin,
+              generic.CreateView):
     """
     FormView for a user to add an interview.
     """
@@ -67,6 +74,7 @@ class AddView(LoginRequiredMixin, generic.CreateView):
     
 
 class EditView(LoginRequiredMixin,
+               ContribRequiredMixin,
                UserPassesTestMixin,
                generic.UpdateView):
     """
@@ -111,6 +119,7 @@ class EditView(LoginRequiredMixin,
 
     
 class DeleteView(LoginRequiredMixin,
+                 ContribRequiredMixin,
                  UserPassesTestMixin,
                  generic.DeleteView):
        
