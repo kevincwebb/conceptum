@@ -6,7 +6,7 @@ from nodemanager.models import ConceptAtom
 class AtomForm(forms.ModelForm):
 
     pk = forms.IntegerField(widget=forms.HiddenInput(attrs={'readonly': True}),
-                      required=False)
+                            required=False)
 
     class Meta:
         model = ConceptAtom
@@ -30,7 +30,7 @@ class CreateMergeForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
     )
     merged_atoms = forms.ModelChoiceField(
-        queryset=ConceptAtom.get_merge_top_level_atoms(),
+        queryset=ConceptAtom.get_final_atoms(),
         widget=forms.RadioSelect,
         required=False
     )

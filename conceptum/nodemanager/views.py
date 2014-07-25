@@ -92,11 +92,10 @@ def get_merge(request, node_id):
 
         if form.is_valid():
 
+            # TODO: DB code goes here
             if form.new_merge_id in request.POST:
-                print "it's a new merge!"
                 print form.cleaned_data.get('new_atom_name')
             else:
-                print "it's an edit merge!"
                 print form.cleaned_data.get('merged_atoms')
 
             print form.cleaned_data.get('free_atoms')
