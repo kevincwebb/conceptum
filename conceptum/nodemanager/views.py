@@ -94,9 +94,15 @@ def get_merge(request, node_id):
 
             # TODO: DB code goes here
             if form.new_merge_id in request.POST:
-                print form.cleaned_data.get('new_atom_name')
+                new_atom = ConceptAtom(concept_node=node,
+                                       user=user,
+                                       text=form.cleaned_data.get('new_atom_name'),
+                                       final_choice=True,)
+                new_atom.save()
+                new_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
             else:
-                print form.cleaned_data.get('merged_atoms')
+                curr_atom = form.cleaned_data.get('merged_atoms')
+                curr_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
 
             print form.cleaned_data.get('free_atoms')
 
