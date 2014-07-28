@@ -4,7 +4,7 @@ from django.template import RequestContext, loader
 from django.core.urlresolvers import reverse
 
 from nodemanager.models import CITreeInfo, ConceptNode, ConceptAtom
-from nodemanager.forms import AtomFormSet, CreateMergeForm
+from nodemanager.forms import AtomFormSet, CreateMergeForm, UpdateMergeFormSet
 
 getNode = lambda node_id: ConceptNode.objects.filter(pk=node_id).get()
 
@@ -72,13 +72,34 @@ def get_entry(request, node_id):
 def merge(request, node_id):
 
     node = getNode(node_id)
-    form = CreateMergeForm()
+    create_form = CreateMergeForm()
+
+    top_level_merged_atoms = ConceptAtom.get_final_atoms()
+
+    # for atom in top_level_merged_atoms:
+    #     initial['pk']=atom.pk
+    #     qset_dict['pk']=
+
+    edit_formset = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in top_level_merged_atoms])
+
+    # for form in edit_formset:
+    #     #print form.as_p()
+    #     atom_pk = form['pk'].value()
+    #     print "atom_pk", atom_pk
+    #     qset = ConceptAtom.objects.filter(merged_atoms__pk=atom_pk)
+    #     print "THE QUERYSET: ", qset
+    #     print "THE OLD FORM: ", form['choices'].data()
+    #     form['choices'].queryset = qset
+    #     print "THE FORM: ", form['choices'].value()
+
+
 
     template = loader.get_template('nodemanager/merge.html')
     context = RequestContext(request,
                              {'node': node,
                               'user': request.user,
-                              'form': form},)
+                              'create_form': create_form,
+                              'edit_formset': edit_formset},)
     return HttpResponse(template.render(context))
 
 def get_merge(request, node_id):
@@ -102,7 +123,7 @@ def get_merge(request, node_id):
             else:
                 curr_atom = form.cleaned_data.get('merged_atoms')
 
-         curr_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
+                curr_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
 
                 return redirect('merge', node_id=node.id)
 

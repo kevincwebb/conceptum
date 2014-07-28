@@ -51,3 +51,25 @@ class CreateMergeForm(forms.Form):
             raise forms.ValidationError("Must pick or create an atom to merge with, none entered.")
 
         return cleaned_data
+
+
+class UpdateMergeForm(forms.Form):
+
+     pk = forms.IntegerField(widget=forms.HiddenInput(attrs={'readonly': True}))
+
+     choices = forms.ModelMultipleChoiceField(
+         queryset=ConceptAtom.objects.all(), #initial qset is empty
+         widget=forms.CheckboxSelectMultiple)
+
+     delete = forms.BooleanField(label="Delete and Unmerge All")
+
+     def __init__(self, *args, **kwargs):
+
+         super(UpdateMergeForm, self).__init__(*args, **kwargs)
+
+         #dynamically find the choice qset for the corresponding concept atom
+         my_pk = self['pk'].value()
+         self.fields['choices'].queryset = ConceptAtom.objects.filter(merged_atoms__pk=my_pk)
+
+UpdateMergeFormSet = formset_factory(UpdateMergeForm,
+                                     extra=0)

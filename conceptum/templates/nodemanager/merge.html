@@ -4,12 +4,22 @@
 <form action="{% url 'get merge' node.id %}" method="post">
   {% csrf_token %}
 
-  {% if form.errors %}
+  {% if create_form.errors %}
   <h3>Please correct the following error:</h3>
-  {{ form.non_field_errors }}
+  {{ create_form.non_field_errors }}
   {% endif %}
 
+  {{ create_form.as_p }}
+  <input type="submit" name="{{ create_form.new_merge_id }}" value="New Merge">
+  <input type="submit" name="{{ create_form.edit_merge_id }}" value="Add to Merge">
+</form>
+
+<h3>Edit Existing Merges</h3>
+<form action="{% url 'get entry' node.id %}" method="post">
+  {% csrf_token %}
+  {% for form in edit_formset %}
   {{ form.as_p }}
-  <input type="submit" name="{{ form.new_merge_id }}" value="New Merge">
-  <input type="submit" name="{{ form.edit_merge_id }}" value="Add to Merge">
+  {% endfor %}
+  {{ edit_management.formset_form }}
+  <input type="submit" value="Submit">
 </form>
