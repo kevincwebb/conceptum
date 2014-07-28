@@ -60,7 +60,7 @@ class UpdateMergeForm(forms.Form):
      choices = forms.ModelMultipleChoiceField(
          queryset=ConceptAtom.objects.all(), #initial qset is empty
          widget=forms.CheckboxSelectMultiple)
-
+     atom_name = None
      delete = forms.BooleanField(label="Delete and Unmerge All")
 
      def __init__(self, *args, **kwargs):
@@ -70,6 +70,7 @@ class UpdateMergeForm(forms.Form):
          #dynamically find the choice qset for the corresponding concept atom
          my_pk = self['pk'].value()
          self.fields['choices'].queryset = ConceptAtom.objects.filter(merged_atoms__pk=my_pk)
+         self.atom_name = ConceptAtom.objects.filter(pk=my_pk).get().text
 
 UpdateMergeFormSet = formset_factory(UpdateMergeForm,
                                      extra=0)

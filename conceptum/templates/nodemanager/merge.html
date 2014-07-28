@@ -18,6 +18,7 @@
 <form action="{% url 'edit merge' node.id %}" method="post">
   {% csrf_token %}
   {% for form in edit_formset %}
+  <b><u>Edit - {{ form.atom_name }}</u></b>
   {{ form.as_p }}
   {% endfor %}
   {{ edit_formset.management_form }}
