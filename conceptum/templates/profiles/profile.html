@@ -1,19 +1,26 @@
-{% extends "base.html" %}
+{% extends "account/base.html" %}
+
+{% load url from future %}
 {% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Edit Profile" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
 
 {% block content %}
 
-{% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
+<div class="container">
 
-<h2>Welcome {{ user.name }} </h2>
-    <div class ="profile-info">
-	This is your profile.<br><br>
+
+  <div class="horizontal-heading">
+    <h2>Welcome {{ user.name }}</h2>
+  </div>
+
     
     <b>Primary Email:</b>
     {{ user.email }}<br>
@@ -30,14 +37,27 @@
     <b>Other Info:</b>
     {{ user.profile.text_info }}<br>
 
+    <br>
+    {% if user.profile.is_contrib or user.is_staff %}
+      You have Contributor privileges, which means you can access features of the website
+      for developing the CI.  You can also deploy the CI when it is finished.
+    {% else %}
+      You do not have Contributor privileges, but you can deploy the CI when it is finished.
+      If you would like to help develop the CI, please contact us.
+    {% endif %}
+
+    {% if user.is_staff %}
+      <br>
+      You are an administrator.
+    {% endif %}
     
-    
-	<br><br><b>Options:<b>
+	<br><br>
+    <b>Options:<b>
 	<br><a href = {% url 'account_logout' %}> Logout </a>
     <br><a href = {% url 'edit_profile' %}> Edit Profile </a>
 	<br><a href = {% url 'account_email' %}> Manage Email Addresses </a>
 	<br><a href = {% url 'account_change_password' %}> Change Password </a>
   
-    
+</div> <!-- container -->
 
 {% endblock %}

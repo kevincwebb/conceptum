@@ -130,12 +130,14 @@ class SignupFormTest(SimpleTestCase):
         response = self.client.post('/accounts/signup/', {'email': '',
                                                           'name': '',
                                                           'homepage': '',
+                                                          'institution': '',
                                                           'password1': '',
                                                           'password2': ''})
         error = "This field is required."
         self.assertFormError(response, 'form', 'email', error, "" )
         self.assertFormError(response, 'form', 'name', error, "" )
         self.assertFormError(response, 'form', 'homepage', error, "" )
+        self.assertFormError(response, 'form', 'institution', error, "" )
         self.assertFormError(response, 'form', 'password1', error, "" )
         self.assertFormError(response, 'form', 'password2', error, "" )
 
