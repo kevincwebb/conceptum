@@ -101,10 +101,15 @@ def get_merge(request, node_id, merge_type=None):
             print "No Merge type was called"
 
 
-        if form.is_valid():
+        # note that "form" could be either a single form or a formset
+        # depending on whether the user did a 'new merge' or an
+        # 'update merge'. For this reason, we have to do an additional
+        # attribute check
+        if form.is_valid(): #could be a form or a formset depending on request
 
-            #user merged under a new concept atom
-            if form.new_merge_id in request.POST:
+            # user merged under a new concept atom
+            if hasattr(form,'new_merge_id') and form.new_merge_id in request.POST:
+                print "new merge id"
                 new_atom = ConceptAtom(concept_node=node,
                                        user=user,
                                        text=form.cleaned_data.get('new_atom_name'),
@@ -112,18 +117,34 @@ def get_merge(request, node_id, merge_type=None):
                 new_atom.save()
                 new_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
             #user merged atoms to an existing concept atom
-            elif form.edit_merge_id in request.POST:
+            elif hasattr(form,'edit_merge_id') and form.edit_merge_id in request.POST:
+                print "edit merge id"
                 curr_atom = form.cleaned_data.get('merged_atoms')
 
                 curr_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
 
             #user has edited an existing concept atom
             else:
-                print "EditMergeFormSet"
+                print "it's a formset!"
+                formset = form #small name-change to enhance clarity
+
+                for form in formset:
+
+                    if form.cleaned_data.get('delete'):
+                        atom = ConceptAtom.objects.filter(pk=form.cleaned_data.get('pk')).get()
+                        atom.delete()
+                    else:
+                        for atom in form.cleaned_data.get('choices'):
+                            atom.merged_atoms = None
+                            atom.save()
+
+
 
             return redirect('merge', node_id=node.id)
 
         else:
+            print "form is invalid"
+            print form.errors
             return render(request, 'nodemanager/merge.html',
                           {'node': node,
                            'user': user,

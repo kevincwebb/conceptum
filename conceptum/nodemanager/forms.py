@@ -59,9 +59,11 @@ class UpdateMergeForm(forms.Form):
 
      choices = forms.ModelMultipleChoiceField(
          queryset=ConceptAtom.objects.all(), #initial qset is empty
-         widget=forms.CheckboxSelectMultiple)
+         widget=forms.CheckboxSelectMultiple,
+         required=False)
      atom_name = None
-     delete = forms.BooleanField(label="Delete and Unmerge All")
+     delete = forms.BooleanField(label="Delete and Unmerge All",
+                                 required=False)
 
      def __init__(self, *args, **kwargs):
 

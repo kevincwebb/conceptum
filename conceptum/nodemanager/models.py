@@ -143,7 +143,7 @@ class ConceptAtom(models.Model):
 
     text = models.CharField(max_length=MAX_LENGTH)
     final_choice = models.BooleanField(default=False)
-    merged_atoms = models.ForeignKey('self', null=True)
+    merged_atoms = models.ForeignKey('self', null=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return self.text
