@@ -8,6 +8,11 @@ from .models import ContributorProfile
 User = get_user_model()
 
 class EditProfileForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(EditProfileForm, self).__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-control'
+
     class Meta:
         model = ContributorProfile
         fields = ['name', 'institution', 'homepage', 'text_info']
