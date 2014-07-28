@@ -3,3 +3,5 @@
 {% for exam in all_exams %}
         <li><a href="{% url 'description' exam.id %}">{{ exam.name }}</a></li>
 {% endfor %}
+
+<h3> Here's a list of all of the exams ordered by vote count! </h3>

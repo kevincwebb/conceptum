@@ -41,11 +41,13 @@ class Interview(models.Model):
     
     date_of_interview = models.DateField()
     
-   # uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL)
     
     date_uploaded = models.DateField(auto_now_add=True)
 
     votes = VotesField()
+
+    objects_with_scores = ObjectsWithScoresManager()
     
     def __str__(self):
         return "Interview with {person} on {date}".format(
