@@ -1,7 +1,7 @@
 <h1>Pruning Stage for Node {{ node.id }}</h1>
 
 {{ node.content }}
-<form action="{% url 'get merge' node.id %}" method="post">
+<form action="{% url 'new merge' node.id %}" method="post">
   {% csrf_token %}
 
   {% if create_form.errors %}
@@ -15,11 +15,11 @@
 </form>
 
 <h3>Edit Existing Merges</h3>
-<form action="{% url 'get entry' node.id %}" method="post">
+<form action="{% url 'edit merge' node.id %}" method="post">
   {% csrf_token %}
   {% for form in edit_formset %}
   {{ form.as_p }}
   {% endfor %}
   {{ edit_management.formset_form }}
-  <input type="submit" value="Submit">
+  <input type="submit" value="Edit Already-Merged Nodes">
 </form>

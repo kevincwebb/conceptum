@@ -83,17 +83,25 @@ def merge(request, node_id):
                               'edit_formset': edit_formset},)
     return HttpResponse(template.render(context))
 
-def get_merge(request, node_id):
+def get_merge(request, node_id, merge_type=None):
 
     node = getNode(node_id)
     user = request.user
 
     if request.method == 'POST':
 
-        form = CreateMergeForm(request.POST)
+        #differentiate between different forms
+        if merge_type == 'create merge':
+            form = CreateMergeForm(request.POST)
+        elif merge_type == 'update merge':
+            form = UpdateMergeFormSet(request.POST)
+        else:
+            print "No Merge type was called"
+
 
         if form.is_valid():
 
+            #user merged under a new concept atom
             if form.new_merge_id in request.POST:
                 new_atom = ConceptAtom(concept_node=node,
                                        user=user,
@@ -101,12 +109,17 @@ def get_merge(request, node_id):
                                        final_choice=True,)
                 new_atom.save()
                 new_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
-            else:
+            #user merged atoms to an existing concept atom
+            elif form.edit_merge_id in request.POST:
                 curr_atom = form.cleaned_data.get('merged_atoms')
 
                 curr_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
 
-                return redirect('merge', node_id=node.id)
+            #user has edited an existing concept atom
+            else:
+                print "EditMergeFormSet"
+
+            return redirect('merge', node_id=node.id)
 
         else:
             return render(request, 'nodemanager/merge.html',
