@@ -1,3 +1,11 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import ConceptNode
+
+import reversion
+
+
+class ConceptNodeAdmin(reversion.VersionAdmin):
+    pass
+
+admin.site.register(ConceptNode, ConceptNodeAdmin)
