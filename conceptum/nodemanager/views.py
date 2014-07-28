@@ -93,8 +93,10 @@ def get_merge(request, node_id, merge_type=None):
         #differentiate between different forms
         if merge_type == 'create merge':
             form = CreateMergeForm(request.POST)
+            print "new merge form!"
         elif merge_type == 'update merge':
             form = UpdateMergeFormSet(request.POST)
+            print "update merge form!"
         else:
             print "No Merge type was called"
 
