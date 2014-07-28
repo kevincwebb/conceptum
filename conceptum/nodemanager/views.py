@@ -73,26 +73,7 @@ def merge(request, node_id):
 
     node = getNode(node_id)
     create_form = CreateMergeForm()
-
-    top_level_merged_atoms = ConceptAtom.get_final_atoms()
-
-    # for atom in top_level_merged_atoms:
-    #     initial['pk']=atom.pk
-    #     qset_dict['pk']=
-
-    edit_formset = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in top_level_merged_atoms])
-
-    # for form in edit_formset:
-    #     #print form.as_p()
-    #     atom_pk = form['pk'].value()
-    #     print "atom_pk", atom_pk
-    #     qset = ConceptAtom.objects.filter(merged_atoms__pk=atom_pk)
-    #     print "THE QUERYSET: ", qset
-    #     print "THE OLD FORM: ", form['choices'].data()
-    #     form['choices'].queryset = qset
-    #     print "THE FORM: ", form['choices'].value()
-
-
+    edit_formset = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms()])
 
     template = loader.get_template('nodemanager/merge.html')
     context = RequestContext(request,
