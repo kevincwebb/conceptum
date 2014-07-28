@@ -7,6 +7,12 @@ from django.contrib.auth import authenticate
 from profiles.models import ContributorProfile
 
 class SignupForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(SignupForm, self).__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if 'interest_in' not in field_name:
+                field.widget.attrs['class'] = 'form-control'
+
     email = forms.EmailField(widget=forms.TextInput(attrs={'type': 'email',
                                                            'placeholder': _('E-mail address')}))
     name = forms.CharField(label=_("Name"),
@@ -54,6 +60,10 @@ class SignupForm(forms.Form):
 
 
 class LoginForm(BaseLoginForm):
+    def __init__(self, *args, **kwargs):
+        super(LoginForm, self).__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-control'
     
     def clean(self):
         if self._errors:

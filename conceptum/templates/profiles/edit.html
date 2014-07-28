@@ -15,7 +15,7 @@
 {% block content %}
 
 <div class="container">
-    
+
 <form class="form-horizontal" role="form" method="POST" action="{% url 'edit_profile' %}">
   {% csrf_token %}
 
@@ -27,6 +27,10 @@
 
   {{ form.non_field_errors }}
 
+  {% if redirect_field_value %}
+  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+  {% endif %}
+
   {% for field in form %}
     <div class="form-group">
       {{ field.errors }}
@@ -37,15 +41,12 @@
     </div>
   {% endfor %}
 
-  {% if redirect_field_value %}
-  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-  {% endif %}
-
-  <div class="submit">
-    <button class="btn btn-lg btn-primary " type="submit">Save Changes</button>
-    <a href = {% url 'profile' %} class='btn btn-lg btn-info ' > Cancel </a>
+  <div class="form-group row">
+    <div class="col-xs-12">
+      <button class="btn btn-lg btn-primary " type="submit">Save Changes</button>
+      <a href = {% url 'profile' %} class='btn btn-lg btn-danger' > Cancel </a>
+    </div>
   </div>
-  
 
 </form>
 
