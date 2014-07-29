@@ -18,6 +18,7 @@ class Exam(models.Model):
     """
 
     votes = VotesField()
+    objects = models.Manager()
     name = models.CharField(max_length=EXAM_NAME_LENGTH)
     description = models.CharField(max_length=EXAM_DESC_LENGTH)
     randomize = models.BooleanField('randomize question order', default=False)

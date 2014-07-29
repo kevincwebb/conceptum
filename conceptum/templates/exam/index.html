@@ -20,11 +20,12 @@
 </style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
 {% voting_script %}
-{% for exam in all_exams %}
+{% for exam in exam_list_ordered__scores %}
   <div class="exam">
     {% vote_buttons_for exam %}
       <div class="name">
         {{ exam.name }}
       </div>
   </div>
+  <br />
 {% endfor %}
