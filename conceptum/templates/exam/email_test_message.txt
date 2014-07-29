@@ -1,0 +1,9 @@
+{% load account %}
+{#% user_display user as user_display %#}
+{% load i18n %}{% autoescape off %}
+{% blocktrans with current_site.name as site_name %}
+
+Please take this test on {{ site_name }}.
+
+To take the test, go to {{ test_url }}
+{% endblocktrans %}{% endautoescape %}
