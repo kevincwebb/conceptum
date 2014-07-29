@@ -1,3 +1,6 @@
+{% load qhonuskan_votes static %}
+{% get_static_prefix as STATIC_PREFIX %}
+
 <h3> You're at the Exam Index! </h3>
 
 {% for exam in all_exams %}
@@ -5,3 +8,23 @@
 {% endfor %}
 
 <h3> Here's a list of all of the exams ordered by vote count! </h3>
+
+<link href="{{STATIC_PREFIX}}default_buttons.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+  div.vote_buttons {
+    width: 40px;
+    margin-right: 5px;
+    float: left;
+    border: 1px solid #666;
+  }
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+{% voting_script %}
+{% for exam in all_exams %}
+  <div class="exam">
+    {% vote_buttons_for exam %}
+      <div class="name">
+        {{ exam.name }}
+      </div>
+  </div>
+{% endfor %}

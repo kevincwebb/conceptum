@@ -1,4 +1,5 @@
 from django.db import models
+from qhonuskan_votes.models import VotesField, SortByScoresManager
 
 # import reversion
 
@@ -15,9 +16,12 @@ class Exam(models.Model):
     Represents a collection of questions that can be used as a concept
     inventory, survey, or other form of exam.
     """
+
+    votes = VotesField()
     name = models.CharField(max_length=EXAM_NAME_LENGTH)
     description = models.CharField(max_length=EXAM_DESC_LENGTH)
     randomize = models.BooleanField('randomize question order', default=False)
+    sort_by_score = SortByScoresManager()
 
     def __unicode__(self):
         return self.name
