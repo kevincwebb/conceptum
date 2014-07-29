@@ -91,10 +91,10 @@ def get_merge(request, node_id, merge_type=None):
     if request.method == 'POST':
 
         #differentiate between different forms
-        if merge_type == 'create merge':
+        if merge_type == 'new merge':
             form = CreateMergeForm(request.POST)
             print "new merge form!"
-        elif merge_type == 'update merge':
+        elif merge_type == 'edit merge':
             form = UpdateMergeFormSet(request.POST)
             print "update merge form!"
         else:
@@ -145,10 +145,31 @@ def get_merge(request, node_id, merge_type=None):
         else:
             print "form is invalid"
             print form.errors
-            return render(request, 'nodemanager/merge.html',
-                          {'node': node,
-                           'user': user,
-                           'form': form})
+
+            render_args = {'node': node,
+                           'user': user}
+            if merge_type == 'new merge':
+                print "new merge!"
+                render_args['create_form'] = form
+                render_args['edit_formset'] = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms()])
+
+            elif merge_type == 'update merge':
+                print "update merge!"
+                render_args['create_form'] = CreateMergeForm()
+                render_args['edit_formset'] = form
+            else:
+                print "whatwhatwhat"
+
+            print render_args
+            template = loader.get_template('nodemanager/merge.html')
+            context = RequestContext(request, render_args)
+            return HttpResponse(template.render(context))
+            # create_form = CreateMergeForm()
+            # edit_formset = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms()])
+
+
+            # print render_args
+            # return render(request, 'nodemanager/merge.html', render_args)
 
 def rank(request, node_id):
     return HttpResponse("this is rank")
