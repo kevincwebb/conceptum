@@ -1,8 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.template import RequestContext, loader
+from django.views.generic import FormView
+from django.core.urlresolvers import reverse_lazy
+from django.http import HttpResponseRedirect
 
-from exam.models import Exam
+from .models import Exam, ExamResponse
+from .forms import DistributeForm
 
 # Create your views here.
 
@@ -28,3 +32,16 @@ def discuss(request, exam_id):
                              {'exam': exam,
                               'exam_id': exam_id},)
     return HttpResponse(template.render(context))
+
+class DistributeView(FormView):
+    template_name = 'exam/exam_distribute.html'
+    form_class = DistributeForm
+    success_url = reverse_lazy('index')
+    
+    def form_valid(self, form):
+        to_email = form.cleaned_data.get('email')
+        exam_response = ExamResponse.objects.create()
+        exam_response.send(self.request, to_email)
+        return HttpResponseRedirect(self.get_success_url())
+    
+    

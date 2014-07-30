@@ -12,11 +12,12 @@ class Migration(SchemaMigration):
         db.create_table(u'profiles_contributorprofile', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('user', self.gf('django.db.models.fields.related.OneToOneField')(related_name='profile', unique=True, to=orm['authtools.User'])),
-            ('institution', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('is_contrib', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('institution', self.gf('django.db.models.fields.CharField')(default='', max_length=200)),
             ('homepage', self.gf('django.db.models.fields.URLField')(default='', max_length=200)),
             ('interest_in_devel', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('interest_in_deploy', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('text_info', self.gf('django.db.models.fields.TextField')(default='')),
+            ('text_info', self.gf('django.db.models.fields.TextField')(default='', blank=True)),
         ))
         db.send_create_signal(u'profiles', ['ContributorProfile'])
 
@@ -65,10 +66,11 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'ContributorProfile'},
             'homepage': ('django.db.models.fields.URLField', [], {'default': "''", 'max_length': '200'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'institution': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'institution': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '200'}),
             'interest_in_deploy': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'interest_in_devel': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'text_info': ('django.db.models.fields.TextField', [], {'default': "''"}),
+            'is_contrib': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'text_info': ('django.db.models.fields.TextField', [], {'default': "''", 'blank': 'True'}),
             'user': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'profile'", 'unique': 'True', 'to': u"orm['authtools.User']"})
         }
     }
