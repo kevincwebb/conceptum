@@ -4,7 +4,7 @@ from django.template import RequestContext, loader
 from django.core.urlresolvers import reverse
 
 from nodemanager.models import CITreeInfo, ConceptNode, ConceptAtom
-from nodemanager.forms import AtomForm, AtomFormSet
+from nodemanager.forms import AtomFormSet, CreateMergeForm, UpdateMergeFormSet
 
 getNode = lambda node_id: ConceptNode.objects.filter(pk=node_id).get()
 
@@ -18,6 +18,9 @@ def entry(request, node_id, redirected=False):
                              {'node': node,
                               'user': user,
                               'redirected': redirected},)
+    if not node.node_type == 'F':
+        return render(request, 'nodemanager/stage_error.html')
+
     if user in node.users_contributed_set():
         template = loader.get_template('nodemanager/atomlist.html')
         context['atoms'] = atoms
@@ -32,7 +35,7 @@ def entry(request, node_id, redirected=False):
 
 def get_entry(request, node_id):
     if request.method == 'POST':
-        formset = AtomFormSet(request.POST)
+        formset = AtomFormSet(request.post)
 
         if formset.is_valid():
             for form in formset:
@@ -69,15 +72,109 @@ def get_entry(request, node_id):
                    'user': request.user,
                    'form': form})
 
-def prune(request, node_id):
+def merge(request, node_id):
 
+    user = request.user
     node = getNode(node_id)
 
-    template = loader.get_template('nodemanager/prune.html')
+    if not node.node_type == 'P':
+        return render(request, 'nodemanager/stage_error.html')
+
+    create_form = CreateMergeForm(node=node)
+    edit_formset = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms(node)])
+
+    template = loader.get_template('nodemanager/merge.html')
     context = RequestContext(request,
                              {'node': node,
-                              'user': request.user},)
+                              'user': request.user,
+                              'create_form': create_form,
+                              'edit_formset': edit_formset},)
     return HttpResponse(template.render(context))
+
+def get_merge(request, node_id, merge_type=None):
+
+    node = getNode(node_id)
+    user = request.user
+
+    if request.method == 'POST':
+
+        #differentiate between different forms
+        if merge_type == 'new merge':
+            form = CreateMergeForm(request.POST, node=node)
+        elif merge_type == 'edit merge':
+            form = UpdateMergeFormSet(request.POST)
+        else:
+            print "ERROR No Merge type was called"
+
+
+        # note that "form" could be either a single form or a formset
+        # depending on whether the user did a 'new merge' or an
+        # 'update merge'. For this reason, we have to do an additional
+        # attribute check
+        if form.is_valid(): #could be a form or a formset depending on request
+
+            # user merged under a new concept atom
+            if hasattr(form,'new_merge_id') and form.new_merge_id in request.POST:
+                new_atom = ConceptAtom(concept_node=node,
+                                       user=user,
+                                       text=form.cleaned_data.get('new_atom_name'),
+                                       final_choice=True,)
+                new_atom.save()
+                new_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
+            #user merged atoms to an existing concept atom
+            elif hasattr(form,'edit_merge_id') and form.edit_merge_id in request.POST:
+                curr_atom = form.cleaned_data.get('merged_atoms')
+
+                curr_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
+
+            #user has edited an existing concept atom
+            else:
+                formset = form #small name-change to enhance clarity
+
+                for form in formset:
+
+                    if form.cleaned_data.get('delete'):
+                        atom = ConceptAtom.objects.filter(pk=form.cleaned_data.get('pk')).get()
+                        atom.delete()
+                    else:
+                        for atom in form.cleaned_data.get('choices'):
+                            atom.merged_atoms = None
+                            atom.save()
+
+
+
+            return redirect('merge', node_id=node.id)
+
+        else:
+
+            print "errors in form"
+            print form.errors
+            #print form.non_form_errors()
+
+            render_args = {'node': node,
+                           'user': user}
+            if merge_type == 'new merge':
+                render_args['create_form'] = form
+                render_args['edit_formset'] = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms(node)])
+
+            elif merge_type == 'edit merge':
+                render_args['create_form'] = CreateMergeForm(node)
+                render_args['edit_formset'] = form
+            else:
+                print "ERROR unknown merge type"
+
+            template = loader.get_template('nodemanager/merge.html')
+            context = RequestContext(request, render_args)
+            return HttpResponse(template.render(context))
+
+def finalize_merge(request, node_id):
+
+    node = getNode(node_id)
+    for atom in ConceptAtom.get_unmerged_atoms(node):
+        atom.final_choice = True
+        atom.save()
+
+    return redirect(reverse('final sub', args=[node_id]))
 
 def rank(request, node_id):
     return HttpResponse("this is rank")

@@ -1,0 +1,36 @@
+<h1>Pruning Stage for Node {{ node.id }}</h1>
+
+{{ node.content }}
+<form action="{% url 'new merge' node.id %}" method="post">
+  {% csrf_token %}
+
+  {% if create_form.errors %}
+  <h3>Please correct the following error:</h3>
+  {{ create_form.non_field_errors }}
+  {% endif %}
+
+  {% if edit_formset.non_form_errors %}
+  <h3>Please correct the following error:</h3>
+  {{ edit_formset.non_form_errors }}
+  {% endif %}
+
+  {{ create_form.as_p }}
+  <input type="submit" name="{{ create_form.new_merge_id }}" value="New Merge">
+  <input type="submit" name="{{ create_form.edit_merge_id }}" value="Add to Merge">
+</form>
+
+<h3>Edit Existing Merges</h3>
+<form action="{% url 'edit merge' node.id %}" method="post">
+  {% csrf_token %}
+  {% for form in edit_formset %}
+  <b><u>Edit - {{ form.atom_name }}</u></b>
+  {{ form.as_p }}
+  {% endfor %}
+  {{ edit_formset.management_form }}
+  <input type="submit" value="Edit Already-Merged Nodes">
+</form>
+
+<a href="{% url 'landing' %}">Back to Landing Page</a>
+<p>
+<a href="{% url 'final merge' node.id %}">Final Submission</a>
+<font color="red">After clicking, you will not be able to edit or add concepts!</font>
