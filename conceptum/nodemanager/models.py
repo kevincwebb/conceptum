@@ -163,12 +163,12 @@ class ConceptAtom(models.Model):
         return self.text
 
     @staticmethod
-    def get_unmerged_atoms():
-        return ConceptAtom.objects.filter(merged_atoms=None).exclude(final_choice=True)
+    def get_unmerged_atoms(node):
+        return ConceptAtom.objects.filter(concept_node=node).filter(merged_atoms=None).exclude(final_choice=True)
 
     @staticmethod
-    def get_final_atoms():
-        return ConceptAtom.objects.filter(final_choice=True)
+    def get_final_atoms(node):
+        return ConceptAtom.objects.filter(concept_node=node).filter(final_choice=True)
 
     def add_merge_atoms(self, atoms): #atoms is a queryset
         for atom in atoms:

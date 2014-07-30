@@ -26,11 +26,11 @@ AtomFormSet = formset_factory(AtomForm,
 class CreateMergeForm(forms.Form):
 
     free_atoms = forms.ModelMultipleChoiceField(
-        queryset=ConceptAtom.get_unmerged_atoms(),
+        queryset=ConceptAtom.objects.none(),
         widget=forms.CheckboxSelectMultiple,
     )
     merged_atoms = forms.ModelChoiceField(
-        queryset=ConceptAtom.get_final_atoms(),
+        queryset=ConceptAtom.objects.none(),
         widget=forms.RadioSelect,
         required=False
     )
@@ -38,6 +38,15 @@ class CreateMergeForm(forms.Form):
 
     new_merge_id = 'new merge'
     edit_merge_id = 'edit merge'
+
+    def __init__(self, *args, **kwargs):
+
+        node = kwargs.pop('node')
+
+        super(CreateMergeForm, self).__init__(*args, **kwargs)
+
+        self.fields['free_atoms'].queryset = ConceptAtom.get_unmerged_atoms(node)
+        self.fields['merged_atoms'].queryset = ConceptAtom.get_final_atoms(node)
 
     def clean(self):
 
@@ -58,7 +67,7 @@ class UpdateMergeForm(forms.Form):
      pk = forms.IntegerField(widget=forms.HiddenInput(attrs={'readonly': True}))
 
      choices = forms.ModelMultipleChoiceField(
-         queryset=ConceptAtom.objects.all(), #initial qset is empty
+         queryset=ConceptAtom.objects.none(), #initial qset is empty
          widget=forms.CheckboxSelectMultiple,
          required=False)
      atom_name = None

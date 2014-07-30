@@ -80,8 +80,8 @@ def merge(request, node_id):
     if not node.node_type == 'P':
         return render(request, 'nodemanager/stage_error.html')
 
-    create_form = CreateMergeForm()
-    edit_formset = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms()])
+    create_form = CreateMergeForm(node=node)
+    edit_formset = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms(node)])
 
     template = loader.get_template('nodemanager/merge.html')
     context = RequestContext(request,
@@ -100,7 +100,7 @@ def get_merge(request, node_id, merge_type=None):
 
         #differentiate between different forms
         if merge_type == 'new merge':
-            form = CreateMergeForm(request.POST)
+            form = CreateMergeForm(request.POST, node=node)
         elif merge_type == 'edit merge':
             form = UpdateMergeFormSet(request.POST)
         else:
@@ -155,10 +155,10 @@ def get_merge(request, node_id, merge_type=None):
                            'user': user}
             if merge_type == 'new merge':
                 render_args['create_form'] = form
-                render_args['edit_formset'] = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms()])
+                render_args['edit_formset'] = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms(node)])
 
             elif merge_type == 'edit merge':
-                render_args['create_form'] = CreateMergeForm()
+                render_args['create_form'] = CreateMergeForm(node)
                 render_args['edit_formset'] = form
             else:
                 print "ERROR unknown merge type"
@@ -169,7 +169,8 @@ def get_merge(request, node_id, merge_type=None):
 
 def finalize_merge(request, node_id):
 
-    for atom in ConceptAtom.get_unmerged_atoms():
+    node = getNode(node_id)
+    for atom in ConceptAtom.get_unmerged_atoms(node):
         atom.final_choice = True
         atom.save()
 
