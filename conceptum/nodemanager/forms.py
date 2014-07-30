@@ -1,5 +1,5 @@
 from django import forms
-from django.forms.formsets import formset_factory
+from django.forms.formsets import formset_factory, BaseFormSet
 
 from nodemanager.models import ConceptAtom
 
@@ -74,5 +74,24 @@ class UpdateMergeForm(forms.Form):
          self.fields['choices'].queryset = ConceptAtom.objects.filter(merged_atoms__pk=my_pk)
          self.atom_name = ConceptAtom.objects.filter(pk=my_pk).get().text
 
+class BaseUpdateMergeFormset(BaseFormSet):
+
+    def clean(self):
+
+        if any(self.errors): #if there are any individual errors, exit
+            return
+
+        for form in self.forms:
+            delete = form.cleaned_data.get('delete')
+            choice_qset = form.cleaned_data.get('choices')
+
+            # if at any point we have a deletion or non-empty qset,
+            # form cannot be empty
+            if delete or choice_qset:
+                return
+
+        raise forms.ValidationError("Did not enter anything to edit or remove.")
+
 UpdateMergeFormSet = formset_factory(UpdateMergeForm,
+                                     formset=BaseUpdateMergeFormset,
                                      extra=0)

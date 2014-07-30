@@ -148,13 +148,18 @@ def get_merge(request, node_id, merge_type=None):
             return redirect('merge', node_id=node.id)
 
         else:
+
+            print "errors in form"
+            print form.errors
+            #print form.non_form_errors()
+
             render_args = {'node': node,
                            'user': user}
             if merge_type == 'new merge':
                 render_args['create_form'] = form
                 render_args['edit_formset'] = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms()])
 
-            elif merge_type == 'update merge':
+            elif merge_type == 'edit merge':
                 render_args['create_form'] = CreateMergeForm()
                 render_args['edit_formset'] = form
             else:

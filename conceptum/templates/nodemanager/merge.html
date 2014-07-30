@@ -9,6 +9,11 @@
   {{ create_form.non_field_errors }}
   {% endif %}
 
+  {% if edit_formset.non_form_errors %}
+  <h3>Please correct the following error:</h3>
+  {{ edit_formset.non_form_errors }}
+  {% endif %}
+
   {{ create_form.as_p }}
   <input type="submit" name="{{ create_form.new_merge_id }}" value="New Merge">
   <input type="submit" name="{{ create_form.edit_merge_id }}" value="Add to Merge">
