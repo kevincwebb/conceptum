@@ -18,6 +18,9 @@ def entry(request, node_id, redirected=False):
                              {'node': node,
                               'user': user,
                               'redirected': redirected},)
+    if not node.node_type == 'F':
+        return render(request, 'nodemanager/stage_error.html')
+
     if user in node.users_contributed_set():
         template = loader.get_template('nodemanager/atomlist.html')
         context['atoms'] = atoms
@@ -74,13 +77,8 @@ def merge(request, node_id):
     user = request.user
     node = getNode(node_id)
 
-    if user in node.users_contributed_set():
-        template = loader.get_template('nodemanager/final_atomlist.html')
-        context = RequestContext(request,
-                                 {'node': node,
-                                  'user': user,
-                                  'atoms': ConceptAtom.objects.filter(concept_node=node).filter(final_choice=True)})
-        return HttpResponse(template.render(context))
+    if not node.node_type == 'P':
+        return render(request, 'nodemanager/stage_error.html')
 
     create_form = CreateMergeForm()
     edit_formset = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms()])

@@ -18,5 +18,6 @@ urlpatterns = patterns('',
         url(r'^(?P<node_id>\d+)/editmerge', views.get_merge,
             {'merge_type': 'edit merge'}, name='edit merge'),
         url(r'^(?P<node_id>\d+)/finalmerge$', views.finalize_merge, name='final merge'),
+
         url(r'^(?P<node_id>\d+)/rank$', views.rank, name='rank'),
         )
