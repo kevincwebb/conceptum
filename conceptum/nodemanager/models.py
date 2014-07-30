@@ -121,11 +121,25 @@ class ConceptNode(MPTTModel):
 
         return
 
-    def is_stage_finished(self):
+    def check_users_visited(self):
         if list(self.users_contributed_set()) == list(self.ci_tree_info.users.all()):
             return True
         else:
             return False
+
+    def check_admin_visited(self):
+        if not set(self.admin_set()).isdisjoint(set(self.users_contributed_set())):
+            return True
+        else:
+            return False
+
+    def is_stage_finished(self):
+
+        if self.node_type == 'F' or self.node_type == 'R':
+            return self.check_users_visited()
+        elif self.node_type == 'P':
+            return self.check_admin_visited()
+
 
 
 # Atoms are entered by the user and are meant to represent
