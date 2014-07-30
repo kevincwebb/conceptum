@@ -160,3 +160,6 @@ class ConceptAtom(models.Model):
         for atom in atoms:
             atom.merged_atoms = self
             atom.save()
+
+    def get_dependent_atoms(self):
+        return ConceptAtom.objects.filter(merged_atoms__pk=self.pk)

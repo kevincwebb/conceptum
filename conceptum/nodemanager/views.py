@@ -32,7 +32,7 @@ def entry(request, node_id, redirected=False):
 
 def get_entry(request, node_id):
     if request.method == 'POST':
-        formset = AtomFormSet(request.POST)
+        formset = AtomFormSet(request.post)
 
         if formset.is_valid():
             for form in formset:
@@ -71,7 +71,17 @@ def get_entry(request, node_id):
 
 def merge(request, node_id):
 
+    user = request.user
     node = getNode(node_id)
+
+    if user in node.users_contributed_set():
+        template = loader.get_template('nodemanager/final_atomlist.html')
+        context = RequestContext(request,
+                                 {'node': node,
+                                  'user': user,
+                                  'atoms': ConceptAtom.objects.filter(concept_node=node).filter(final_choice=True)})
+        return HttpResponse(template.render(context))
+
     create_form = CreateMergeForm()
     edit_formset = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms()])
 
@@ -170,6 +180,14 @@ def get_merge(request, node_id, merge_type=None):
 
             # print render_args
             # return render(request, 'nodemanager/merge.html', render_args)
+
+def finalize_merge(request, node_id):
+
+    for atom in ConceptAtom.get_unmerged_atoms():
+        atom.final_choice = True
+        atom.save()
+
+    return redirect(reverse('final sub', args=[node_id]))
 
 def rank(request, node_id):
     return HttpResponse("this is rank")

@@ -1,0 +1,14 @@
+<h1>Final Merged Atom List</h1>
+
+<ul>
+  {% for atom in atoms %}
+        <li> {{ atom.text }} </li>
+        <ul>
+        {% for dependent_atom in atom.get_dependent_atoms %}
+                <li> {{ dependent_atom.text }} </li>
+        {% endfor %}
+        </ul>
+{% endfor %}
+</ul>
+
+<a href="{% url 'landing' %}">Back to Stage 1 Landing Page</a>

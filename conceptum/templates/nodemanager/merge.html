@@ -24,3 +24,8 @@
   {{ edit_formset.management_form }}
   <input type="submit" value="Edit Already-Merged Nodes">
 </form>
+
+<a href="{% url 'landing' %}">Back to Landing Page</a>
+<p>
+<a href="{% url 'final merge' node.id %}">Final Submission</a>
+<font color="red">After clicking, you will not be able to edit or add concepts!</font>
