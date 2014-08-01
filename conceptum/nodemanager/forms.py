@@ -36,8 +36,8 @@ class CreateMergeForm(forms.Form):
     )
     new_atom_name = forms.CharField(max_length=140, required=False)
 
-    new_merge_id = 'new merge'
-    edit_merge_id = 'edit merge'
+    add_merge_id = 'add merge'
+    subtract_merge_id = 'subtract merge'
 
     def __init__(self, *args, **kwargs):
 

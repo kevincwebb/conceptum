@@ -97,22 +97,22 @@ def get_merge(request, node_id, merge_type=None):
     if request.method == 'POST':
 
         #differentiate between different forms
-        if merge_type == 'new merge':
+        if merge_type == 'add merge':
             form = CreateMergeForm(request.POST, node=node)
-        elif merge_type == 'edit merge':
+        elif merge_type == 'subtract merge':
             form = UpdateMergeFormSet(request.POST)
         else:
             print "ERROR No Merge type was called"
 
 
         # note that "form" could be either a single form or a formset
-        # depending on whether the user did a 'new merge' or an
+        # depending on whether the user did a 'add merge' or an
         # 'update merge'. For this reason, we have to do an additional
         # attribute check
         if form.is_valid(): #could be a form or a formset depending on request
 
             # user merged under a new concept atom
-            if hasattr(form,'new_merge_id') and form.new_merge_id in request.POST:
+            if hasattr(form,'add_merge_id') and form.add_merge_id in request.POST:
                 new_atom = ConceptAtom(concept_node=node,
                                        user=user,
                                        text=form.cleaned_data.get('new_atom_name'),
@@ -120,7 +120,7 @@ def get_merge(request, node_id, merge_type=None):
                 new_atom.save()
                 new_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
             #user merged atoms to an existing concept atom
-            elif hasattr(form,'edit_merge_id') and form.edit_merge_id in request.POST:
+            elif hasattr(form,'subtract_merge_id') and form.subtract_merge_id in request.POST:
                 curr_atom = form.cleaned_data.get('merged_atoms')
 
                 curr_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
@@ -151,11 +151,11 @@ def get_merge(request, node_id, merge_type=None):
 
             render_args = {'node': node,
                            'user': user}
-            if merge_type == 'new merge':
+            if merge_type == 'add merge':
                 render_args['create_form'] = form
                 render_args['edit_formset'] = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms(node)])
 
-            elif merge_type == 'edit merge':
+            elif merge_type == 'subtract merge':
                 render_args['create_form'] = CreateMergeForm(node)
                 render_args['edit_formset'] = form
             else:

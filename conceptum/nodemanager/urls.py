@@ -14,9 +14,9 @@ urlpatterns = patterns('',
 
         url(r'^(?P<node_id>\d+)/merge$', views.merge, name='merge'),
         url(r'^(?P<node_id>\d+)/newmerge', views.get_merge,
-            {'merge_type': 'new merge'}, name='new merge'),
+            {'merge_type': 'add merge'}, name='add merge'),
         url(r'^(?P<node_id>\d+)/editmerge', views.get_merge,
-            {'merge_type': 'edit merge'}, name='edit merge'),
+            {'merge_type': 'subtract merge'}, name='subtract merge'),
         url(r'^(?P<node_id>\d+)/finalmerge$', views.finalize_merge, name='final merge'),
 
         url(r'^(?P<node_id>\d+)/rank$', views.rank, name='rank'),
