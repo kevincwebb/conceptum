@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.template import RequestContext, loader
 from django.core.urlresolvers import reverse
@@ -6,12 +6,10 @@ from django.core.urlresolvers import reverse
 from nodemanager.models import CITreeInfo, ConceptNode, ConceptAtom
 from nodemanager.forms import AtomFormSet, CreateMergeForm, UpdateMergeFormSet
 
-getNode = lambda node_id: ConceptNode.objects.filter(pk=node_id).get()
-
 # add/edit/remove interface for concept atoms
 def entry(request, node_id, redirected=False):
 
-    node = getNode(node_id)
+    node = get_object_or_404(ConceptNode,pk=node_id)
     user = request.user
     atoms = ConceptAtom.objects.filter(user=user)
     context = RequestContext(request,
@@ -46,7 +44,7 @@ def get_entry(request, node_id):
 
                     if not pk: #new entries do not have a pk
                         new_atom = ConceptAtom(
-                            concept_node=getNode(node_id),
+                            concept_node=get_object_or_404(ConceptNode,pk=node_id),
                             user=request.user,
                             text=form_text,
                             final_choice=False
@@ -68,14 +66,14 @@ def get_entry(request, node_id):
             return redirect('free entry', node_id=node_id)
 
     return render(request, 'nodemanager/entry.html',
-                  {'node': getNode(node_id),
+                  {'node': get_object_or_404(ConceptNode,pk=node_id),
                    'user': request.user,
                    'form': form})
 
 def merge(request, node_id):
 
     user = request.user
-    node = getNode(node_id)
+    node = get_object_or_404(ConceptNode,pk=node_id)
 
     if not node.node_type == 'P':
         return render(request, 'nodemanager/stage_error.html')
@@ -93,7 +91,7 @@ def merge(request, node_id):
 
 def get_merge(request, node_id, merge_type=None):
 
-    node = getNode(node_id)
+    node = get_object_or_404(ConceptNode,pk=node_id)
     user = request.user
 
     if request.method == 'POST':
@@ -169,7 +167,7 @@ def get_merge(request, node_id, merge_type=None):
 
 def finalize_merge(request, node_id):
 
-    node = getNode(node_id)
+    node = get_object_or_404(ConceptNode,pk=node_id)
     for atom in ConceptAtom.get_unmerged_atoms(node):
         atom.final_choice = True
         atom.save()
@@ -181,7 +179,7 @@ def rank(request, node_id):
 
 def add_finished_user(request, node_id):
 
-    node = getNode(node_id)
+    node = get_object_or_404(ConceptNode,pk=node_id)
     user = request.user
     if not user in node.users_contributed_set():
         node.user.add(user)
