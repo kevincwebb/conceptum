@@ -64,7 +64,7 @@ class SurveyCreateView(LoginRequiredMixin, ContribRequiredMixin, generic.View):
         
         return HttpResponseRedirect(reverse('survey_create', kwargs ={ 'pk' : self.kwargs['pk']}))
 
-class ExcerptDetailView(LoginRequiredMixin, generic.DetailView):
+class ExcerptDetailView(LoginRequiredMixin, ContribRequiredMixin, generic.DetailView):
     """
     Lists All Excerpts related to a concept
     """
@@ -180,4 +180,20 @@ class MultipleChoiceEditView(LoginRequiredMixin,
     
     def get_success_url(self):
         return reverse('survey_index')
+    
+class FreeResponseDeleteView(LoginRequiredMixin,
+                 ContribRequiredMixin,
+                 generic.DeleteView):
+       
+    model = FreeResponseQuestion
+    template_name = 'survey/confirm_delete.html'
+    success_url = reverse_lazy('survey_index')
+    
+class MultipleChoiceDeleteView(LoginRequiredMixin,
+                 ContribRequiredMixin,
+                 generic.DeleteView):
+       
+    model = MultipleChoiceQuestion
+    template_name = 'survey/confirm_delete.html'
+    success_url = reverse_lazy('survey_index')
     

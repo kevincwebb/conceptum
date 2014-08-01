@@ -93,6 +93,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
                 i = i + 1
         
         if(i <= NUM_CHOICES):
+            #finds the current largest MultipleChoiceOption id number and sets the new one to 1 greater
             max_id = MultipleChoiceOption.objects.all().order_by("-id")[0].id
             new_id = max_id + 1
             self.NEW_ID = new_id

@@ -17,7 +17,7 @@
 <div class="container">
     
 <div class="form-horizontal-heading">
-  <h2>Edit Question</h2>
+  <h2>Edit Free Response Question</h2>
 </div>
   
 
@@ -26,6 +26,7 @@
     
     <button class="btn btn-lg btn-primary " type="submit" value="Update"> Update </button>
     <a href = {% url 'survey_index' %} class="btn btn-primary"> Cancel </a>
+    <a href = {% url 'freeresponse_delete' object.id %} class="btn btn-primary"> Delete Question </a>
 </form>
 
 </div> <!-- container -->
