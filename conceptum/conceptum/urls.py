@@ -21,7 +21,8 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^exams/', include('exam.urls')),
     url(r'^stage1/', include('cistage1.urls')),
-    url(r'^interviews/', include('interviews.urls'))
+    url(r'^interviews/', include('interviews.urls')),
+    url(r'^survey/', include('survey.urls')),
 )
 
 # Uncomment the next line to serve media files in dev.

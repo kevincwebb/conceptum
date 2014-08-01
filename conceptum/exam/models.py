@@ -92,7 +92,7 @@ class MultipleChoiceOption(models.Model):
     """
     Represents one option in the set of choices for a multiple choice question.
     """
-    question = models.ForeignKey(FreeResponseQuestion)
+    question = models.ForeignKey(MultipleChoiceQuestion)
     text = models.CharField(max_length=CHOICE_LENGTH)
     rank = models.IntegerField(null=True)
 

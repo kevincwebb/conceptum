@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Survey Detail" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  
+
+  {% for excerpt in excerpt_list %}
+ 
+    <b>Interview:</b> {{ excerpt.interview }} <br>
+    <b>Response:</b> {{ excerpt.response }} <br>
+    <br>
+  {% endfor %}
+
+  <br>
+  
+  
+  <form method="post" action="{% url 'survey_create' concept_id %}">{% csrf_token %}
+  {{ form }}
+  <br><br>
+  <div class="submit">
+  <button class="btn btn-primary btn-primary" type="submit">Submit Question</button>
+  <br>
+  </form>
+  <br>
+  <a href = {% url 'survey_index' %} class="btn btn-primary"> Choose A Different Category </a>
+
+</div> <!-- container -->
+
+{% endblock %}

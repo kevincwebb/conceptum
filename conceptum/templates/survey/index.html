@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Interview Detail" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    
+<div class="form-horizontal-heading">
+  <h2>Survey Questions</h2>
+</div>
+<h4>Click on a question to edit it </h4>
+
+<br>
+{% if freeresponsequestion_list %}
+    <ul>
+    {% for question in freeresponsequestion_list %}
+        <li>{{question.content_object}} - <a href="{% url 'freeresponse_edit' question.id %}">{{ question}}</a> </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No free response questions have been created yet.</p>
+{% endif %}
+
+{% if multiplechoicequestion_list %}
+    <ul>
+    {% for question in multiplechoicequestion_list %}
+        <li>{{question.content_object}} - <a href="{% url 'multiplechoice_edit' question.id %}">{{ question}}</a> </li>
+        <ul>
+        <p>{%for option in option_list %}
+          {% if option.question.id == question.id%}
+            
+            <li>
+          {{option.text|linebreaks}}
+            </li>
+        
+          {%endif%}
+    {% endfor %}
+    </ul>
+    {% endfor %}
+    
+    </ul>
+{% else %}
+    <p>No multiple choice questions have been created yet.</p>
+{% endif %}
+
+<a href = {% url 'survey_select' %} class="btn btn-primary"> Add Questions </a>
+
+</div> <!-- container -->
+
+{% endblock %}

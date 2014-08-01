@@ -221,7 +221,7 @@ LOCAL_APPS = (
     'interviews',
     'profiles',
     'custom_auth',
-
+    'survey',
     'cistage1',
     'nodemanager',
 

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Interview Detail" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    
+<div class="form-horizontal-heading">
+  <h2>Survey Development:</h2>
+</div>
+
+<form class="form-horizontal" role="form" method="post">{% csrf_token %}
+
+
+  {{ form.non_field_errors }}
+
+  {% for field in form %}
+    <div class="form-group">
+      {{ field.errors }}
+      <label for="{{ field.id_for_label }}" class="col-sm-3 control-label">{{ field.label }}</label>
+      <div class="col-sm-9">
+        {{ field }}
+     </div>
+    </div>
+  {% endfor %}
+  
+
+<div class="submit">
+  <button class="btn btn-primary btn-primary" type="submit">Choose Concept</button>
+  <a href = {% url 'survey_index' %} class="btn btn-primary"> Cancel </a>
+</div>
+</form>
+
+ <!-- container -->
+
+{% endblock %}
