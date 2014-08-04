@@ -62,7 +62,7 @@ class SurveyCreateView(LoginRequiredMixin, ContribRequiredMixin, generic.View):
                 return view(request, *args, **kwargs)
         
         
-        return HttpResponseRedirect(reverse('survey_create', kwargs ={ 'pk' : self.kwargs['pk']}))
+        return HttpResponseRedirect(reverse('survey_create', kwargs ={ 'pk' : self.kwargs['pk'], 'question_type' : self.kwargs['question_type']}))
 
 class ExcerptDetailView(LoginRequiredMixin, ContribRequiredMixin, generic.DetailView):
     """
@@ -109,7 +109,7 @@ class AddFreeResponseView(LoginRequiredMixin, ContribRequiredMixin, generic.Crea
         return context
 
 
-class AddMultipleChoiceView(LoginRequiredMixin, ContribRequiredMixin, generic.CreateView):
+class AddMultipleChoiceView(LoginRequiredMixin, ContribRequiredMixin, generic.FormView):
     model = MultipleChoiceQuestion
     template_name = 'survey/create.html'
     form_class = AddMultipleChoiceForm
@@ -117,8 +117,9 @@ class AddMultipleChoiceView(LoginRequiredMixin, ContribRequiredMixin, generic.Cr
     def form_valid(self, form):
         form.instance.content_object = DummyConcept.objects.get(pk = self.kwargs['pk'])
         form.instance.exam_id = Exam.objects.get(name = 'Survey').id
+        response = super(AddMultipleChoiceView, self).form_valid(form)
         form.form_valid()
-        return super(AddMultipleChoiceView, self).form_valid(form)
+        return response
     
     def get_success_url(self):
         return reverse('survey_index')
@@ -127,7 +128,6 @@ class AddMultipleChoiceView(LoginRequiredMixin, ContribRequiredMixin, generic.Cr
         context = super(AddMultipleChoiceView, self).get_context_data(**kwargs)
         context['concept_id'] = self.kwargs['pk']
         return context
-
 
 
 class SurveyListView(LoginRequiredMixin,
@@ -180,7 +180,8 @@ class MultipleChoiceEditView(LoginRequiredMixin,
     
     def get_success_url(self):
         return reverse('survey_index')
-    
+
+
 class FreeResponseDeleteView(LoginRequiredMixin,
                  ContribRequiredMixin,
                  generic.DeleteView):
@@ -188,7 +189,8 @@ class FreeResponseDeleteView(LoginRequiredMixin,
     model = FreeResponseQuestion
     template_name = 'survey/confirm_delete.html'
     success_url = reverse_lazy('survey_index')
-    
+
+
 class MultipleChoiceDeleteView(LoginRequiredMixin,
                  ContribRequiredMixin,
                  generic.DeleteView):

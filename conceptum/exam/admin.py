@@ -11,13 +11,21 @@ from .models import (
 
 import reversion
 
-class FreeResponseInLine(admin.TabularInline):
+class FreeResponseQuestionInLine(admin.TabularInline):
     model = FreeResponseQuestion
     fields = ('content_object',)
     readonly_fields = ('content_object',)
     
+class MultipleChoiceQuestionInLine(admin.TabularInline):
+    model = MultipleChoiceQuestion
+    fields = ('content_object', )
+    readonly_fields = ('content_object',)
+    
+class MultipleChoiceOptionInLine(admin.TabularInline):
+    model = MultipleChoiceOption
+
 class ExamAdmin(reversion.VersionAdmin):
-    inlines = [FreeResponseInLine,]
+    inlines = [FreeResponseQuestionInLine,MultipleChoiceQuestionInLine, ]
 
 
 # Responses probably don't need to be versioned
@@ -26,15 +34,16 @@ class ExamResponseAdmin(admin.ModelAdmin):
 
 
 class FreeResponseQuestionAdmin(reversion.VersionAdmin):
-    list_display = ('exam', 'content_type', 'content_object', 'question', 'image', 'rank', 'optional',)
+    list_display = ('question', 'exam', 'content_type', 'content_object', 'image', 'rank', 'optional', 'pk')
     
 
 class MultipleChoiceOptionAdmin(reversion.VersionAdmin):
-    pass
+    list_display = ('text','question', 'rank', 'pk')
 
 
 class MultipleChoiceQuestionAdmin(reversion.VersionAdmin):
-    pass
+    list_display = ('question','exam', 'content_type', 'content_object',  'image', 'rank', 'optional', 'pk')
+    inlines = [MultipleChoiceOptionInLine]
 
 admin.site.register(Exam, ExamAdmin)
 admin.site.register(ExamResponse, ExamResponseAdmin)

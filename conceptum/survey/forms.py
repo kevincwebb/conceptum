@@ -38,8 +38,6 @@ class AddMultipleChoiceForm(forms.ModelForm):
     class Meta:
         model = MultipleChoiceQuestion
         fields = ['question',]
-        
-    question = forms.CharField(label = 'Question')
     
     def __init__(self, *args, **kwargs):
         """
@@ -48,18 +46,35 @@ class AddMultipleChoiceForm(forms.ModelForm):
         Empty choice fields will not be saved. 
         """
         super(AddMultipleChoiceForm, self).__init__(*args, **kwargs)
+        #variable x enumerates the choices
         for x in range(1, NUM_CHOICES+1):
             self.fields["choice_%d" % x] = \
                 forms.CharField(label=_("choice %s" % x),
                                 required=False,)
 
+
+    def clean(self):
+        cleaned_data = super(AddMultipleChoiceForm, self).clean()
+        choice_counter = 0
+        for x in range(1, NUM_CHOICES+1):
+            choice = self.cleaned_data.get("choice_%d" % x)
+            if choice:
+                choice_counter = choice_counter + 1
+        if choice_counter < 1:
+            raise forms.ValidationError("You need to provide Choices for the Multiple Choice Question", code = 'no_choices')
+        return cleaned_data
+            
+            
     def form_valid(self):
         s, created = Exam.objects.get_or_create(name='Survey')
-        q = self.instance
-        q.exam = s
-        q.question = self.cleaned_data.get('question')
-        q.id = self.instance.object_id
+        q = MultipleChoiceQuestion(exam = s, question = self.cleaned_data.get('question'),
+                                   content_type = self.instance.content_type,
+                                   object_id = self.instance.object_id)
+        q.save()
+        self.set_choices(q)
         
+        
+    def set_choices(self, q):
         for x in range(1, NUM_CHOICES+1):
             choice_text = self.cleaned_data.get("choice_%d" % x)
             if (choice_text):
@@ -93,7 +108,8 @@ class MultipleChoiceEditForm(forms.ModelForm):
                 i = i + 1
         
         if(i <= NUM_CHOICES):
-            #finds the current largest MultipleChoiceOption id number and sets the new one to 1 greater
+            #finds the current largest MultipleChoiceOption id number and
+            #sets NEW_ID to 1 greater.(the newly created MultipleChoiceOption's id = NEW_ID in save()
             max_id = MultipleChoiceOption.objects.all().order_by("-id")[0].id
             new_id = max_id + 1
             self.NEW_ID = new_id
@@ -108,7 +124,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
         that choice will be deleted if it previously existed.
         Creates a new multiplechoiceoption if add_choice_feild is not empty
         """
-        q = self.instance # the interview
+        q = self.instance # the question
         q.question = self.cleaned_data.get('question')
         q.save()
         
@@ -118,6 +134,8 @@ class MultipleChoiceEditForm(forms.ModelForm):
                 if (choice_text):
                     c = MultipleChoiceOption(question = q, text = choice_text)
                     c.save()
+        #checks to see if each choice still has text in the field, will change if edited,
+        #and delete choice if field is blank
         for choice in MultipleChoiceOption.objects.filter():
             if(choice.question == self.instance):
                 text = self.cleaned_data.get("choice_%d" % choice.id)

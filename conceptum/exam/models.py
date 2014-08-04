@@ -9,6 +9,8 @@ from allauth.account.adapter import get_adapter
 # import reversion
 
 from .managers import ExamResponseManager
+import reversion
+
 
 
 # Constants
@@ -31,7 +33,7 @@ class Exam(models.Model):
     
     def __unicode__(self):
         return self.name
-
+#reversion.register(Exam)
 
 class ExamResponse(models.Model):
     """
@@ -126,13 +128,13 @@ class QuestionResponse(models.Model):
     class Meta:
         abstract = True
 
+
 class FreeResponseQuestion(Question):
     """
     Represents a question in which the answerer can respond with free-form
     text.
     """
     pass
-
 
 class FreeResponseResponse(QuestionResponse):
     """
