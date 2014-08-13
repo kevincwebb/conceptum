@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+{% load survey_tags %}
+
+{% block head_title %}{% trans "Survey Detail" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+<h1>Question Versions</h1>
+<h3>Select an old version of the question to revert to it</h3>
+<div class="container">
+
+{%if question_type == 'fr'%}
+  <form action = {% url 'freeresponse_revert' question.id %} method = post >
+               {% csrf_token %}
+   <table class="table table-bordered">
+                 <thead>
+    <tr>
+      <th>Version</th>
+      <th>Question</th>
+      <th>Revert?</th>
+    </tr>
+  </thead>
+    <tbody>
+    {%for version, q in version_list%}
+      {% with forloop.counter as index %}
+        {%if q == question.question %}
+              <tr class = warning>
+                <td> Current Version:  </td>
+                <td>{{q}}</td>
+                <td><input type="radio" name="version" disabled=disabled value={{version.id}}><br></td>
+        {% else %}
+          <tr class = success>
+                <td>{{index}}  </td>
+                <td>{{q}}</td>
+                <td><input type="radio" name="version" value={{version.id}}><br></td>
+            {%endif%}
+    
+      {%endwith%}
+    {% endfor %}
+    
+    </form>
+  </tbody>
+</table>
+               <input type="submit" value="Submit" class="btn btn-primary">
+    <br>
+{%endif%}
+
+{%if question_type == 'mc'%}
+  
+    <form action =""
+          {%comment%} {% url 'multiplechoice_revert' question.id %} {%endcomment%} method = post >
+               {% csrf_token %}
+   <table class="table table-bordered">
+                 <thead>
+    <tr>
+      <th>Version</th>
+      <th>Question</th>
+      <th>Options</th>
+      <th>Revert?</th>
+    </tr>
+  </thead>
+    <tbody>
+
+      
+
+    {%for version in version_list%}
+      {% with forloop.counter as index %}
+        
+        {%comment%} index = 1 is versions, index = 2 is questions, index = 3 is option lists 
+          {%if current_question == question and current_option_list == options_list %}
+              <tr class = warning>
+                <td> Current Version:  </td>
+                <td>{{question}}</td>
+                <td>{{options}}</td>
+                <td><input type="radio" name="version" disabled=disabled value={{version.id}}><br></td>
+                {%if current_question == question and current_option_list == options_list %}
+        {% else %}
+        {%endcomment%}
+          <tr class = success>
+                <td>{{index}}  </td>
+                <td>{{question_list.pop}}</td>
+                <td>{{options_list.pop}}</td>
+                <td><input type="radio" name="version" value={{version.id}}><br></td>
+            
+    
+      {%endwith%}
+    {% endfor %}
+
+    </form>
+  </tbody>
+</table>
+               <input type="submit" value="Submit" class="btn btn-primary">
+    <br>
+  
+  
+{%endif%}
+
+{% endblock %}

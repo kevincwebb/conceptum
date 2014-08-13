@@ -10,6 +10,7 @@ from allauth.account.adapter import get_adapter
 
 from .managers import ExamResponseManager
 import reversion
+from reversion.models import Revision, Version
 
 
 
@@ -109,7 +110,7 @@ class Question(models.Model):
     
     question = models.CharField(max_length=QUESTION_LENGTH)
     image = models.ImageField(upload_to=question_imageupload_to, blank=True)
-    rank = models.IntegerField(null=True)
+    rank = models.IntegerField(null=True, blank = True)
     optional = models.BooleanField(default=False)
 
     class Meta:
@@ -161,10 +162,18 @@ class MultipleChoiceOption(models.Model):
     """
     question = models.ForeignKey(MultipleChoiceQuestion)
     text = models.CharField(max_length=CHOICE_LENGTH)
-    rank = models.IntegerField(null=True)
+    rank = models.IntegerField(null=True, blank = True)
 
     def __unicode__(self):
         return self.text
+    
+#class OptionVersion(models.Model):
+#    revision = models.ForeignKey(Revision)  # This is required
+#    question= models.ForeignKey(Version)
+    
+reversion.register(MultipleChoiceOption)
+reversion.register(MultipleChoiceQuestion, follow=["multiplechoiceoption_set"])
+
 
 
 class MultipleChoiceResponse(QuestionResponse):

@@ -1,12 +1,8 @@
 from django.shortcuts import get_object_or_404, render
 from django.core.urlresolvers import reverse_lazy, resolve, reverse
 from django.views import generic
-from django.utils import timezone
-from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect, HttpResponse
-from django.template import Context, Template
-from django.views.generic.detail import SingleObjectMixin
 from django.contrib.contenttypes.models import ContentType
 from django import forms
 from django.utils.translation import ugettext_lazy as _
@@ -15,11 +11,15 @@ from exam.models import Exam, FreeResponseQuestion, FreeResponseResponse, Multip
 from .forms import AddFreeResponseForm, SelectConceptForm, AddMultipleChoiceForm, MultipleChoiceEditForm
 from interviews.models import get_concept_list, Excerpt, DummyConcept
 from profiles.mixins import ContribRequiredMixin
+import reversion
+from itertools import chain
+from collections import defaultdict
 
+SURVEY_NAME = 'Survey'
 
 class SelectConceptView(LoginRequiredMixin, ContribRequiredMixin, generic.FormView,):
     """
-    Lists all Concepts in the database, Select a concept to view the SurveyView
+    Lists all Concepts in the database, Select a concept to view the SurveyCreateView
     """
     template_name = 'survey/select.html'
     form_class = SelectConceptForm
@@ -42,12 +42,12 @@ class SelectConceptView(LoginRequiredMixin, ContribRequiredMixin, generic.FormVi
        
 
 class SurveyCreateView(LoginRequiredMixin, ContribRequiredMixin, generic.View):
-
+    #shows interviews for chosen topic
     def get(self, request, *args, **kwargs):
         view = ExcerptDetailView.as_view()
         return view(request, *args, **kwargs)
 
-    
+    #chooses form and view based on 'question_type' POST kwarg (either fr or mc)
     def post(self, request, *args, **kwargs):
         if(self.kwargs['question_type'] == 'fr'):
             form = AddFreeResponseForm(request.POST)
@@ -57,7 +57,7 @@ class SurveyCreateView(LoginRequiredMixin, ContribRequiredMixin, generic.View):
         
         elif(self.kwargs['question_type'] == 'mc'):
             form = AddMultipleChoiceForm(request.POST)
-            if(form.is_valid()) :
+            if(form.is_valid() ) :
                 view = AddMultipleChoiceView.as_view()
                 return view(request, *args, **kwargs)
         
@@ -97,7 +97,7 @@ class AddFreeResponseView(LoginRequiredMixin, ContribRequiredMixin, generic.Crea
     
     def form_valid(self, form):
         form.instance.content_object = DummyConcept.objects.get(pk = self.kwargs['pk'])
-        form.instance.exam_id = Exam.objects.get(name = 'Survey').id
+        form.instance.exam_id = Exam.objects.get(name = SURVEY_NAME).id
         return super(AddFreeResponseView, self).form_valid(form)
 
     def get_success_url(self):
@@ -116,7 +116,7 @@ class AddMultipleChoiceView(LoginRequiredMixin, ContribRequiredMixin, generic.Fo
     
     def form_valid(self, form):
         form.instance.content_object = DummyConcept.objects.get(pk = self.kwargs['pk'])
-        form.instance.exam_id = Exam.objects.get(name = 'Survey').id
+        form.instance.exam_id = Exam.objects.get(name = SURVEY_NAME).id
         response = super(AddMultipleChoiceView, self).form_valid(form)
         form.form_valid()
         return response
@@ -142,17 +142,17 @@ class SurveyListView(LoginRequiredMixin,
     
     def get_context_data(self, **kwargs):
         context = super(SurveyListView, self).get_context_data(**kwargs)
-        context['freeresponsequestion_list']=FreeResponseQuestion.objects.filter(exam = Exam.objects.get(name = 'Survey').id)
-        context['multiplechoicequestion_list']=MultipleChoiceQuestion.objects.filter(exam = Exam.objects.get(name = 'Survey').id) 
+        context['freeresponsequestion_list']=FreeResponseQuestion.objects.filter(exam = Exam.objects.get(name = SURVEY_NAME).id)
+        context['multiplechoicequestion_list']=MultipleChoiceQuestion.objects.filter(exam = Exam.objects.get(name = SURVEY_NAME).id) 
         context['option_list']= MultipleChoiceOption.objects.all()
         return context
 
 
 class FreeResponseEditView(LoginRequiredMixin,
-               ContribRequiredMixin,
-               generic.UpdateView):
+                           ContribRequiredMixin,
+                           generic.UpdateView):
     """
-    FormView for a user to edit an existing Question
+    UpdateView for a user to edit an existing Question
     """
     model = FreeResponseQuestion
     fields =['question']
@@ -166,7 +166,7 @@ class MultipleChoiceEditView(LoginRequiredMixin,
                ContribRequiredMixin,
                generic.UpdateView):
     """
-    FormView for a user to edit an existing Question
+    UpdateView for a user to edit an existing Question
     """
     model = MultipleChoiceQuestion
     template_name = 'survey/mcquestion_update_form.html'
@@ -182,14 +182,154 @@ class MultipleChoiceEditView(LoginRequiredMixin,
         return reverse('survey_index')
 
 
+#view for reverting a question back to a previous version   
+def revert_freeresponse(request, pk):
+    q = get_object_or_404(FreeResponseQuestion, pk=pk)
+    version_list = reversion.get_unique_for_object(q)
+    
+    if 'version' in request.POST.keys():
+        ids = {}
+        for version in version_list:
+            ids[version.id] = version
+        selected_version =  ids[(int(request.POST['version']))]
+        selected_version.revision.revert()
+        return HttpResponseRedirect(reverse('survey_index'))
+    else:
+        return HttpResponseRedirect(reverse('freeresponse_versions', kwargs={'pk' : pk}))
+
+    
+class FreeResponseVersionView(LoginRequiredMixin,
+               ContribRequiredMixin,
+               generic.UpdateView):
+    model = FreeResponseQuestion
+    template_name = 'survey/versions.html'
+    success_url = reverse_lazy('survey_index')
+    
+    def get_question(self, **kwargs):
+        return FreeResponseQuestion.objects.get(exam = Exam.objects.get(name = SURVEY_NAME).id, id = self.kwargs['pk'])
+
+    def get_versions(self,**kwargs):
+        version_list = reversion.get_unique_for_object(self.get_question())
+        d = {}
+        for version in version_list:
+            if(version.field_dict['question'] not in d.values() ):
+                d[version]=(version.field_dict['question'])
+        return d
+    
+    def get_context_data(self, **kwargs):
+        context = super(FreeResponseVersionView, self).get_context_data(**kwargs)
+        context['question']=self.get_question()
+        context['version_list'] = self.get_versions().items()
+        context['question_type'] = 'fr'
+        return context
+
+class MultipleChoiceVersionView(LoginRequiredMixin,
+               ContribRequiredMixin,
+               generic.UpdateView):
+    model = MultipleChoiceQuestion
+    template_name = 'survey/versions.html'
+    success_url = reverse_lazy('survey_index')
+
+    def get_question(self, **kwargs):
+        return MultipleChoiceQuestion.objects.get(exam = Exam.objects.get(name = SURVEY_NAME).id, id = self.kwargs['pk'])
+    
+    def get_version_options(self, **kwargs):
+        version_list = kwargs['version_list']
+        d = {}
+        for version in version_list:
+            option_list = version.revision.version_set.filter(content_type__name='multiple choice option')
+            options = []
+            for option in option_list:
+                if option.field_dict:
+                    fd = option.field_dict
+                    #related_versions = {related_version.object_id : fd['text']}
+                    options.append(fd['text'])
+            d[version] = options               
+        #print d
+        return d
+    
+    def get_options_for_version(self, version, **kwargs):
+        options = self.get_version_options(version_list = kwargs['version_list'])[version]
+        return options
+    
+    def get_current_options(self, **kwargs):
+        option_list = MultipleChoiceOption.objects.filter(question= self.get_question())
+        d = []
+        for option in option_list:
+            d.append(option)
+        #print d
+        return d
+    
+    #def questions_for_versions(self, values):
+    #    l = []
+    #    print "values"
+    #    print values
+    #    for value in values:
+    #        for question in value:
+    #            print question
+    #            l.append(question)
+    #    return l
+    
+    def get_versions(self,**kwargs):
+        version_list = reversion.get_for_object(self.get_question())
+        versions = []
+        questions = []
+        options = []
+        for version in version_list:
+            versions.append(version)
+            questions.append(version.field_dict['question'])
+            options.append(self.get_options_for_version(version, version_list = version_list))
+            #if(version.field_dict['question'] not in self.questions_for_versions(d.values())):
+               #d[version]= {version.field_dict['question'] : self.get_options_for_version(version, version_list = version_list) }
+            #elif (self.get_options_for_version(version) in d.values().values()):
+                #d[version]= {version.field_dict['question'] : self.get_options_for_version(version, version_list = version_list) }
+        #print d
+        return [versions, questions, options]
+
+    #def get_options(self, version, **kwargs):
+    #    olist = []
+    #    for version in VERSION_LIST:
+    #        option = version_options[version].values()
+    #        olist.append(option)
+    #    return olist
+
+    def get_context_data(self, **kwargs):
+        data = self.get_versions()
+        context = super(MultipleChoiceVersionView, self).get_context_data(**kwargs)
+        context['current_question']=self.get_question()
+        context['version_list'] = data[0]
+        #print data
+        context['question_list'] = data[1]
+        context['options_list'] = data[2]
+        context['current_option_list'] = self.get_current_options()
+        context['question_type'] = 'mc'
+        return context
+
 class FreeResponseDeleteView(LoginRequiredMixin,
                  ContribRequiredMixin,
                  generic.DeleteView):
-       
+    """
+    Issue With how Questions are deleted with version control:
+    When a question is created it is automatically assigned the next largest pk.
+    If you create a question, say its pk = 5 and its concept is Concept A.
+    Now you delete that question, and create another question under Concept B. It is also given pk = 5
+    because thats the next available pk. This isn't a problem until you try to revert to old
+    versions of the question for Concept B. The deleted question for Concept A will appear under old versions
+    of the current question even though it isn't actually a version of same question, or even necessarily the same concept.
+    
+    This isn't an issue if the question you delete isn't the newest one.
+    If you have questions with pk = 1, 2, 3, 4, and delete question 2, then create
+    a new question, you will now have questions with pk= 1, 3, 4, 5, which does not create this issue.
+    
+    Could probably fix by creating a custom form to handle deleting the questions.
+    If the pk of the question being deleted is equal to FreeResponseQuestion.objects.all().order_by("-id")[0].id
+    then it is going to cause the version problem. The logic to fix this could also be put in the FreeResponse/MultipleChoice Add views. 
+    
+    """
     model = FreeResponseQuestion
     template_name = 'survey/confirm_delete.html'
     success_url = reverse_lazy('survey_index')
-
+    
 
 class MultipleChoiceDeleteView(LoginRequiredMixin,
                  ContribRequiredMixin,
@@ -198,4 +338,6 @@ class MultipleChoiceDeleteView(LoginRequiredMixin,
     model = MultipleChoiceQuestion
     template_name = 'survey/confirm_delete.html'
     success_url = reverse_lazy('survey_index')
+    
+    
     

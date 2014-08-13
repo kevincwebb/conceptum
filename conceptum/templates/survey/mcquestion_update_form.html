@@ -25,6 +25,7 @@
     {{ form.as_p }}
     
     <button class="btn btn-lg btn-primary " type="submit" value="Update"> Update </button>
+    <a href = {% url 'multiplechoice_versions' object.id %} class="btn btn-primary"> Revert Question to an Old Version </a>
     <a href = {% url 'survey_index' %} class="btn btn-primary"> Cancel </a>
     <a href = {% url 'multiplechoice_delete' object.id %} class="btn btn-primary"> Delete Question </a>
 </form>

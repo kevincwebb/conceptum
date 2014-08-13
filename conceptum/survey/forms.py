@@ -8,7 +8,7 @@ from django.contrib.contenttypes.models import ContentType, ContentTypeManager
 
 from exam.models import Exam, FreeResponseQuestion, FreeResponseResponse, MultipleChoiceQuestion, MultipleChoiceOption, MultipleChoiceResponse
 from interviews.models import get_concept_list, DummyConcept as Concept
-
+import reversion
 #number of muliple choice choices
 NUM_CHOICES = 6;
 
@@ -80,6 +80,7 @@ class AddMultipleChoiceForm(forms.ModelForm):
             if (choice_text):
                 c = MultipleChoiceOption(question = q, text = choice_text)
                 c.save()
+               # reversion.add_meta(MultipleChoiceVersionOption, c)
 
 
 class MultipleChoiceEditForm(forms.ModelForm):
@@ -126,7 +127,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
         """
         q = self.instance # the question
         q.question = self.cleaned_data.get('question')
-        q.save()
+       
         
         if (self.NEW_ID > -1):
             if(self.cleaned_data.get("choice_%d" % self.NEW_ID) ):
@@ -136,12 +137,15 @@ class MultipleChoiceEditForm(forms.ModelForm):
                     c.save()
         #checks to see if each choice still has text in the field, will change if edited,
         #and delete choice if field is blank
-        for choice in MultipleChoiceOption.objects.filter():
+        for choice in MultipleChoiceOption.objects.all():
             if(choice.question == self.instance):
                 text = self.cleaned_data.get("choice_%d" % choice.id)
                 if text:
-                    choice.text = text
-                    choice.save()
+                    if(choice.text != text):
+                        c = MultipleChoiceOption(question = q, text = text)
+                        c.save()
+                        choice.delete()
                 else:
                     choice.delete()
+        q.save()
     

@@ -210,7 +210,8 @@ DJANGO_APPS = (
     'allauth.account',
 
     # Used as a tree structure for CI Stage 1
-    'mptt'
+    'mptt',
+    
 
 
 )
