@@ -45,7 +45,7 @@
           {% endifequal %}
 
           {% ifequal node.node_type 'R' %}
-                <a href="{% url 'rank' node.id %}">Ranking for Node {{ node.id }}</a>
+                <a href="{% url 'setup' node_id=node.id %}">Ranking for Node {{ node.id }}</a>
           {% endifequal %}
 
           <p>

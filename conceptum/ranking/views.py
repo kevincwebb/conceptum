@@ -4,7 +4,7 @@ from django.template import RequestContext, loader
 from django.core.urlresolvers import reverse
 
 
-def setup(request):
+def setup(request, node_id):
     return HttpResponse("setup")
 
 def form(request):
