@@ -218,8 +218,8 @@ LOCAL_APPS = (
     'cidev',
     'custom_auth',
     'exam',
-    'interviews',
-    'profiles',
+#    'interviews',
+#    'profiles',
     'custom_auth',
 
     'cistage1',
