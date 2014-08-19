@@ -1,7 +1,7 @@
 from django.db import models
 
 from authtools.models import User
-from nodemanager.models import ConceptNode, ConceptAton
+from nodemanager.models import ConceptNode, ConceptAtom
 
 
 class RankingProcess(models.Model):
@@ -33,7 +33,7 @@ class RankingProcess(models.Model):
     )
     status = models.CharField(max_length=1,
                              choices=STATE_CHOICES,
-                             default=not_intialized)
+                             default=not_initialized)
 
 
 class ValueCounter(models.Model):
