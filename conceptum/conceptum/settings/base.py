@@ -224,6 +224,7 @@ LOCAL_APPS = (
 
     'cistage1',
     'nodemanager',
+    'ranking',
 
 )
 

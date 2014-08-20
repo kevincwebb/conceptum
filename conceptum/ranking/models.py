@@ -35,6 +35,9 @@ class RankingProcess(models.Model):
                              choices=STATE_CHOICES,
                              default=not_initialized)
 
+    def __unicode__(self):
+        return "Ranking Process of " + unicode(self.parent)
+
 
 class ValueCounter(models.Model):
 
