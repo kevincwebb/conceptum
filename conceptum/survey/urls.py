@@ -13,6 +13,7 @@ urlpatterns = patterns('',
     url(r'^edit/mc/(?P<pk>\d+)/versions/$', views.MultipleChoiceVersionView.as_view(), name='multiplechoice_versions'),
     
     url(r'^edit/fr/(?P<pk>\d+)/versions/revert/$', views.revert_freeresponse, name='freeresponse_revert'),
+    url(r'^edit/mc/(?P<pk>\d+)/versions/revert/$', views.revert_multiplechoice, name='multiplechoice_revert'),
     
     
     url(r'^select/$', views.SelectConceptView.as_view(), name='survey_select'), 

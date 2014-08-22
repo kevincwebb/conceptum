@@ -27,6 +27,8 @@ class AddFreeResponseForm(forms.ModelForm):
     class Meta:
         model = FreeResponseQuestion
         fields = ['question' ]
+        widgets = {
+            'question': forms.TextInput(attrs={'size': '60'})}
 
     def form_valid(self, form):
         s, created = Exam.objects.get_or_create(name='Survey')
@@ -38,6 +40,8 @@ class AddMultipleChoiceForm(forms.ModelForm):
     class Meta:
         model = MultipleChoiceQuestion
         fields = ['question',]
+        widgets = {
+            'question': forms.TextInput(attrs={'size': '60'})}
     
     def __init__(self, *args, **kwargs):
         """
@@ -88,6 +92,8 @@ class MultipleChoiceEditForm(forms.ModelForm):
     class Meta:
         model = MultipleChoiceQuestion
         fields = ['question']
+        widgets = {
+            'question': forms.TextInput(attrs={'size': '60'})}
         
     NEW_ID = -1
     

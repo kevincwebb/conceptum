@@ -3,7 +3,6 @@
 {% load url from future %}
 {% load i18n %}
 {% load static %}
-{% load survey_tags %}
 
 {% block head_title %}{% trans "Survey Detail" %}{% endblock %}
 
@@ -15,15 +14,16 @@
 
 {% block content %}
 <h1>Question Versions</h1>
-<h3>Select an old version of the question to revert to it</h3>
+<h3>Select an old version of the question and hit "Submit" to revert to it</h3>
 <div class="container">
 
 {%if question_type == 'fr'%}
   <form action = {% url 'freeresponse_revert' question.id %} method = post >
                {% csrf_token %}
+    <div style="overflow: auto; width:75%; height: 400px;">
    <table class="table table-bordered">
                  <thead>
-    <tr>
+    <tr bgcolor="#B2B2B2">
       <th>Version</th>
       <th>Question</th>
       <th>Revert?</th>
@@ -50,18 +50,17 @@
     </form>
   </tbody>
 </table>
-               <input type="submit" value="Submit" class="btn btn-primary">
-    <br>
+    </div>
+    
 {%endif%}
 
 {%if question_type == 'mc'%}
-  
-    <form action =""
-          {%comment%} {% url 'multiplechoice_revert' question.id %} {%endcomment%} method = post >
-               {% csrf_token %}
+  <form action = {% url 'multiplechoice_revert' current_question.id %}  method = post >
+{% csrf_token %}
+ <div style="overflow: auto; width:75%; height: 500px;">
    <table class="table table-bordered">
                  <thead>
-    <tr>
+    <tr bgcolor="#B2B2B2">
       <th>Version</th>
       <th>Question</th>
       <th>Options</th>
@@ -70,38 +69,48 @@
   </thead>
     <tbody>
 
-      
-
     {%for version in version_list%}
+      
       {% with forloop.counter as index %}
         
-        {%comment%} index = 1 is versions, index = 2 is questions, index = 3 is option lists 
-          {%if current_question == question and current_option_list == options_list %}
+        {% if index == 1 %}
               <tr class = warning>
                 <td> Current Version:  </td>
-                <td>{{question}}</td>
-                <td>{{options}}</td>
+                <td>{{question_list.pop}}</td>
+                <td>{% for option in options_list.pop %}
+                     <li>{{option}}</li> 
+                {%endfor%}
+                </td>
                 <td><input type="radio" name="version" disabled=disabled value={{version.id}}><br></td>
-                {%if current_question == question and current_option_list == options_list %}
-        {% else %}
-        {%endcomment%}
+        {%else%}
+          
           <tr class = success>
                 <td>{{index}}  </td>
                 <td>{{question_list.pop}}</td>
-                <td>{{options_list.pop}}</td>
+                <td>{% for option in options_list.pop %}
+                     <li>{{option}}</li> 
+                {%endfor%}
+                </td>
                 <td><input type="radio" name="version" value={{version.id}}><br></td>
             
-    
+    {%endif%}
       {%endwith%}
     {% endfor %}
 
     </form>
   </tbody>
 </table>
-               <input type="submit" value="Submit" class="btn btn-primary">
-    <br>
-  
-  
+  </div>
+               
+
 {%endif%}
+<input type="submit" value="Submit" class="btn btn-primary">
+  {%if question_type == 'fr'%}
+    <a href = {% url 'freeresponse_edit' question.id %} class="btn btn-primary"> Cancel </a>     
+    {%endif%}
+    {%if question_type == 'mc'%}
+      <a href = {% url 'multiplechoice_edit' current_question.id %} class="btn btn-primary"> Cancel </a>
+      {%endif%}
+      
 
 {% endblock %}

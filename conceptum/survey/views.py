@@ -140,13 +140,27 @@ class SurveyListView(LoginRequiredMixin,
     model = MultipleChoiceOption
     template_name = 'survey/index.html'
     
+    def get_data(self, **kwargs):
+        mc = {}
+        fr = {}
+        for concept in get_concept_list():
+            concept_type = ContentType.objects.get_for_model(concept)
+            fr_question_list = FreeResponseQuestion.objects.filter(exam = Exam.objects.get(name = SURVEY_NAME).id,
+                                                                   content_type__pk=concept_type.id, object_id=concept.id)
+            mc_question_list = MultipleChoiceQuestion.objects.filter(exam = Exam.objects.get(name = SURVEY_NAME).id,
+                                                                   content_type__pk=concept_type.id, object_id=concept.id)
+            fr[concept] = fr_question_list
+            mc[concept] = mc_question_list
+        return [fr, mc]
+    
     def get_context_data(self, **kwargs):
         context = super(SurveyListView, self).get_context_data(**kwargs)
-        context['freeresponsequestion_list']=FreeResponseQuestion.objects.filter(exam = Exam.objects.get(name = SURVEY_NAME).id)
-        context['multiplechoicequestion_list']=MultipleChoiceQuestion.objects.filter(exam = Exam.objects.get(name = SURVEY_NAME).id) 
+        data = self.get_data()
+        context['freeresponsequestion_list']=data[0]
+        context['multiplechoicequestion_list']=data[1]
         context['option_list']= MultipleChoiceOption.objects.all()
         return context
-
+ 
 
 class FreeResponseEditView(LoginRequiredMixin,
                            ContribRequiredMixin,
@@ -188,14 +202,15 @@ def revert_freeresponse(request, pk):
     version_list = reversion.get_unique_for_object(q)
     
     if 'version' in request.POST.keys():
-        ids = {}
         for version in version_list:
-            ids[version.id] = version
-        selected_version =  ids[(int(request.POST['version']))]
-        selected_version.revision.revert()
+            if version.id == int(request.POST['version']):
+                version.revert()
+                #version.revision.revert(delete = True)
+                break
         return HttpResponseRedirect(reverse('survey_index'))
     else:
         return HttpResponseRedirect(reverse('freeresponse_versions', kwargs={'pk' : pk}))
+
 
     
 class FreeResponseVersionView(LoginRequiredMixin,
@@ -223,6 +238,23 @@ class FreeResponseVersionView(LoginRequiredMixin,
         context['question_type'] = 'fr'
         return context
 
+def revert_multiplechoice(request, pk):
+    q = get_object_or_404(MultipleChoiceQuestion, pk=pk)
+    version_list = reversion.get_for_object(q)
+    
+    if 'version' in request.POST.keys():
+        for version in version_list:
+            print request.POST['version']
+            print version.id
+            if version.id == int(request.POST['version']):
+                print "reverting"
+                #version.revert()
+                version.revision.revert(delete=True)
+                break
+        return HttpResponseRedirect(reverse('survey_index'))
+    else:
+        return HttpResponseRedirect(reverse('multiplechoice_versions', kwargs={'pk' : pk}))
+    
 class MultipleChoiceVersionView(LoginRequiredMixin,
                ContribRequiredMixin,
                generic.UpdateView):
@@ -242,10 +274,9 @@ class MultipleChoiceVersionView(LoginRequiredMixin,
             for option in option_list:
                 if option.field_dict:
                     fd = option.field_dict
-                    #related_versions = {related_version.object_id : fd['text']}
                     options.append(fd['text'])
             d[version] = options               
-        #print d
+
         return d
     
     def get_options_for_version(self, version, **kwargs):
@@ -257,19 +288,8 @@ class MultipleChoiceVersionView(LoginRequiredMixin,
         d = []
         for option in option_list:
             d.append(option)
-        #print d
         return d
-    
-    #def questions_for_versions(self, values):
-    #    l = []
-    #    print "values"
-    #    print values
-    #    for value in values:
-    #        for question in value:
-    #            print question
-    #            l.append(question)
-    #    return l
-    
+
     def get_versions(self,**kwargs):
         version_list = reversion.get_for_object(self.get_question())
         versions = []
@@ -277,28 +297,17 @@ class MultipleChoiceVersionView(LoginRequiredMixin,
         options = []
         for version in version_list:
             versions.append(version)
+        for version in reversed(version_list):
             questions.append(version.field_dict['question'])
             options.append(self.get_options_for_version(version, version_list = version_list))
-            #if(version.field_dict['question'] not in self.questions_for_versions(d.values())):
-               #d[version]= {version.field_dict['question'] : self.get_options_for_version(version, version_list = version_list) }
-            #elif (self.get_options_for_version(version) in d.values().values()):
-                #d[version]= {version.field_dict['question'] : self.get_options_for_version(version, version_list = version_list) }
-        #print d
         return [versions, questions, options]
 
-    #def get_options(self, version, **kwargs):
-    #    olist = []
-    #    for version in VERSION_LIST:
-    #        option = version_options[version].values()
-    #        olist.append(option)
-    #    return olist
 
     def get_context_data(self, **kwargs):
         data = self.get_versions()
         context = super(MultipleChoiceVersionView, self).get_context_data(**kwargs)
         context['current_question']=self.get_question()
         context['version_list'] = data[0]
-        #print data
         context['question_list'] = data[1]
         context['options_list'] = data[2]
         context['current_option_list'] = self.get_current_options()
