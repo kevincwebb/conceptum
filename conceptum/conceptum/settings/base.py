@@ -170,6 +170,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    #reversion control
+    'reversion.middleware.RevisionMiddleware',
 )
 ########## END MIDDLEWARE CONFIGURATION
 
@@ -208,7 +210,8 @@ DJANGO_APPS = (
     'allauth.account',
 
     # Used as a tree structure for CI Stage 1
-    'mptt'
+    'mptt',
+    
 
 
 )
@@ -221,7 +224,7 @@ LOCAL_APPS = (
     'interviews',
     'profiles',
     'custom_auth',
-
+    'survey',
     'cistage1',
     'nodemanager',
 

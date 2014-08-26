@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Survey Create" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  
+
+  {% for excerpt in excerpt_list %}
+ 
+    <b>Interview:</b> {{ excerpt.interview }} <br>
+    <b>Response:</b> {{ excerpt.response }} <br>
+    <br>
+  {% endfor %}
+
+  <br>
+  
+  
+  <br>
+  <form method="post" action="">{% csrf_token %}
+  
+  {{form|linebreaks}}
+  
+  <div class="submit">
+    <br>
+  <button class="btn btn-primary btn-primary" type="submit">Submit</button>
+  
+  {% if question_type == 'free_response'%}
+  <a href = {% url 'survey_create' concept_id 'mc' %} class="btn btn-primary"> Change to Multiple Choice Question </a>
+  {%elif question_type == 'multiple_choice'%}
+  <a href = {% url 'survey_create' concept_id 'fr' %} class="btn btn-primary"> Change to Free Response Question </a>
+{%endif%}
+
+<a href = {% url 'survey_select' %} class="btn btn-primary"> Choose A Different Concept </a>
+<a href = {% url 'survey_index' %} class="btn btn-primary"> Cancel </a>
+  <br>
+  </form>
+  <br>
+
+  
+  
+  
+</div> <!-- container -->
+
+{% endblock %}

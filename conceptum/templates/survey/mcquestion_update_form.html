@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Interview Detail" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    
+<div class="form-horizontal-heading">
+  <h2>Edit Multiple Choice Question</h2>
+</div>
+  
+
+<form action="" method="post">{% csrf_token %}
+    {{ form.as_p }}
+    
+    <button class="btn btn-primary " type="submit" value="Update"> Update </button>
+    <a href = {% url 'survey_index' %} class="btn btn-primary"> Cancel </a>
+    <a href = {% url 'multiplechoice_versions' object.id %} class="btn btn-warning"> Revert Question to an Old Version </a>
+    <a href = {% url 'multiplechoice_delete' object.id %} class="btn btn-danger"> Delete Question </a>
+</form>
+
+</div> <!-- container -->
+
+{% endblock %}
+

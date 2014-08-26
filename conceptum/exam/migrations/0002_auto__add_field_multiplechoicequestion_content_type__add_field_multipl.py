@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'MultipleChoiceQuestion.content_type'
         db.add_column(u'exam_multiplechoicequestion', 'content_type',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default='', to=orm['contenttypes.ContentType']),
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['contenttypes.ContentType']),
                       keep_default=False)
 
         # Adding field 'MultipleChoiceQuestion.object_id'
@@ -20,7 +20,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'FreeResponseQuestion.content_type'
         db.add_column(u'exam_freeresponsequestion', 'content_type',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default='', to=orm['contenttypes.ContentType']),
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['contenttypes.ContentType']),
                       keep_default=False)
 
         # Adding field 'FreeResponseQuestion.object_id'

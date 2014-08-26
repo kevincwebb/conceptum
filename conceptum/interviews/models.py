@@ -13,16 +13,19 @@ class DummyConcept(models.Model):
     def __str__(self):
         return self.name
 
+
 def get_concept_list():
     """
     this method is temporary.  Its anticipated replacement is a method in the
     ConceptNode class that will return a list of leaf nodes.
     """
+
     DummyConcept.objects.get_or_create(name='Concept A')
     DummyConcept.objects.get_or_create(name='Concept B')
     DummyConcept.objects.get_or_create(name='Concept C')
     DummyConcept.objects.get_or_create(name='Concept D')
     return DummyConcept.objects.all()
+
 
 class Interview(models.Model):
     """

@@ -38,9 +38,9 @@
 
           {% ifequal node.node_type 'P' %}
                 {% if user in node.admin_set %}
-                        <a href="{% url 'prune' node.id %}"> Prune for Node {{ node.id }}</a>
+                        <a href="{% url 'merge' node.id %}"> Merge for Node {{ node.id }}</a>
                 {% else %}
-                        User is not admin, but node is in pruning state
+                        User is not admin, but node is in Merge state
                 {% endif %}
           {% endifequal %}
 
