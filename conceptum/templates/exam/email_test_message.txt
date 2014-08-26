@@ -3,7 +3,7 @@
 {% load i18n %}{% autoescape off %}
 {% blocktrans with current_site.name as site_name %}
 
-Please take this test on {{ site_name }}.
+Please take this test on {{ site_name }}. It expires {{ expiration }}.
 
 To take the test, go to {{ test_url }}
 {% endblocktrans %}{% endautoescape %}

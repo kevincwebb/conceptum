@@ -20,6 +20,25 @@
     <h3>Take the test here</h3>
   </div>
   
+  <form class="form-horizontal" role="form"  action="{% url 'exam_response' object.key %}" method="post">{% csrf_token %}
+  
+  {{ form.non_field_errors }}
+
+  {% for field in form %}
+    <div class="form-group">
+      {{ field.errors }}
+      <label for="{{ field.id_for_label }}" class="col-sm-3 control-label">{{ field.label }}</label>
+      <div class="col-sm-9">
+        {{ field }}
+     </div>
+    </div>
+  {% endfor %}
+  
+      <div class="submit">
+        <button class="btn btn-primary" type="submit">Submit Responses</button>
+      </div>
+  </form>
+  
 </div> <!-- container -->
 
 {% endblock %}

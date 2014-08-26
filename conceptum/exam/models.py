@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import models
 from django.contrib.contenttypes.models import ContentType, ContentTypeManager
 from django.contrib.contenttypes import generic
@@ -6,7 +8,6 @@ from django.utils import timezone
 from django.core.urlresolvers import reverse
 
 from allauth.account.adapter import get_adapter
-# import reversion
 
 from .managers import ExamResponseManager
 
@@ -27,7 +28,7 @@ class Exam(models.Model):
     """
     name = models.CharField(max_length=EXAM_NAME_LENGTH)
     description = models.CharField(max_length=EXAM_DESC_LENGTH)
-    randomize = models.BooleanField('randomize question order', default=False)
+    randomize = models.BooleanField('randomize question order', default=False)        
     
     def __unicode__(self):
         return self.name
@@ -35,43 +36,51 @@ class Exam(models.Model):
 
 class ExamResponse(models.Model):
     """
-    Object for distributing and saving a single instance of an Exam.
-    Use self.question_response_set to get a queryset of QuestionResponses
-    associated with this ExamResponse.
+    Class for distributing and saving a single instance of an Exam.
+    Use self.freeresponseresponse_set (or multiplechoiceresponse_set) to get a queryset
+    of FreeResponseResponses (MultipleChoiceResponses) associated with this ExamResponse.
     
     Because this object is not associated with a single Exam, it is possible to
-    use multiple Exams when distributing exams (thus allowing modular exams)
+    use multiple Exam objects when distributing exam_responses
     
     Use objects.create() when creating in order to set the key
     
-    email functionality based on allauth
-    see allauth/account/model.py - EmailConfirmation
+    Email functionality based on django-allauth,
+    see allauth.account.models.EmailConfirmation
+    and allauth.account.adapter.send_mail
     """
-    # We may want to make the respondent field anonymous or optional
+    
     respondent = models.CharField(max_length=RESPONDENT_NAME_LENGTH, default='')
     is_available = models.BooleanField(default=True)
+    expiration_datetime = models.DateTimeField()
     sent = models.DateTimeField(null=True)
-    key = models.CharField(max_length=64, unique=True)
+    key = models.CharField(max_length=64, unique=True, primary_key=True)
     
     objects = ExamResponseManager()
     
-    ## From allauth.account.models
-    #@classmethod
-    #def create(cls, extra=None):
-    #    key = random_token([extra])
-    #    return cls._default_manager.create(key=key)
+    def check_available(self):
+        return self.is_available and self.expiration_datetime >= timezone.now()
     
     def send(self, request, email, **kwargs):
+        """
+        Generates an email message with a link to the ExamResponse form.
+        
+        This function calls get_adapter() from django-allauth and uses allauth's
+        send_mail function.
+        """
         current_site = Site.objects.get_current()
         test_url = reverse("exam_response", args=[self.key])
         test_url = request.build_absolute_uri(test_url)
+        # The ctx dictionary is a way to access variables in the message template,
+        # no need to get into the send_mail function below.
         ctx = {
-            #"user": self.email_address.user,
             "test_url": test_url,
             "current_site": current_site,
             "key": self.key,
+            "expiration": self.expiration_datetime
         }
         email_template = 'exam/email_test' # "_message.txt" or "_subject.txt" will be added
+        # get_adapter and send_mail depend on django-allauth
         get_adapter().send_mail(email_template,
                                 email,
                                 ctx)
@@ -118,13 +127,21 @@ class Question(models.Model):
 
 class QuestionResponse(models.Model):
     """
-    Abstract base class for *Response models.  Subclasses should define a
+    Base class for *Response models.  Subclasses should define a
     "question" field that is a ForeignKey to a *Question model.
+    
+    This model is abstract. Using multi-inheritence would be less efficient than an
+    abstract model, but would allow us to query all questionresponse objects.
     """
     exam_response = models.ForeignKey(ExamResponse)
     
+    #objects = QuestionResponseManager()
+    
     class Meta:
         abstract = True
+        
+    def __unicode__(self):
+        return "{0}: {1}".format(self.exam_response, self.question)
 
 class FreeResponseQuestion(Question):
     """
@@ -139,10 +156,7 @@ class FreeResponseResponse(QuestionResponse):
     Records the response to a free response question.
     """
     question = models.ForeignKey(FreeResponseQuestion)
-    response = models.CharField(max_length=RESPONSE_FREE_LENGTH)
-
-    def __unicode__(self):
-        return self.response
+    response = models.CharField(max_length=RESPONSE_FREE_LENGTH, blank=True)
 
 
 class MultipleChoiceQuestion(Question):
@@ -157,7 +171,7 @@ class MultipleChoiceOption(models.Model):
     """
     Represents one option in the set of choices for a multiple choice question.
     """
-    question = models.ForeignKey(FreeResponseQuestion)
+    question = models.ForeignKey(MultipleChoiceQuestion)
     text = models.CharField(max_length=CHOICE_LENGTH)
     rank = models.IntegerField(null=True)
 
@@ -170,8 +184,8 @@ class MultipleChoiceResponse(QuestionResponse):
     Records the response to a multiple choice question.
     """
     question = models.ForeignKey(MultipleChoiceQuestion)
-    option = models.ForeignKey(MultipleChoiceOption)
+    option = models.ForeignKey(MultipleChoiceOption, null=True)
 
-    def __unicode__(self):
-        option = MultipleChoiceOption.objects.get(pk=self.option)
-        return unicode(option)
+    #def __unicode__(self):
+    #    option = MultipleChoiceOption.objects.get(pk=self.option)
+    #    return unicode(option)

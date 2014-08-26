@@ -2,7 +2,9 @@ import hashlib
 import random
 
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
 
+#from .models import FreeResponseResponse, MultipleChoiceResponse
 
 def random_token(extra=None, hash_func=hashlib.sha256):
     """
@@ -16,6 +18,6 @@ def random_token(extra=None, hash_func=hashlib.sha256):
 
 class ExamResponseManager(models.Manager):
     
-    def create(self):
+    def create(self, **kwargs):
         key = random_token(['extra_string'])
-        return super(ExamResponseManager,self).create(key=key)
+        return super(ExamResponseManager,self).create(key=key, **kwargs)

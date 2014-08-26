@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Test Unavailable" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+ 
+  <div class="horizontal-heading">
+    <h3>This test is unavailable.</h3>
+  </div>
+  Your link may be bad or expired, or you may have already submitted the test at this link.<br>
+  Make sure you copied the link correctly, and contact your instructor if you need a new link.
+  
+</div> <!-- container -->
+
+{% endblock %}
