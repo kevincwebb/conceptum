@@ -3,6 +3,7 @@ from django.contrib.contenttypes.generic import GenericTabularInline, GenericSta
 
 from .models import (
     Exam,
+    ResponseSet,
     ExamResponse,
     FreeResponseQuestion,
     FreeResponseResponse,
@@ -29,16 +30,16 @@ class MultipleChoiceOptionInLine(admin.TabularInline):
 class ExamAdmin(reversion.VersionAdmin):
     inlines = [FreeResponseQuestionInLine,MultipleChoiceQuestionInLine, ]
 
-# Responses probably don't need to be versioned
+class ResponseSetAdmin(admin.ModelAdmin):
+    pass
+
 class ExamResponseAdmin(admin.ModelAdmin):
-    #list_display = ('is_available',)
     pass
 
 class FreeResponseQuestionAdmin(reversion.VersionAdmin):
     list_display = ('question', 'exam', 'content_type', 'content_object', 'image', 'rank', 'optional', 'pk')
 
 class FreeResponseResponseAdmin(admin.ModelAdmin):
-    #list_display = ('exam_response', 'question')
     pass
 
 class MultipleChoiceOptionAdmin(reversion.VersionAdmin):
@@ -52,6 +53,7 @@ class MultipleChoiceResponseAdmin(admin.ModelAdmin):
     pass
 
 admin.site.register(Exam, ExamAdmin)
+admin.site.register(ResponseSet, ResponseSetAdmin)
 admin.site.register(ExamResponse, ExamResponseAdmin)
 admin.site.register(FreeResponseQuestion, FreeResponseQuestionAdmin)
 admin.site.register(FreeResponseResponse, FreeResponseResponseAdmin)

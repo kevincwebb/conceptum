@@ -1,5 +1,5 @@
 <h3> You're at the Exam Index! </h3>
 
 {% for exam in all_exams %}
-        <li><a href="{% url 'description' exam.id %}">{{ exam.name }}</a></li>
+        <li><a href="{% url 'exam_description' exam.id %}">{{ exam.name }}</a></li>
 {% endfor %}

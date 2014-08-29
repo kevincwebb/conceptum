@@ -5,12 +5,15 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.validators import validate_email, ValidationError
 
-from .models import ExamResponse, MultipleChoiceOption
+from .models import ExamResponse, MultipleChoiceOption, ResponseSet
 
 MAX_EMAILS = 30
 
 class MultiEmailField(forms.Field):
-    
+    """
+    Field to collect email addresses as one large text input, where addresses are
+    seperated by semi-colon.  Used in DistributeFrom
+    """
     def to_python(self, value):
         """
         Normalize data to a list of strings.
@@ -34,6 +37,23 @@ class MultiEmailField(forms.Field):
             except ValidationError:
                 raise ValidationError("One or more email addresses is invalid.")
 
+class ExamResponseChoiceField(forms.ModelMultipleChoiceField):
+    """
+    A custom field used in DistributeForm so that the list of pending exams (for re-sending)
+    displays the respondent's email.
+    """
+    def label_from_instance(self, obj):
+        return obj.respondent
+
+class NewResponseSetForm(forms.ModelForm):
+    class Meta:
+        model = ResponseSet
+        fields = ['course', 'pre_test'] #'modules' ]
+        
+        #widgets = {
+        #    'modules': forms.CheckboxSelectMultiple(),
+        #}
+
 class DistributeForm(forms.Form):
     
     expiration_date = forms.DateField(initial= (date.today() + timedelta(days=7)),
@@ -42,11 +62,35 @@ class DistributeForm(forms.Form):
     expiration_time = forms.TimeField(initial= time(23,59,59),
                                       help_text='HH:MM:SS  (use 24-hr clock)')
     
-    recipients = MultiEmailField(help_text="Enter list of addresses, separated by semi-colons.",
+    recipients = MultiEmailField(required=False,
                                  widget=forms.Textarea(attrs={
-                                    'placeholder':"email1@email.com;\nemail2@email.com"}))
+                                 'placeholder':"seperate with semicolons... \n\nemail1@email.com;\nemail2@email.com"}))
+    
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super(DistributeForm, self).__init__(*args, **kwargs)
+        pending_exams = self.instance.examresponse_set.filter(submitted__exact=None)
+        self.fields["resend"] = ExamResponseChoiceField(queryset=pending_exams,
+                                                        required=False,
+                                                        widget=forms.CheckboxSelectMultiple())
+    
+    def clean_recipients(self):
+        """
+        Check that there has not already been an exam sent to this address. Note that this
+        does not check that an email has not been entered twice in the same input.
+        """
+        data = self.cleaned_data['recipients']
+        for email in data:
+            if self.instance.examresponse_set.filter(respondent__exact=email):
+                raise forms.ValidationError("You have already sent an exam to one or more \
+                                            of these addresses.  If you'd like to resend an \
+                                            exam, use the checkbox below.")
+        return data
     
     def clean(self):
+        """
+        Check that expiration time is in the future and no more than 100 days from today
+        """
         cleaned_data = super(DistributeForm, self).clean()
         expiration_date = cleaned_data.get("expiration_date")
         expiration_time = cleaned_data.get("expiration_time")
@@ -58,6 +102,12 @@ class DistributeForm(forms.Form):
             if datetime.today() >= expiration_datetime:
                 raise forms.ValidationError("Expiration date/time must be in future")
         return cleaned_data
+
+
+class BlankForm(forms.Form):
+    class Meta:
+        fields = []
+
     
 class ExamResponseForm(forms.ModelForm):
     class Meta:
@@ -74,8 +124,10 @@ class ExamResponseForm(forms.ModelForm):
         for response in self.instance.multiplechoiceresponse_set.all():
             self.fields["MC_response_%d" % response.id] = \
                 forms.ModelChoiceField(label=_(response.question.__unicode__()),
-                                required=True,
-                                queryset=response.question.multiplechoiceoption_set.all(),)
+                                       required=True,
+                                       queryset=response.question.multiplechoiceoption_set.all(),
+                                       empty_label=None,
+                                       widget=forms.RadioSelect())
             
     def save(self):
         for response in self.instance.freeresponseresponse_set.all():

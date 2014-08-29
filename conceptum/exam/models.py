@@ -8,12 +8,11 @@ from django.utils import timezone
 from django.core.urlresolvers import reverse
 
 from allauth.account.adapter import get_adapter
-
-from .managers import ExamResponseManager
 import reversion
 from reversion.models import Revision, Version
 
-
+from profiles.models import ContributorProfile
+from .managers import ExamResponseManager
 
 # Constants
 EXAM_NAME_LENGTH = 100
@@ -22,6 +21,7 @@ QUESTION_LENGTH = 1000
 CHOICE_LENGTH = 500
 RESPONSE_FREE_LENGTH = 2000
 RESPONDENT_NAME_LENGTH = 100
+COURSE_NAME_LENGTH = 100
 
 
 class Exam(models.Model):
@@ -37,6 +37,31 @@ class Exam(models.Model):
         return self.name
 #reversion.register(Exam)
 
+
+class ResponseSet(models.Model):
+    """
+    This class holds information shared among multiple ExamResponses that have
+    been distributed together (same course, teacher, time)
+    
+    pre_test = True implies the test was given as a pre_test, and a post_test should follow
+    pre_test = False implies the test was given as a post_test
+    
+    "modules" field is currently unused because stage1 is not ready yet.
+    """
+    created = models.DateTimeField(auto_now_add=True)
+    instructor = models.ForeignKey(ContributorProfile) # includes name, email, and institution
+    course = models.CharField(max_length=COURSE_NAME_LENGTH)
+    pre_test = models.BooleanField(default=False)
+    exam = models.ForeignKey(Exam)
+    # modules = models.ManyToManyField(...
+    
+    class Meta:
+        ordering = ['-created']
+    
+    def __unicode__(self):
+        return "{0} ({1})".format(self.course, self.created.date())
+    
+    
 class ExamResponse(models.Model):
     """
     Class for distributing and saving a single instance of an Exam.
@@ -51,18 +76,22 @@ class ExamResponse(models.Model):
     Email functionality based on django-allauth,
     see allauth.account.models.EmailConfirmation
     and allauth.account.adapter.send_mail
+    
+    TODO: Set up an automatic deletion of expired blank responses.
+    this S.O. post is a good design http://stackoverflow.com/a/11789141
     """
     
-    respondent = models.CharField(max_length=RESPONDENT_NAME_LENGTH, default='')
-    is_available = models.BooleanField(default=True)
+    key = models.CharField(max_length=64, unique=True, primary_key=True)
+    response_set = models.ForeignKey(ResponseSet)
+    respondent = models.CharField(max_length=RESPONDENT_NAME_LENGTH, default='') # an email
     expiration_datetime = models.DateTimeField()
     sent = models.DateTimeField(null=True)
-    key = models.CharField(max_length=64, unique=True, primary_key=True)
+    submitted = models.DateTimeField(null=True, blank=True, default=None)
     
     objects = ExamResponseManager()
     
-    def check_available(self):
-        return self.is_available and self.expiration_datetime >= timezone.now()
+    def is_available(self):
+        return (not self.submitted) and self.expiration_datetime >= timezone.now()
     
     def send(self, request, email, **kwargs):
         """
@@ -91,7 +120,7 @@ class ExamResponse(models.Model):
         self.save()
 
     def __unicode__(self):
-        return self.key[-8:]
+        return "{0}: {1}".format(self.key[-8:], self.respondent)
 
 def question_imageupload_to(question, filename):
     """
@@ -196,7 +225,3 @@ class MultipleChoiceResponse(QuestionResponse):
     """
     question = models.ForeignKey(MultipleChoiceQuestion)
     option = models.ForeignKey(MultipleChoiceOption, null=True)
-
-    #def __unicode__(self):
-    #    option = MultipleChoiceOption.objects.get(pk=self.option)
-    #    return unicode(option)

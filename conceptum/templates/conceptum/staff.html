@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Staff Functions" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+ 
+  <div class="horizontal-heading">
+    <h1>Staff Directory</h1>
+  </div>
+  This page contains features that are only available to staff users.
+
+  <h3>Options</h3>
+    <a href = {% url 'pending_users' %}> Approve Pending Users </a><br>
+    Control CI stage (Coming Soon)<br>
+    <a href = {% url 'distribute_cleanup' %}> Cleanup Expired Exams </a><br>
+    <a href = {% url 'profile' %}> Return to profile </a><br>
+  
+  
+</div> <!-- container -->
+
+{% endblock %}
