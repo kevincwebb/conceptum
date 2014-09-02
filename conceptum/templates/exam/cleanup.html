@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Delete expired responses?" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  
+  <div class="form-horizontal-heading">
+    <h2>Cleanup Expired Exams</h2>
+  </div>
+  {% if expired %}
+    <p>Some of the distributed exams expired before they were submitted. Please delete them.</p>
+    <form action="{% url 'distribute_cleanup' %}" role="form" method="post">{% csrf_token %}
+      <div class="submit">
+        <button class="btn btn-danger" type="submit">Delete</button>
+        <a href = {% url 'staff_page' %} class='btn btn-primary'> Cancel </a>
+    </div>
+    </form>
+    {% for response in expired %}
+      <br>{{ response }}
+    {% endfor %}
+  {% else %}
+    <p>No expired exams.</p>
+    <a href = {% url 'staff_page' %} class='btn btn-primary'> Cancel </a>
+  {% endif %}
+  
+
+  
+
+<br>
+
+</div> <!-- container -->
+
+{% endblock %}

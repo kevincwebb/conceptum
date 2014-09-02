@@ -1,16 +1,18 @@
+
 from django.conf.urls import patterns, include, url
 from django.conf.urls.static import static
 from django.conf import settings
 from django.contrib import admin
 admin.autodiscover()
 
-
+from .views import StaffView
 
 
 urlpatterns = patterns('',
     url(r'^$', 'conceptum.views.home', name='home'),
     url(r'^ci_info$', 'conceptum.views.ci_info', name='ci_info'),
-
+    url(r'^staff/$', StaffView.as_view(), name='staff_page'),
+    
     url(r'^accounts/', include('custom_auth.urls')),
 
     url(r'^cidev/', include('cidev.urls')),
@@ -23,6 +25,7 @@ urlpatterns = patterns('',
     url(r'^stage1/', include('cistage1.urls')),
     url(r'^interviews/', include('interviews.urls')),
     url(r'^survey/', include('survey.urls')),
+    
 )
 
 # Uncomment the next line to serve media files in dev.

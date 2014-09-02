@@ -18,24 +18,13 @@
 
 
   <div class="horizontal-heading">
-    <h2>Welcome {{ user.name }}</h2>
-  </div>
-
-    
-    <b>Primary Email:</b>
-    {{ user.email }}<br>
-
-    <b>Name:</b>
-    {{ user.name }}<br>
-
-    <b>Institution:</b>
-    {{ user.profile.institution }}<br>    
-    
-    <b>Homepage:</b>
-    {{ user.profile.homepage }}<br>
-    
-    <b>Other Info:</b>
-    {{ user.profile.text_info }}<br>
+    <h1>Welcome, {{ user.name }}</h1>
+  </div>    
+    <b>Primary Email:</b>{{ user.email }}<br>
+    <b>Name:</b>{{ user.name }}<br>
+    <b>Institution:</b>{{ user.profile.institution }}<br>    
+    <b>Homepage:</b>{{ user.profile.homepage }}<br>
+    <b>Other Info:</b>{{ user.profile.text_info }}<br>
 
     <br>
     {% if user.profile.is_contrib or user.is_staff %}
@@ -47,14 +36,25 @@
     {% endif %}
 
     {% if user.is_staff %}
-      <br>
-      You are an administrator.
+      <br><br>
+      You are an administrator. You can do exclusive staff things at the
+      <a href = {% url 'staff_page' %}> Staff Page </a><br>
     {% endif %}
     
-	<br><br>
-    <b>Options:<b>
-	<br><a href = {% url 'account_logout' %}> Logout </a>
-    <br><a href = {% url 'edit_profile' %}> Edit Profile </a>
+    <h3>Distribute Survey/Exam</h3>
+    <a href = {% url 'exam_index' %} class='btn btn-primary'>New Distribution</a>
+    <h4>Your distributed exams</h4>
+    {% for response_set in user.profile.responseset_set.all %}
+      <a href = {% url 'distribute_send' response_set.id %}> {{ response_set }} </a>
+      <a href = {% url 'distribute_delete' response_set.id %} class='btn btn-sm btn-danger'> Delete </a>
+      
+      <br>
+    {% endfor %}
+    
+	
+    <h3>Options</h3>
+	<a href = {% url 'account_logout' %}> Logout </a>
+	<br><a href = {% url 'edit_profile' %}> Edit Profile </a>
 	<br><a href = {% url 'account_email' %}> Manage Email Addresses </a>
 	<br><a href = {% url 'account_change_password' %}> Change Password </a>
   

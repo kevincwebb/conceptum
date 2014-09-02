@@ -3,10 +3,13 @@ from django.contrib.contenttypes.generic import GenericTabularInline, GenericSta
 
 from .models import (
     Exam,
+    ResponseSet,
     ExamResponse,
     FreeResponseQuestion,
+    FreeResponseResponse,
     MultipleChoiceOption,
-    MultipleChoiceQuestion
+    MultipleChoiceQuestion,
+    MultipleChoiceResponse,
 )
 
 import reversion
@@ -27,26 +30,33 @@ class MultipleChoiceOptionInLine(admin.TabularInline):
 class ExamAdmin(reversion.VersionAdmin):
     inlines = [FreeResponseQuestionInLine,MultipleChoiceQuestionInLine, ]
 
+class ResponseSetAdmin(admin.ModelAdmin):
+    pass
 
-# Responses probably don't need to be versioned
 class ExamResponseAdmin(admin.ModelAdmin):
     pass
 
-
 class FreeResponseQuestionAdmin(reversion.VersionAdmin):
     list_display = ('question', 'exam', 'content_type', 'content_object', 'image', 'rank', 'optional', 'pk')
-    
+
+class FreeResponseResponseAdmin(admin.ModelAdmin):
+    pass
 
 class MultipleChoiceOptionAdmin(reversion.VersionAdmin):
     list_display = ('text','question', 'rank', 'pk')
-
 
 class MultipleChoiceQuestionAdmin(reversion.VersionAdmin):
     list_display = ('question','exam', 'content_type', 'content_object',  'image', 'rank', 'optional', 'pk')
     inlines = [MultipleChoiceOptionInLine]
 
+class MultipleChoiceResponseAdmin(admin.ModelAdmin):
+    pass
+
 admin.site.register(Exam, ExamAdmin)
+admin.site.register(ResponseSet, ResponseSetAdmin)
 admin.site.register(ExamResponse, ExamResponseAdmin)
 admin.site.register(FreeResponseQuestion, FreeResponseQuestionAdmin)
+admin.site.register(FreeResponseResponse, FreeResponseResponseAdmin)
 admin.site.register(MultipleChoiceOption, MultipleChoiceOptionAdmin)
 admin.site.register(MultipleChoiceQuestion, MultipleChoiceQuestionAdmin)
+admin.site.register(MultipleChoiceResponse, MultipleChoiceResponseAdmin)

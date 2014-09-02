@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Delete responses?" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  
+  <div class="form-horizontal-heading">
+    <h2>Delete Responses?</h2>
+  </div>
+  <p>Are you sure you want to delete "{{ object }}"?<br>
+  {% if object.examresponse_set.all %}
+    Responses have been distributed to some emails. Deleting this object will also delete
+    all responses.<br>
+  {% endif %}
+  You cannot undo this action.</p>
+  <form action="" method="post">{% csrf_token %}
+
+      <div class="submit">
+        <button class="btn btn-danger" type="submit">Confirm Delete</button>
+        <a href = {% url 'profile' %} class='btn btn-primary'> Cancel </a>
+      </div>
+  </form>
+
+<br>
+
+</div> <!-- container -->
+
+{% endblock %}

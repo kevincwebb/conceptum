@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block head_title %}{% trans "Take Test" %}{% endblock %}
+{% block head_title %}{% trans "Distribute Exam" %}{% endblock %}
 
 {% block extra_headers %}
 
@@ -17,10 +17,10 @@
 <div class="container">
  
   <div class="horizontal-heading">
-    <h3>Take the test here</h3>
+    <h3>Provide test details</h3>
   </div>
   
-  <form class="form-horizontal" role="form"  action="{% url 'exam_response' object.key %}" method="post">{% csrf_token %}
+  <form class="form-horizontal" role="form"  action="{% url 'distribute_new' exam.id %}" method="post">{% csrf_token %}
   
   {{ form.non_field_errors }}
 
@@ -35,7 +35,8 @@
   {% endfor %}
   
       <div class="submit">
-        <button class="btn btn-primary" type="submit">Submit Responses</button>
+        <button class="btn btn-primary" type="submit">Next</button>
+        <a href = {% url 'exam_description' exam.id %} class='btn btn-primary'> Cancel </a>
       </div>
   </form>
   
