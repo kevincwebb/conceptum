@@ -112,13 +112,13 @@ def get_submit(request, node_id):
 
             choices = form.cleaned_data['final_choices']
 
-            # for choice in choices:
-            #     counter = ValueCounter.objects.filter(target=atom).get()
-            #     counter.value += 1
-            #     counter.save()
-                                
-            print choices
-            return HttpResponse("yo it's valid")
+            for choice in choices:
+                counter = ValueCounter.objects.filter(target=choice).get()
+                counter.value += 1
+                counter.save()
+                                     
+
+            return redirect('final sub', node_id)
 
         else:
             return HttpResponse("uh oh not valid")    
