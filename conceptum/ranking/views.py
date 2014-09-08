@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 
 from nodemanager.models import ConceptNode
 from ranking.models import RankingProcess
+from ranking.forms import RankingProcessSetupForm
 
 # TODO: get_or_404s for all nodes, ranking processes, etc
 
@@ -20,15 +21,43 @@ def dispatch(request, node_id):
     else:
         return redirect('closed', node_id=node_id)
 
-def setup(request, node_id, admin=False):
+def setup(request, node_id):
 
     user = request.user
     node = ConceptNode.objects.filter(pk=node_id).get()
+    form = RankingProcessSetupForm()
 
     if user in node.admin_set():
-        return render(request,'ranking/rank_setup.html',)
+        return render(request,'ranking/rank_setup.html',
+                      {"node": node,
+                       "form": form})
     else:
         return render(request,'ranking/rank_cannot_setup.html',)
+
+def get_setup(request, node_id):
+
+    node = get_object_or_404(ConceptNode,pk=node_id)
+    user = request.user
+
+    if request.method == 'POST':
+
+        form = RankingProcessSetupForm(request.POST)
+        if form.is_valid():
+
+            ranking_process = RankingProcess.objects.filter(parent__pk=node_id).get()
+            ranking_process.choices = node.get_final_choices()
+            ranking_process.value_choices = form.cleaned_data.get('value_choices')
+            ranking_process.status = ranking_process.in_progress
+            ranking_process.save()
+
+            return redirect('dispatch', node_id=node_id)
+            #return HttpResponse("valid form!...db code tba, {0}".format(form.cleaned_data.get('value_choices')))
+        else:
+            return render(request,'ranking/rank_setup.html',
+                          {"node": node,
+                           "form": form})
+    
+    return HttpResponse("got it")
 
 def submit(request, node_id):
 
