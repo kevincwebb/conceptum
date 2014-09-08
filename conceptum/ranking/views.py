@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 
 from nodemanager.models import ConceptNode
 from ranking.models import RankingProcess
-from ranking.forms import RankingProcessSetupForm
+from ranking.forms import RankingProcessSetupForm, BinaryChoiceForm
 
 # TODO: get_or_404s for all nodes, ranking processes, etc
 
@@ -27,12 +27,17 @@ def setup(request, node_id):
     node = ConceptNode.objects.filter(pk=node_id).get()
     form = RankingProcessSetupForm()
 
+    ranking_process = RankingProcess.objects.filter(parent__id=node_id).get()
+    if not ranking_process.status == ranking_process.not_initialized:
+        return redirect('dispatch', node_id=node_id)
+
     if user in node.admin_set():
         return render(request,'ranking/rank_setup.html',
                       {"node": node,
                        "form": form})
     else:
         return render(request,'ranking/rank_cannot_setup.html',)
+
 
 def get_setup(request, node_id):
 
@@ -56,18 +61,25 @@ def get_setup(request, node_id):
             return render(request,'ranking/rank_setup.html',
                           {"node": node,
                            "form": form})
-    
-    return HttpResponse("got it")
+    else:
+        return HttpResponse("error you're not supposed to be here")
 
 def submit(request, node_id):
 
     user = request.user
     node = ConceptNode.objects.filter(pk=node_id).get()
 
+    form = BinaryChoiceForm(node_id=node_id)
+    
     if user not in node.users_contributed_set():
 
         if user in node.admin_set():
-            return render(request, 'ranking/rank_submit_admin.html',)
+            return render(request, 'ranking/rank_submit_admin.html',
+                          {'node': node,
+                           'user': user,
+                           'form': form}
+                      )
+
         else:
             return render(request, 'ranking/rank_submit_user.html',)
 
@@ -77,6 +89,14 @@ def submit(request, node_id):
             return render(request, 'ranking/rank_already_voted_admin.html',)
         else:
             return render(request, 'ranking/rank_already_voted_user.html',)
+
+def get_submit(request, node_id):
+
+    user = request.user
+    node = ConceptNode.objects.filter(pk=node_id).get()
+
+    
+    #return redirect('final sub', node_id=node_id)
 
 def closed(request, node_id ):
     return render(request, 'ranking/rank_closed.html')

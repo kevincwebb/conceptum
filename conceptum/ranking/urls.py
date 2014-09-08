@@ -10,5 +10,6 @@ urlpatterns = patterns('',
     url(r'^getsetup$', views.get_setup, name='get setup'),
 
     url(r'^submit$', views.submit, name='submit'),
+    url(r'^get_submit$', views.get_submit, name='get submit'),
     url(r'^closed$', views.closed, name = 'closed'),
 )

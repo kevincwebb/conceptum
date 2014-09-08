@@ -1,1 +1,9 @@
 rank submit for admin
+
+<form action="{% url 'get submit' node.id %}" method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <input type="submit" value="Submit">
+</form>
+<p>
+<a href="{% url 'landing' %}">Back to Landing Page</a>
