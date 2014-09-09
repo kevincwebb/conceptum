@@ -66,7 +66,7 @@ def get_setup(request, node_id):
             
 
             return redirect('dispatch', node_id=node_id)
-            #return HttpResponse("valid form!...db code tba, {0}".format(form.cleaned_data.get('value_choices')))
+
         else:
             return render(request,'ranking/rank_setup.html',
                           {"node": node,
@@ -106,14 +106,19 @@ def get_submit(request, node_id):
                 counter = ValueCounter.objects.filter(target=choice).get()
                 counter.value += 1
                 counter.save()
-                                     
 
             return redirect('final sub', node_id)
 
-        else:
-            return HttpResponse("uh oh not valid")    
+        else: #form has errors
+            return render(request, 'ranking/submit.html',
+                          {'node': node,
+                           'user': user,
+                           'form': form
+                           'user_is_admin': user in node.admin_set()} #boolean
+                                                                      #assignment
+    else:
+        HttpResponse("not supposed to be here?")
     
-    #return redirect('final sub', node_id=node_id)
 
 def closed(request, node_id ):
     return render(request, 'ranking/rank_closed.html')
