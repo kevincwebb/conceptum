@@ -79,25 +79,15 @@ def submit(request, node_id):
     user = request.user
     node = ConceptNode.objects.filter(pk=node_id).get()
 
-    form = BinaryChoiceForm(node_id=node_id)
+    render_args = {'node': node,
+                   'user': user,
+                   'user_is_admin': user in node.admin_set()} #boolean assignment
     
     if user not in node.users_contributed_set():
-
-        render_args = {'node': node,
-                       'user': user,
-                       'form': form,}
-        
-        if user in node.admin_set():
-            return render(request, 'ranking/rank_submit_admin.html', render_args)
-        else:
-            return render(request, 'ranking/rank_submit_user.html',)
-
-    else: #user has already voted
-
-        if user in node.admin_set():
-            return render(request, 'ranking/rank_already_voted_admin.html',)
-        else:
-            return render(request, 'ranking/rank_already_voted_user.html',)
+        render_args['form'] = BinaryChoiceForm(node_id=node_id)
+        return render(request, 'ranking/submit.html', render_args)
+    else:
+        return render(request, 'ranking/already_voted.html', render_args)
 
 def get_submit(request, node_id):
 

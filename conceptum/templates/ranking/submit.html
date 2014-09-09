@@ -1,4 +1,4 @@
-rank submit for admin
+<h1>Submission Form for Ranking</h1>
 
 <form action="{% url 'get submit' node.id %}" method="post">
   {% csrf_token %}
@@ -7,3 +7,7 @@ rank submit for admin
 </form>
 <p>
 <a href="{% url 'landing' %}">Back to Landing Page</a>
+
+{% if user_is_admin %}
+<h4>You are an admin (fast-forward tba)</h4>
+{% endif %}
