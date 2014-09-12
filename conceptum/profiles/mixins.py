@@ -16,3 +16,17 @@ class ContribRequiredMixin(object):
         if not request.user.profile.can_contrib():
             raise PermissionDenied  # Return a 403
         return super(ContribRequiredMixin, self).dispatch(request, *args, **kwargs)
+    
+class StaffRequiredMixin(object):
+    """
+    Same as ContribRequiredMixin but with (user.is_staff==True). 
+    """
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Check to see if the user in the request is allowed to contribute.
+        Uses the can_contrib() method just in case there are inconsistencies
+        between is_staff and is_contrib booleans.
+        """
+        if not request.user.is_staff:
+            raise PermissionDenied  # Return a 403
+        return super(StaffRequiredMixin, self).dispatch(request, *args, **kwargs)
