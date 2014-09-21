@@ -113,9 +113,10 @@ def get_submit(request, node_id):
             return render(request, 'ranking/submit.html',
                           {'node': node,
                            'user': user,
-                           'form': form
+                           'form': form,
                            'user_is_admin': user in node.admin_set()} #boolean
                                                                       #assignment
+                          )
     else:
         HttpResponse("not supposed to be here?")
     
