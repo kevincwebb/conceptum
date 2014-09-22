@@ -39,10 +39,34 @@ class RankingProcess(models.Model):
     def get_ranked_items_in_order(self):
         return map(lambda v: v.target, ValueCounter.objects.filter(ranking_process=self))
 
+        
+    def close_rank_export_choices(ranking_process):
+    
+        choices = ranking_process.get_ranked_items_in_order()
+        parent_node = ranking_process.parent
+        parent_info = parent_node.ci_tree_info
+        
+        for choice in choices: #choice is a ConceptAtom here
+
+            new_child = ConceptNode(
+                ci_tree_info = parent_info,
+                parent = parent_node,
+                content = choice.text,
+            )
+            new_child.save()
+
+            #once we have created the new nodes we close the ranking process
+            self.status = self.closed
+            self.save()
+    
+            return
+
+
     def __unicode__(self):
         return "Ranking Process of " + unicode(self.parent)
 
 
+        
 class ValueCounter(models.Model):
 
     target = models.ForeignKey(ConceptAtom)
