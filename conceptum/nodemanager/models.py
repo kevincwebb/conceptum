@@ -10,11 +10,15 @@ class CITreeInfo(models.Model):
     CI Tree Info defines parameters that hold true throughout an
     entire concept hierarchy. These parameters are:
     
-    - users (can add and vote on new concepts) administrators (user
-    - privileges, +merge, +set boundaries, +force vote close) type:
-    - whether or not this tree is the "master" -- or tree with the
-    - highest user approval rating
+    - users (can add and vote on new concepts)
+
+    - administrators (user privileges, +merge, +set boundaries, +force
+      vote close)
+
+    - type: whether or not this tree is the "master" -- or tree with
+      the highest user approval rating
     """
+
     admins = models.ManyToManyField(User, related_name='admins')
     users = models.ManyToManyField(User, related_name='users')
 
