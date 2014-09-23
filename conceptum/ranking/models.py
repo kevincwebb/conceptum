@@ -1,3 +1,5 @@
+# Model definitions for the ranking app
+
 from django.db import models
 
 from authtools.models import User
@@ -5,6 +7,21 @@ from nodemanager.models import ConceptNode, ConceptAtom
 from operator import attrgetter
 
 class RankingProcess(models.Model):
+    """
+    This model contains all the necessary information that determines
+    a ranking process.
+
+    -Choices: a set of objects we are voting on (currently concept atoms)
+    
+    -Parent: what this ranking process is attached to (currently a
+    concept node. Note that this "parent" field is how we figure out
+    who is voting and administrating, since that information is
+    available in the concept node's CI Tree Info model).
+
+    -Value Choice: The ranking system (currently just binary is implemented)
+
+    -Status: one of Not Initialized/In Progress/Closed
+    """
 
     choices = models.ManyToManyField(ConceptAtom)
     parent = models.ForeignKey(ConceptNode)
@@ -23,6 +40,7 @@ class RankingProcess(models.Model):
                                     choices=VALUE_CHOICES,
                                     default=binary)
 
+    #possible ranking states
     not_initialized = 'N'
     in_progress = 'I'
     closed = 'C'
@@ -68,6 +86,21 @@ class RankingProcess(models.Model):
 
         
 class ValueCounter(models.Model):
+    """
+    The Value Counter model stores voting information entered by the
+    user. There is one counter attached to each object in the voting
+    set.
+
+    The value counter currently has this information:
+
+    - target: the object whose value it tracks
+    
+    - ranking process: the parent ranking process this counter belongs
+      to
+
+    - value: the actual value it holds. This can theoretically be
+      expanded.
+    """
 
     target = models.ForeignKey(ConceptAtom)
     ranking_process = models.ForeignKey(RankingProcess)
