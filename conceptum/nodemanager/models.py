@@ -1,18 +1,20 @@
+# Defines the models for the nodemanager class
+
 from django.db import models
-
-# Used for underlying tree structure
-from mptt.models import MPTTModel, TreeForeignKey
-
+from mptt.models import MPTTModel, TreeForeignKey #for tree structure
 from authtools.models import User
 
-# Only one CITreeInfo model can exist per tree. Every node in the CI
-# Tree is connected to it. It provides global information, such as:
-# -administrators
-# -users working on the tree
-# -type (whether the tree is the master or not)
-# TODO: maybe created by
-class CITreeInfo(models.Model):
 
+class CITreeInfo(models.Model):
+    """
+    CI Tree Info defines parameters that hold true throughout an
+    entire concept hierarchy. These parameters are:
+    
+    - users (can add and vote on new concepts) administrators (user
+    - privileges, +merge, +set boundaries, +force vote close) type:
+    - whether or not this tree is the "master" -- or tree with the
+    - highest user approval rating
+    """
     admins = models.ManyToManyField(User, related_name='admins')
     users = models.ManyToManyField(User, related_name='users')
 
@@ -41,17 +43,42 @@ class CITreeInfo(models.Model):
             return None
 
 
-# The ConceptNode functions as a single-type container for all data that
-# different node objects might need. We do this instead of inheritance
-# because django-mttp can only construct trees of 1 type.
-#
-# Concept Nodes hold whatever value has been given to them from a
-# vote. They can also hold voting processes that, if completed, will
-# spawn child nodes whose content contains whatever was chosen from
-# the voting process.
-class ConceptNode(MPTTModel):
+# All concepts/topics/questions entered can't be longer than
+# this. #thankstwitter
+MAX_LENGTH = 140
 
-    # gives information about the tree the node belongs to
+
+class ConceptNode(MPTTModel):
+    """
+    Each node manages the canonical process for creating a modular
+    concept inventory.
+    
+    1. Everyone brainstorms potential concepts (simple text)
+    2. The raw list is pruned by an admin to produce a final set.
+    3. everyone votes on this set to determine which are selected.
+
+    Because our concept hierarchy is meant to be modular, this process
+    will occur multiple times: topics have modules, modules have
+    concepts, and concepts have questions.
+
+    A Concept Node stores the following information necessary for this
+    process:
+
+    - CI Tree Info: which overall hierarchy it is attached to
+      (concepts don't know about neighbors, only children.
+    
+    - User: tracks which users have visited the concept node. Resets
+      when the node changes state
+
+    - Node Type: The state of the node (currently: "Free Entry",
+      "Merge", "Rank" or "Closed")
+
+    - Content: The text that contains data relevant to the concept
+      hierarchy. This might be a topic/module name, a concept, or
+      question text.
+    """
+
+    # which concept hierarchy does the node belong to
     ci_tree_info = models.ForeignKey(CITreeInfo)
 
     # required by mptt
@@ -60,19 +87,11 @@ class ConceptNode(MPTTModel):
     # a node manages individual users
     user = models.ManyToManyField(User)
 
-    #add more types if desired
-    # NODECHOICES = (
-    #     ('F', 'Free Entry'), #initial brainstorm
-    #     ('P', 'Pruning'), #create final voting set
-    #     ('R', 'Ranking'), #vote on set and compute optimal choices
-    #     ('C', 'Complete'), #no more node-specific edits can be made
-    #)
+    #temporary arbitrary charfield (meant to be choices)
     node_type = models.CharField(max_length=2)
-                                 # choices=NODECHOICES,
-                                 # default='C',)
 
-    # Whatever content was awarded to this node by the parent voting
-    # process
+    # Whatever content this node contains (usually determined by a
+    # parent node going through the stage 1 process)
     content = models.TextField(max_length=140)
 
     def __unicode__(self):
@@ -141,22 +160,35 @@ class ConceptNode(MPTTModel):
             return self.check_admin_visited()
 
 
-
-# Atoms are entered by the user and are meant to represent
-# topics/concepts/module names that altogether will form a
-# hierarchical representation of a CI. They each link to one node and
-# one user. "Final Choice" represents whether or not an atom has
-# passed the pruning process.
-
-MAX_LENGTH = 140
-
 class ConceptAtom(models.Model):
+    """
+    A Concept Atom serves as a container for a concept and is passed
+    around in the implementations for "free entry", "merging", and
+    "ranking".
 
+    A Concept Atom has the following information:
+
+    - Concept Node: the parent node process that this atom belongs to
+    - User: tracks which user created the atom
+    - Text: The concept/topic/module name/question content itself
+    - Final Choice: whether or not this atom is in the post-merge set
+    - Merged Atoms: what concept atoms were merged under this one
+    """
+
+    # parent node
     concept_node = models.ForeignKey(ConceptNode)
+
+    # which user created this node
     user = models.ForeignKey(User)
 
+    # content
     text = models.CharField(max_length=MAX_LENGTH)
+
+    # whether or not this atom is part of the final merged set
     final_choice = models.BooleanField(default=False)
+
+    # if atoms were merged into one atom, this field will contain the
+    # merged "sub-atoms"
     merged_atoms = models.ForeignKey('self', null=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
