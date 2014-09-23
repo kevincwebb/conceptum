@@ -218,20 +218,16 @@ class ConceptAtom(models.Model):
     - Merged Atoms: what concept atoms were merged under this one
     """
 
-    # parent node
     concept_node = models.ForeignKey(ConceptNode)
 
-    # which user created this node
+    # only one user can create a node
     user = models.ForeignKey(User)
 
-    # content
     text = models.CharField(max_length=MAX_LENGTH)
 
-    # whether or not this atom is part of the final merged set
     final_choice = models.BooleanField(default=False)
 
-    # if atoms were merged into one atom, this field will contain the
-    # merged "sub-atoms"
+    # many atoms can only be merged under one single atom
     merged_atoms = models.ForeignKey('self', null=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
@@ -239,16 +235,32 @@ class ConceptAtom(models.Model):
 
     @staticmethod
     def get_unmerged_atoms(node):
+        """ Return all atoms that have not been merged. """
+
         return ConceptAtom.objects.filter(concept_node=node).filter(merged_atoms=None).exclude(final_choice=True)
 
     @staticmethod
     def get_final_atoms(node):
+        """
+        Get all final choices, i.e. those determined to be in the final
+        set after a merge.
+
+        NOTE: this is a redundant method; ConceptNode already has a
+        method that does this (I think)
+        """
+
         return ConceptAtom.objects.filter(concept_node=node).filter(final_choice=True)
 
-    def add_merge_atoms(self, atoms): #atoms is a queryset
+    def add_merge_atoms(self, atoms):
+        """
+        Given a queryset of atoms, add them to/merge them under this atom.
+        """
+
         for atom in atoms:
             atom.merged_atoms = self
             atom.save()
 
     def get_dependent_atoms(self):
+        """ Get all atoms merged under this one."""
+        
         return ConceptAtom.objects.filter(merged_atoms__pk=self.pk)
