@@ -32,15 +32,22 @@ class CITreeInfo(models.Model):
         else:
             return "Tree Info"
 
-    # returns a query set. if it's empty, there is no master tree
     @staticmethod
     def get_master_tree_root():
+        """
+        This function the root node of the master concept hierarchy. There
+        should only be one of them.
+        """
+
         master_info = CITreeInfo.objects.filter(is_master=True)
         if master_info:
             nodes = ConceptNode.objects.filter(ci_tree_info=master_info)
             if not nodes:
                 print "Error: Master Tree is empty (no root node)"
                 return None
+
+            #if there are multiple master trees (which there
+            #shouldn't), just return the first one
             return [node for node in nodes if node.is_root_node()].pop()
         else:
             print "Error: Master Tree does not exist"
@@ -82,42 +89,59 @@ class ConceptNode(MPTTModel):
       question text.
     """
 
-    # which concept hierarchy does the node belong to
     ci_tree_info = models.ForeignKey(CITreeInfo)
 
     # required by mptt
     parent = TreeForeignKey('self', null=True, related_name='children')
 
-    # a node manages individual users
-    user = models.ManyToManyField(User)
+    user = models.ManyToManyField(User) #multiple users can visit one
+                                        #node
 
     #temporary arbitrary charfield (meant to be choices)
     node_type = models.CharField(max_length=2)
 
-    # Whatever content this node contains (usually determined by a
-    # parent node going through the stage 1 process)
     content = models.TextField(max_length=140)
 
     def __unicode__(self):
         return self.content
 
     def get_final_choices(self):
+        """
+        Get all final choices, i.e. those determined to be in the final
+        set after a merge.
+        """
+
         all_choices =  ConceptAtom.objects.filter(concept_node=self.id)
         return all_choices.filter(final_choice=True)
 
     def users_contributed_set(self):
+        """
+        Return all the users who have visited this node thus far.
+        """
         return self.user.all()
 
     def admin_set(self):
+        """
+        Return all the admins of this node.
+        """
         return self.ci_tree_info.admins.all()
 
     def is_valid_user(self, user):
+        """
+        Given a user, determine if the user is in the node's set of
+        visitors. (this is admin-inclusive)
+        """
+
         if user in self.ci_tree_info.users.all() or user in self.ci_tree_info.admins.all():
             return True
         else:
             return False
 
     def is_active(self):
+        """
+        Returns whether or not the node is has finished all processes.
+        """
+        
         if not self.node_type == 'C':
             return True
         else:
@@ -127,6 +151,10 @@ class ConceptNode(MPTTModel):
     # of node_type for a cleaner solution that scales and maybe break
     # up into separate functions
     def transition_node_state(self):
+        """
+        Advance the state of a node to the next logical one. (Note that
+        this resets the visited users field to empty.)
+        """
 
         #update node_type
         if self.node_type == 'F':
@@ -145,18 +173,29 @@ class ConceptNode(MPTTModel):
         return
 
     def check_users_visited(self):
+        """
+        Check if all the users have visited the node.
+        """
+        
         if list(self.users_contributed_set()) == list(self.ci_tree_info.users.all()):
             return True
         else:
             return False
 
     def check_admin_visited(self):
+        """
+        Check if an admin has visited the node
+        """
+        
         if not set(self.admin_set()).isdisjoint(set(self.users_contributed_set())):
             return True
         else:
             return False
 
     def is_stage_finished(self):
+        """
+        Given a node in a particular state, check if it is finished.
+        """
 
         if self.node_type == 'F' or self.node_type == 'R':
             return self.check_users_visited()
