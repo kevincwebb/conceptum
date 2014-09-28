@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.template import RequestContext, loader
 from django.core.urlresolvers import reverse
+from django.contrib.contenttypes.models import ContentType
 
 from nodemanager.models import ConceptNode
 from ranking.models import RankingProcess, ValueCounter
@@ -9,10 +10,20 @@ from ranking.forms import RankingProcessSetupForm, BinaryChoiceForm
 
 # TODO: get_or_404s for all nodes, ranking processes, etc
 
+#given a model, return its ContenType (needed for generic keys
+#declared in ranking app models)
+def get_ct(model):
+    return ContentType.objects.get_for_model(model)
+
+#given a node, get the ranking process attached to it (via generic query)
+def get_ranking_process(node):
+    return RankingProcess.objects.filter(object_id=node.id,
+                                         content_type=get_ct(node)).get()
+
 def dispatch(request, node_id):
 
     node = ConceptNode.objects.filter(pk=node_id).get()
-    ranking_process = RankingProcess.objects.filter(parent__pk=node_id).get()
+    ranking_process = get_ranking_process(node)
 
     if ranking_process.status == ranking_process.not_initialized:
         return redirect('setup', node_id=node_id)
@@ -27,7 +38,7 @@ def setup(request, node_id):
     node = ConceptNode.objects.filter(pk=node_id).get()
     form = RankingProcessSetupForm()
 
-    ranking_process = RankingProcess.objects.filter(parent__id=node_id).get()
+    ranking_process = get_ranking_process(node)
     if not ranking_process.status == ranking_process.not_initialized:
         return redirect('dispatch', node_id=node_id)
 
@@ -50,7 +61,7 @@ def get_setup(request, node_id):
         if form.is_valid():
 
             #update ranking_process state based on admin form submission
-            ranking_process = RankingProcess.objects.filter(parent__pk=node_id).get()
+            ranking_process = get_ranking_process(node)
             ranking_process.choices = node.get_final_choices()
             ranking_process.value_choices = form.cleaned_data.get('value_choices')
             ranking_process.status = ranking_process.in_progress
