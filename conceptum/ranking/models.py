@@ -7,6 +7,8 @@ from operator import attrgetter
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 
+import nodemanager.models #full namespace to avoid circular import
+                          #(hopefully)
 
 class RankingProcess(models.Model):
     """
@@ -57,11 +59,23 @@ class RankingProcess(models.Model):
                              choices=STATE_CHOICES,
                              default=not_initialized)
 
-    # currently only for binary choice, 
-    def get_ranked_items_in_order(self):
-        return map(lambda v: v.target, ValueCounter.objects.filter(ranking_process=self))
+    def get_rank_choices(self):
+        """
+        This function returns a list of every item that can be ranked by
+        the Ranking Process by finding everything attached to its
+        Value Counters.
 
-        
+        Note: due to the metaclass ordering enforced in the
+        ValueCounter class, this function (for now) will return the
+        items in descending order according to their integer
+        value. This "feature" and will fall apart if more complex
+        notions of value are created for concept atoms. Consider the
+        use of this function to return items in order as already
+        "deprecated"
+        """
+
+        return map(lambda vc: vc.target, ValueCounter.objects.filter(ranking_process=self))
+
     def __unicode__(self):
         return "Ranking Process of " + unicode(self.parent)
 
