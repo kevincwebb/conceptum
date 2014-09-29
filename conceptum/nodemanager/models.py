@@ -60,7 +60,6 @@ class CITreeInfo(models.Model):
 # this. #thankstwitter
 MAX_LENGTH = 140
 
-
 class ConceptNode(MPTTModel):
     """
     Each node manages the canonical process for creating a modular
@@ -100,7 +99,20 @@ class ConceptNode(MPTTModel):
                                         #node
 
     #temporary arbitrary charfield (meant to be choices)
-    node_type = models.CharField(max_length=2)
+    free_entry = 'F'
+    merge = 'M'
+    rank = 'R'
+    closed = 'R'
+
+    TYPE_CHOICES = (
+        (free_entry, 'Free Entry'),
+        (merge, 'Merge State'),
+        (rank, 'Ranking State'),
+        (closed, 'Closed'),
+     )
+    node_type = models.CharField(max_length=1,
+                                 choices=TYPE_CHOICES,
+                                 default=free_entry)
 
     content = models.TextField(max_length=140)
 
@@ -144,7 +156,7 @@ class ConceptNode(MPTTModel):
         Returns whether or not the node is has finished all processes.
         """
         
-        if not self.node_type == 'C':
+        if not self.node_type == self.closed:
             return True
         else:
             return False
@@ -156,12 +168,12 @@ class ConceptNode(MPTTModel):
         """
 
         #update node_type
-        if self.node_type == 'F':
-            self.node_type = 'P'
-        elif self.node_type == 'P':
-            self.node_type = 'R' #probably want to create a ranking
+        if self.node_type == self.free_entry:
+            self.node_type = self.merge
+        elif self.node_type == self.merge:
+            self.node_type = self.rank #probably want to create a ranking
                                  #process here
-        elif self.node_type == 'R':
+        elif self.node_type == self.rank:
             # if we are transitioning from the ranking process, we
             # export the top choices as new nodes and close both the
             # node and the ranking process
@@ -169,7 +181,7 @@ class ConceptNode(MPTTModel):
             ranking_process.status = ranking_process.closed
             ranking_process.save()
             self.add_atoms_as_new_nodes(ranking_process.get_rank_choices())
-            self.node_type = 'C'
+            self.node_type = self.closed
 
         self.save()
 
@@ -204,9 +216,9 @@ class ConceptNode(MPTTModel):
         Given a node in a particular state, check if it is finished.
         """
 
-        if self.node_type == 'F' or self.node_type == 'R':
+        if self.node_type == self.free_entry or self.node_type == self.rank:
             return self.check_users_visited()
-        elif self.node_type == 'P':
+        elif self.node_type == self.merge:
             return self.check_admin_visited()
 
     def add_atoms_as_new_nodes(self, atom_list):
