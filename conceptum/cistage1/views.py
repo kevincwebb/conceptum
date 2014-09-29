@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.template import RequestContext, loader
 
@@ -6,6 +6,17 @@ from nodemanager.models import CITreeInfo
 from extras import close_rank_export_choices
 
 # Create your views here.
+
+
+def dispatch(request):
+
+    if not CITreeInfo.get_master_tree_root():
+        return redirect('stage1 setup')
+    else:
+        return redirect('landing')
+
+def setup(request):
+    return HttpResponse("yo lets set this up")
 
 def landing(request):
 
