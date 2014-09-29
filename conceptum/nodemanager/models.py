@@ -3,7 +3,9 @@
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey #for tree structure
 from authtools.models import User
+from django.contrib.contenttypes.models import ContentType
 
+from ranking.models import RankingProcess
 
 class CITreeInfo(models.Model):
     """
@@ -147,9 +149,6 @@ class ConceptNode(MPTTModel):
         else:
             return False
 
-    # easy way of doing it for now, probably want to override __iter__
-    # of node_type for a cleaner solution that scales and maybe break
-    # up into separate functions
     def transition_node_state(self):
         """
         Advance the state of a node to the next logical one. (Note that
@@ -160,14 +159,22 @@ class ConceptNode(MPTTModel):
         if self.node_type == 'F':
             self.node_type = 'P'
         elif self.node_type == 'P':
-            self.node_type = 'R'
+            self.node_type = 'R' #probably want to create a ranking
+                                 #process here
         elif self.node_type == 'R':
+            # if we are transitioning from the ranking process, we
+            # export the top choices as new nodes and close both the
+            # node and the ranking process
+            ranking_process = RankingProcess.objects.filter(object_id=self.id, content_type=ContentType.objects.get_for_model(self)).get()
+            ranking_process.status = ranking_process.closed
+            ranking_process.save()
+            self.add_atoms_as_new_nodes(ranking_process.get_rank_choices())
             self.node_type = 'C'
 
         self.save()
 
-        #transition means a new voting process has begun so we scrub
-        #the contributed_users list
+        #transition means a new stage of the stage 1 process has begun
+        #so we scrub the contributed_users list
         self.user.clear()
 
         return
@@ -201,6 +208,19 @@ class ConceptNode(MPTTModel):
             return self.check_users_visited()
         elif self.node_type == 'P':
             return self.check_admin_visited()
+
+    def add_atoms_as_new_nodes(self, atom_list):
+
+        for atom in atom_list:
+            new_child = ConceptNode(
+                ci_tree_info = self.ci_tree_info,
+                parent = self,
+                content = atom.text,
+            )
+            new_child.save()
+
+        return
+            
 
 
 class ConceptAtom(models.Model):

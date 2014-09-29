@@ -3,7 +3,6 @@ from django.http import HttpResponse
 from django.template import RequestContext, loader
 
 from nodemanager.models import CITreeInfo
-from ranking.models import RankingProcess
 from extras import close_rank_export_choices
 
 # Create your views here.
@@ -15,9 +14,6 @@ def landing(request):
 
     for node in master_tree_set:
         if node.is_stage_finished():
-            if node.node_type == 'R':
-                ranking_process = RankingProcess.objects.filter(parent=node).get()
-                close_rank_export_choices(ranking_process)
             node.transition_node_state()
 
     user = request.user
