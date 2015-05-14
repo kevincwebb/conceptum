@@ -19,5 +19,5 @@ urlpatterns = patterns('',
             {'merge_type': 'subtract merge'}, name='subtract merge'),
         url(r'^(?P<node_id>\d+)/finalmerge$', views.finalize_merge, name='final merge'),
 
-        url(r'^(?P<node_id>\d+)/rank$', views.rank, name='rank'),
+        url(r'^(?P<node_id>\d+)/rank/', include('ranking.urls')),
         )
