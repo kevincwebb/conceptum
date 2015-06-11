@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType, ContentTypeManager
 
 from exam.models import Exam, FreeResponseQuestion, FreeResponseResponse, MultipleChoiceQuestion, MultipleChoiceOption, MultipleChoiceResponse
 from interviews.models import get_concept_list, DummyConcept as Concept
+import survey.views
 import reversion
 
 
@@ -38,8 +39,9 @@ class AddFreeResponseForm(forms.ModelForm):
         widgets = {
             'question': forms.TextInput(attrs={'size': '60'})}
 
+    # I suspect that this method is never called... -Ben
     def form_valid(self, form):
-        s, created = Exam.objects.get_or_create(name=views.SURVEY_NAME)
+        s, created = Exam.objects.get_or_create(name=survey.views.SURVEY_NAME)
         q = FreeResponseQuestion(exam = s,
                                  question = self.cleaned_data.get('question'))
     
@@ -79,9 +81,10 @@ class AddMultipleChoiceForm(forms.ModelForm):
             raise forms.ValidationError("You need to provide Choices for the Multiple Choice Question", code = 'no_choices')
         return cleaned_data
             
-            
+    # This method could be moved to the view, using form.cleaned_data
+    # Then we would not need to import survey.views
     def form_valid(self):
-        s, created = Exam.objects.get_or_create(name=views.SURVEY_NAME)
+        s, created = Exam.objects.get_or_create(name=survey.views.SURVEY_NAME)
         q = MultipleChoiceQuestion(exam = s, question = self.cleaned_data.get('question'),
                                    content_type = self.instance.content_type,
                                    object_id = self.instance.object_id)

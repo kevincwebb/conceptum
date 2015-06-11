@@ -6,14 +6,18 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.contenttypes.models import ContentType
 from django import forms
 from django.utils.translation import ugettext_lazy as _
-from braces.views import LoginRequiredMixin, UserPassesTestMixin
-from exam.models import Exam, FreeResponseQuestion, FreeResponseResponse, MultipleChoiceQuestion, MultipleChoiceOption, MultipleChoiceResponse 
-from .forms import AddFreeResponseForm, SelectConceptForm, AddMultipleChoiceForm, MultipleChoiceEditForm
-from interviews.models import get_concept_list, Excerpt, DummyConcept
-from profiles.mixins import ContribRequiredMixin, StaffRequiredMixin
+
 import reversion
 from itertools import chain
 from collections import defaultdict
+from braces.views import LoginRequiredMixin, UserPassesTestMixin
+
+from exam.models import Exam, FreeResponseQuestion, FreeResponseResponse, MultipleChoiceQuestion, MultipleChoiceOption, MultipleChoiceResponse 
+from interviews.models import get_concept_list, Excerpt, DummyConcept
+from profiles.mixins import ContribRequiredMixin, StaffRequiredMixin
+from .forms import AddFreeResponseForm, SelectConceptForm, AddMultipleChoiceForm, MultipleChoiceEditForm
+
+
 
 
 #This is the name of the Exam object used to store the survey as it is built
@@ -151,6 +155,7 @@ class SurveyListView(LoginRequiredMixin,
         fr = {}
         for concept in get_concept_list():
             concept_type = ContentType.objects.get_for_model(concept)
+            #this fails if Survey has not been created
             fr_question_list = FreeResponseQuestion.objects.filter(exam = Exam.objects.get(name = SURVEY_NAME).id,
                                                                    content_type__pk=concept_type.id, object_id=concept.id)
             mc_question_list = MultipleChoiceQuestion.objects.filter(exam = Exam.objects.get(name = SURVEY_NAME).id,

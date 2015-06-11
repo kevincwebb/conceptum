@@ -15,7 +15,7 @@ from braces.views import LoginRequiredMixin, UserPassesTestMixin, StaffuserRequi
 from .models import Exam, ResponseSet, ExamResponse, FreeResponseResponse, MultipleChoiceResponse
 from .forms import NewResponseSetForm, DistributeForm, ExamResponseForm, BlankForm
 
-# Create your views here.
+
 
 def index(request):
     all_exams = Exam.objects.all()
@@ -83,6 +83,7 @@ class NewResponseSetView(LoginRequiredMixin,
                                                )
         return HttpResponseRedirect(self.get_success_url())
 
+
 class DistributeView(LoginRequiredMixin,
                      UserPassesTestMixin,
                      FormView):
@@ -93,7 +94,6 @@ class DistributeView(LoginRequiredMixin,
     This page also provides details about a ResponseSet, and shows which email
     addresses have submitted responses and which have yet to submit.  ExamResponses
     can be re-sent.
-    
     """
     template_name = 'exam/distribute_send.html'
     form_class = DistributeForm
@@ -173,6 +173,7 @@ class DeleteView(LoginRequiredMixin,
         response_set = get_object_or_404(ResponseSet, pk=self.kwargs['pk'])
         return (user.is_staff or user.profile==response_set.instructor)
 
+
 class CleanupView(LoginRequiredMixin,
                   StaffuserRequiredMixin,
                   FormView):
@@ -194,7 +195,8 @@ class CleanupView(LoginRequiredMixin,
     
     #def get_success_url(self):
     #   return reverse('profile')
-    
+
+
 class ExamResponseView(UpdateView):
     model = ExamResponse
     template_name='exam/exam_response.html'
