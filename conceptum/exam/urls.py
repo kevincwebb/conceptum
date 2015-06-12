@@ -42,4 +42,21 @@ urlpatterns = patterns('',
                        #.*comments/
                        url(r'comments/', include('django_comments.urls')),
 
+
+                       ####################################### WIP #####################################################
+                       
+                       # exams/1/responses/
+                       url(r'^(?P<exam_id>\d+)/responses/$', views.response_sets, name = 'exam_response_sets'),
+
+                        #exams/1/responses/1/       (exam 1, response set 1)
+                        url(r'^(?P<exam_id>\d+)/responses/(?P<rsid>\d+)/$', views.responses, name = 'exam_responses'),
+
+
+                        #exams/1/responses/1/1234567...        (exam 1, response set 1, key 1234567...)
+                        url(r'^(?P<exam_id>\d+)/responses/(?P<rsid>\d+)/(?P<key>\w+)/$', views.ExamResponseDetail, name = 'exam_response_detail')
+
+            
+
+                       ####################################### WIP #####################################################
+
                    )

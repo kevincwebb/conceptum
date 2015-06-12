@@ -1,9 +1,63 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Take Test" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+<h1> "{{exam}}" </h1>
+
 <h3> Description of Exam {{ exam_id }} </h3>
 
 {{ exam_desc }}
+    
+<hr>
+<h3> Exam Questions </h3>       <!-- perhaps some toggleability for correct answers/statistics from response sets -->
+
+<ol>    
+{% if qList %}
+<!-- qList = [ q1, q2, ...] where
+	q1 = [question, [option1, option2, ...]
+-->
+	{% for question in qList %}
+		<li><h4>{{question.0}}</h4>
+		<ol type = "a">
+		{% for item in question.1 %}
+			{% if item.id == 1 %}                    <!-- replace '1' with correct identifier -->
+				<li style = "color:green"> {{item}} </li>
+			{% else %}
+				<li> {{item}}</li>
+			{% endif %}
+		{% endfor %}
+		</ol>
+		</li>
+	{% endfor %} 
+	</li>
+{% else %}
+	 No exam questions 
+{% endif %}
+</ol>
+
+<hr>
 
 <h3> Discuss this Exam </h3>
 <!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a> -->
 
+<a href="{% url 'exam_response_sets' exam_id%}">Responses</a><br>
 <a href="{% url 'exam_discuss' exam_id %}">Discuss</a><br>
 <a href="{% url 'distribute_new' exam_id %}">Distribute</a>
+    
+      
+</div> <!-- container -->
+
+{% endblock %}

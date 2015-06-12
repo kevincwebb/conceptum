@@ -25,10 +25,25 @@ def index(request):
     return HttpResponse(template.render(context))
 
 def description(request, exam_id):
+    
+    exam = Exam.objects.get(pk=exam_id)
     exam_desc = Exam.objects.get(pk=exam_id).description
+    exam_questions = exam.multiplechoicequestion_set.all()
+    ######
+    qList = []
+    q = []
+    for question in exam_questions:
+        q = [question.question]     #name of question, correct answer id
+        qOptions = []
+        qOptions.extend(question.multiplechoiceoption_set.all())
+        q.append(qOptions)
+        qList.append(q)
+    
+    ######
     template = loader.get_template('exam/description.html')
     context = RequestContext(request,
-                             { 'exam_desc': exam_desc,
+                             { 'exam': exam,
+                                'qList' : qList,
                                'exam_id': exam_id},)
     return HttpResponse(template.render(context))
 
@@ -39,6 +54,112 @@ def discuss(request, exam_id):
                              {'exam': exam,
                               'exam_id': exam_id},)
     return HttpResponse(template.render(context))
+
+
+####################################### WIP #####################################################
+
+def ExamResponseDetail(request, exam_id, rsid, key):
+
+        template = loader.get_template('exam/response_detail.html')
+    
+        response_set = ResponseSet.objects.get(pk=rsid)       #response set to connect exam and exam response key (?)
+        exam = response_set.exam            #exam
+        response = response_set.examresponse_set.get(pk=key)      #exam response
+        responses = response.multiplechoiceresponse_set.all()
+        stats = qstats(responses)
+        qList = []
+        q = []
+        for question in responses:
+            q = [question.question, question.option_id]     #name of question, answer chosen
+            qOptions = []
+            qOptions.extend(question.question.multiplechoiceoption_set.all())
+            q.append(qOptions)
+            qList.append(q)
+        context = RequestContext(request,
+                                 {'qList':qList,
+                                  'response':response,
+                                  'stats': stats,
+                                  'exam': exam},)
+        return HttpResponse(template.render(context))
+        #return render(request, 'exam/response_detail.html', {'response': response, 'exam': exam})
+    
+# page with all response sets for a given exam
+def response_sets(request, exam_id):
+    
+    exam = Exam.objects.get(pk=exam_id)
+    responses = exam.responseset_set.all()
+
+    """
+    eventually do statistical analysis here to pass to template
+    """
+    
+    template = loader.get_template('exam/response_sets.html')
+    context = RequestContext(request,
+                             { 'responses': responses,
+                               'exam_id': exam_id},)
+    return HttpResponse(template.render(context))
+
+# page with all exam responses for a given exam and response set id (rsid)
+def responses(request, exam_id, rsid):
+    response_set = ResponseSet.objects.get(pk=rsid)
+    exam = Exam.objects.get(pk=exam_id)
+    responses = response_set.examresponse_set.all()
+
+    """
+    eventually do statistical analysis here to pass to template
+    """
+    stats = []
+    for mcrs in responses:
+        stats.append(qstats(mcrs.multiplechoiceresponse_set.all()))
+        
+    set_stats = respSetStats(stats)
+    template = loader.get_template('exam/responses.html')
+    context = RequestContext(request,
+                             { 'responses': responses,
+                                'response_set': response_set,
+                               'exam_id': exam_id,
+                                'stats': set_stats},
+                                )
+    return HttpResponse(template.render(context))
+
+
+
+def respSetStats(qStats):
+    numQuestions = qStats[0][0]
+    numCorrect = 0
+    maxScore = 0
+    lowScore = 100
+    medianScore = 0
+    for stats in qStats:
+        if(stats):
+            numCorrect+=stats[1]
+            if (numQuestions < stats[0]):
+                numQuestions = stats[0]
+            if (maxScore < stats[2]):
+                maxScore = stats[2]
+            if (lowScore > stats[2]):
+                lowScore = stats[2]
+    medianScore = numCorrect / float(numQuestions * len(qStats))
+    medianScore = medianScore *10000 //1 /100
+    return [numQuestions, numCorrect, medianScore, maxScore, lowScore]
+    
+
+#returns a list with [numquestions, numcorrect, percent correct]
+def qstats(mcRespSet):
+    numQuestions = 0
+    numCorrect = 0
+    for question in mcRespSet:
+        numQuestions+=1
+        if question.option_id == 1:     #later if option_id == correct_id
+            numCorrect+=1
+    if (numQuestions != 0):
+        percCorrect = numCorrect/float(numQuestions)
+        percFormatted = percCorrect * 10000 //1 /100
+        return [numQuestions, numCorrect, percFormatted]
+    
+        
+            
+ ####################################### WIP #####################################################
 
 
 class NewResponseSetView(LoginRequiredMixin,
@@ -152,7 +273,10 @@ class DistributeView(LoginRequiredMixin,
                 
                 exam_response.send(self.request, email)    
         return HttpResponseRedirect(self.get_success_url())
-    
+
+
+
+   
 
 class DeleteView(LoginRequiredMixin,
                  UserPassesTestMixin,

@@ -150,6 +150,7 @@ class Question(models.Model):
     image = models.ImageField(upload_to=question_imageupload_to, blank=True)
     rank = models.IntegerField(null=True, blank = True)
     optional = models.BooleanField(default=False)
+    
 
     class Meta:
         abstract = True
@@ -197,6 +198,8 @@ class MultipleChoiceQuestion(Question):
     predefined choices.
     """
     randomize = models.BooleanField('randomize choices order', default=False)
+
+
 
 
 class MultipleChoiceOption(models.Model):

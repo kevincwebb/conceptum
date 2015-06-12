@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Take Test" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+<h1> Response Set for "{{response_set}}" </h1>
+<h3> Responses to: "{{response_set.exam}}" (id {{exam_id}})</h3>
+
+    
+
+<hr>
+<!-- need the response set to be passed in -->
+  <h2>Submitted Responses to {{response_set}}</h2>
+  <ul>
+  {% if responses %}
+    {% for response in responses %}
+      <li><a href = "/exams/{{response.response_set.exam.id}}/responses/{{response.response_set.id}}/{{response.key}}/">{{ response.respondent }}</a></li> 
+    {% endfor %}
+  {% else %}
+    None
+  {% endif %}
+  </ul>
+    
+    <a href="{% url 'exam_response_sets' exam_id%}">Other Response Sets for Exam {{exam_id}}</a><br>
+    
+    
+<hr>
+<!--[numQuestions, numCorrect, medianScore, maxScore, lowScore]-->
+<h2>Statistics</h2>
+<ul>
+    {% if stats %}
+        <li> Average Score: {{stats.2}}%</li>
+        <li> Number of questions: {{stats.0}}</li>
+        <li> Number of correct answers: {{stats.1}}</li>
+        <li> Highest Score: {{stats.3}}%</li>
+        <li> Lowest Score: {{stats.4}}%</li>
+        {% if response_set.pre_test %}
+            <li> Pre-Test created on {{response_set.created}}</li>
+        {% else %}
+            <li>Post-Test created on {{response_set.created}}</li>
+        {% endif %}
+    {% else %}
+    <li> none </li>
+    {% endif %}
+</ul>
+
+<br>
+<hr>
+
+    <!-- maybe make this a footer -->
+    
+<h3> Discuss this Exam </h3>
+<!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a>-->
+
+
+<a href="{% url 'exam_discuss' exam_id %}">Discuss</a><br>
+<a href="{% url 'distribute_new' exam_id %}">Distribute</a>
+
+    
+
+</div> <!-- container -->
+
+{% endblock %}

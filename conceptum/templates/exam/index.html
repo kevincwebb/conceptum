@@ -1,5 +1,27 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Take Test" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    
 <h3> You're at the Exam Index! </h3>
 
 {% for exam in all_exams %}
         <li><a href="{% url 'exam_description' exam.id %}">{{ exam.name }}</a></li>
 {% endfor %}
+    
+</div> <!-- container -->
+
+{% endblock %}

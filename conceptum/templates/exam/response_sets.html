@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Take Test" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+<h3> Response Sets of Exam {{ exam_id }} </h3>
+    
+<!-- need the response set to be passed in -->
+<ul>   
+{% for set in responses %}     <!-- maybe do some collapsible statistics on each response set -->
+    <li><a href = "/exams/{{set.exam.id}}/responses/{{set.id}}/">{{ set }}</a></li>
+{% endfor %}
+</ul>
+    
+<a href="{% url 'exam_index' %}">Back to Exam Index</a><br>
+<hr>
+    
+<h3> Discuss this Exam </h3>
+<!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a> -->
+
+<a href="{% url 'exam_discuss' exam_id %}">Discuss</a><br>
+<a href="{% url 'distribute_new' exam_id %}">Distribute</a>
+    
+      
+</div> <!-- container -->
+
+{% endblock %}

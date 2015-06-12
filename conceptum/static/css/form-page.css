@@ -25,3 +25,67 @@ body {
   margin-left: 150px;
   margin-right: 150px;
 }
+
+
+.collapsible_list li > input + * {
+    display:none;
+}
+
+.collapsible_list li > input:checked + * {
+    display:block;
+}
+
+.collapsible_list li > input:checked > .list{
+    background-color:rgb(200,200,202);
+}
+
+.collapsible_list > input {
+    display:none;
+}
+    
+.collapsible_list li > input{
+    display:none;
+}
+
+.collapsible_list label{
+    cursor:pointer;
+}
+    
+.collapsible_list{
+    list-style:none;
+    padding-left:0;
+    
+}
+
+
+.list{
+    padding: 5px;
+    width: 700px;
+    background-color: rgb(215, 217, 218);
+    border-radius: 10px;
+    border-color: rgb(199, 196, 196);
+    border-width: thin;
+    border-style: solid;
+}
+
+.plus{
+    float:right;
+    color: rgb(142, 142, 142);
+}
+
+.plus:hover{
+    color:rgb(100,100,100);
+}
+
+.list:hover{
+    background-color: rgb(200,200,202);
+}
+
+.list:hover > .plus{
+    color:rgb(100,100,100);
+}
+
+
+
+
+
