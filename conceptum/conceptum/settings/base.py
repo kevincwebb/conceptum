@@ -224,11 +224,9 @@ LOCAL_APPS = (
     'interviews',
     'profiles',
     'custom_auth',
-    'survey',
     'cistage1',
     'nodemanager',
     'ranking',
-
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
