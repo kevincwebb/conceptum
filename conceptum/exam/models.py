@@ -216,7 +216,7 @@ class MultipleChoiceOption(models.Model):
     
 reversion.register(MultipleChoiceOption)
 reversion.register(MultipleChoiceQuestion, follow=["multiplechoiceoption_set"])
-
+# do we need to register FreeResponseQuestion too?
 
 
 class MultipleChoiceResponse(QuestionResponse):

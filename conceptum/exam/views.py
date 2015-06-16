@@ -70,9 +70,7 @@ def discuss(request, exam_id):
 
 
 class ExamIndexView(LoginRequiredMixin,
-                #ContribRequiredMixin, #since this page will likely be used for
-                                       #distribution as well, all users should have access
-                generic.ListView):
+                    generic.ListView):
     """
     Landing page for exams, which includes surveys and CI exams. From this page, users can
     access exams for both development and deployment.
@@ -100,7 +98,7 @@ class ExamIndexView(LoginRequiredMixin,
     
 
 class ExamCreateView(LoginRequiredMixin,
-                     ContribRequiredMixin,
+                     StaffRequiredMixin,
                      generic.CreateView):
     """
     CreateView to create a survey/exam.
@@ -127,7 +125,9 @@ class ExamDetailView(LoginRequiredMixin,
         - id
         - all questions
     
-    TODO: update this view after revising the exam model
+    TODO:
+        - update this view after revising the exam model
+        - the template is currently a mess
     """
     model = Exam
     pk_url_kwarg = 'exam_id'
@@ -175,27 +175,24 @@ class SelectConceptView(LoginRequiredMixin,
         context = super(SelectConceptView, self).get_context_data(**kwargs)
         context['exam'] = self.exam
         return context
-    
-    def select(self, request):
-        if request.method == 'POST':
-            form = SelectConceptForm(request.POST)
-            if form.is_valid():
-                concept = form.cleaned_data.get('concept')
-                return HttpResponseRedirect(reverse('question_create',kwargs ={'exam_id':self.exam.id,
-                                                                               'concept_id':concept.id,
-                                                                               'question_type':'fr' }))
-        else:
-            form = SelectConceptForm()
-        ### !!! AHH what is this?? ---v     
-        return render_to_response('index.html', {'form': form,})
-    
+ 
     def form_valid(self, form):
-        return self.select(self.request)
+        concept = form.cleaned_data.get('concept')
+        return HttpResponseRedirect(reverse('question_create',kwargs ={'exam_id':self.exam.id,
+                                                                       'concept_id':concept.id,
+                                                                       'question_type':'fr' }))
 
 
 class QuestionCreateView(LoginRequiredMixin,
                          ContribRequiredMixin,
-                         generic.View):
+                         generic.FormView):
+    """
+    FormView to add a new question
+    """
+    
+    template_name = 'exam/question_create.html'
+
+    # make sure our url arguments are good
     def dispatch(self, *args, **kwargs):
         self.exam = get_object_or_404(Exam, pk=self.kwargs['exam_id'])
         self.concept = get_object_or_404(Concept, pk=self.kwargs['concept_id'])
@@ -203,137 +200,56 @@ class QuestionCreateView(LoginRequiredMixin,
         if (self.question_type != 'fr' and self.question_type != 'mc'):
             raise Http404
         return super(QuestionCreateView, self).dispatch(*args, **kwargs)
-    
-    #get requests show interviews for chosen topic
-    def get(self, request, *args, **kwargs):
-        view = ExcerptDetailView.as_view()
-        return view(request, *args, **kwargs)
 
-    #post requests choose form and view based on 'question_type' POST kwarg (either fr or mc)
-    def post(self, request, *args, **kwargs):
+    # different form depending on type of question
+    def get_form_class(self):
         if(self.question_type == 'fr'):
-            form = AddFreeResponseForm(request.POST)
-            if (form.is_valid() ):
-                view = AddFreeResponseView.as_view()
-                return view(request, *args, **kwargs)
-        elif(self.question_type == 'mc'):
-            form = AddMultipleChoiceForm(request.POST)
-            if(form.is_valid() ) :
-                view = AddMultipleChoiceView.as_view()
-                return view(request, *args, **kwargs)
-        #if form not valid, show page again
-        return HttpResponseRedirect(reverse('question_create',kwargs ={'exam_id':self.exam.id,
-                                                                       'concept_id':self.concept.id,
-                                                                       'question_type':self.question_type}))
-
-class ExcerptDetailView(LoginRequiredMixin,
-                        ContribRequiredMixin,
-                        generic.DetailView):
-    """
-    Lists All Excerpts related to a concept
-    """
-    model = Concept
-    pk_url_kwarg = 'concept_id'
-    template_name = 'exam/question_create.html'
-    
-    def dispatch(self, *args, **kwargs):
-        self.exam = get_object_or_404(Exam, pk=self.kwargs['exam_id'])
-        self.concept = get_object_or_404(Concept, pk=self.kwargs['concept_id'])
-        self.question_type = self.kwargs['question_type']
-        if (self.question_type != 'fr' and self.question_type != 'mc'):
-            raise Http404
-        return super(ExcerptDetailView, self).dispatch(*args, **kwargs)
+            return AddFreeResponseForm
+        if(self.question_type == 'mc'):
+            return AddMultipleChoiceForm
     
     def get_context_data(self,**kwargs):
-        context = super(ExcerptDetailView, self).get_context_data(**kwargs)
-        concept_type = ContentType.objects.get_for_model(self.get_object())
+        context = super(QuestionCreateView, self).get_context_data(**kwargs)
+        concept_type = ContentType.objects.get_for_model(Concept)
         
         if(self.question_type == 'mc'):
-            context['form'] = AddMultipleChoiceForm
-            context['question_type'] = 'multiple_choice'
-            
+            context['question_type'] = 'multiple_choice'   
         elif(self.question_type == 'fr'):
-            context['form'] = AddFreeResponseForm
             context['question_type'] = 'free_response'
         
         context['exam'] = self.exam
         context['concept'] = self.concept
+        #context['concept_id'] - this may have been used in template, if so, change to concept.id
         context['excerpt_list']=Excerpt.objects.filter(content_type__pk=concept_type.id,
-                                                       object_id=self.get_object().id)
+                                                       object_id=self.concept.id)
         return context
-
-
-class AddFreeResponseView(LoginRequiredMixin,
-                          ContribRequiredMixin,
-                          generic.CreateView):
-    """
-    CreateView for a user to add a free response question to the survey.
-    """
-    model = FreeResponseQuestion
-    template_name = 'exam/question_create.html'
-    form_class = AddFreeResponseForm
-    
-    def dispatch(self, *args, **kwargs):
-        self.exam = get_object_or_404(Exam, pk=self.kwargs['exam_id'])
-        self.concept = get_object_or_404(Concept, pk=self.kwargs['concept_id'])
-        return super(AddFreeResponseView, self).dispatch(*args, **kwargs)    
-    
-    def form_valid(self, form):
-        form.instance.content_object = self.concept
-        form.instance.exam_id = self.exam.id
-        return super(AddFreeResponseView, self).form_valid(form)
-
-    def get_success_url(self):
-        return reverse('exam_detail', args=[self.exam.id])
-
-    def get_context_data(self,**kwargs):
-        context = super(AddFreeResponseView, self).get_context_data(**kwargs)
-        context['concept_id'] = self.concept.id
-        return context
-
-
-class AddMultipleChoiceView(LoginRequiredMixin, ContribRequiredMixin, generic.FormView):
-    """
-    View to let a user add a Multiple Choice Question
-    """
-    model = MultipleChoiceQuestion
-    template_name = 'survey/create.html'
-    form_class = AddMultipleChoiceForm
-
-    def dispatch(self, *args, **kwargs):
-        self.exam = get_object_or_404(Exam, pk=self.kwargs['exam_id'])
-        self.concept = get_object_or_404(Concept, pk=self.kwargs['concept_id'])
-        return super(AddMultipleChoiceView, self).dispatch(*args, **kwargs)   
-
-    def form_valid(self, form):
-        form.instance.content_object = self.concept
-        form.instance.exam_id = self.exam.id
-        response = super(AddMultipleChoiceView, self).form_valid(form)
-        q = MultipleChoiceQuestion(exam = self.exam, question = form.cleaned_data.get('question'),
-                                   content_type = form.instance.content_type,
-                                   object_id = form.instance.object_id)
-        q.save()
-        self.set_choices(q, form.cleaned_data)
-        return response
-    
-    def set_choices(self, q, cleaned_data):
-        x=1
-        while (x):
-            choice_text = cleaned_data.get("choice_%d" % x) #apparently someone used 1-based indexing
-            if (choice_text):
-                c = MultipleChoiceOption(question = q, text = choice_text)
-                c.save()
-                x+=1
-            else:
-                break
     
     def get_success_url(self):
         return reverse('exam_detail', args=[self.exam.id])
     
-    def get_context_data(self,**kwargs):
-        context = super(AddMultipleChoiceView, self).get_context_data(**kwargs)
-        context['concept_id'] = self.concept.id
-        return context
+    def form_valid(self, form):
+        concept_type = ContentType.objects.get_for_model(Concept)
+        # we could move the object creation to each form's save() method, however,
+        # we would need to pass self.exam and self.concept to the form
+        if (self.question_type == 'fr'):
+            FreeResponseQuestion.objects.create(exam = self.exam,
+                                                question = form.cleaned_data.get('question'),
+                                                content_type = concept_type,
+                                                object_id = self.concept.id)
+        if (self.question_type == 'mc'):
+            q = MultipleChoiceQuestion.objects.create(exam = self.exam,
+                                                      question = form.cleaned_data.get('question'),
+                                                      content_type = concept_type,
+                                                      object_id = self.concept.id)
+            x=1
+            while (True):
+                choice_text = form.cleaned_data.get("choice_%d" % x)
+                if (choice_text):
+                    MultipleChoiceOption.objects.create(question = q, text = choice_text)
+                    x+=1
+                else:
+                    break
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class FreeResponseEditView(LoginRequiredMixin,

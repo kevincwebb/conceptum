@@ -25,10 +25,11 @@ urlpatterns = patterns('',
         name='freeresponse_revert'),
     url(r'^edit/mc/(?P<question_id>\d+)/versions/revert/$', views.revert_multiplechoice,
         name='multiplechoice_revert'),
-    url(r'^delete/mc/(?P<question_id>\d+)$', views.MultipleChoiceDeleteView.as_view(),
-        name='multiplechoice_delete'),
     url(r'^delete/fr/(?P<question_id>\d+)$', views.FreeResponseDeleteView.as_view(),
         name='freeresponse_delete'),
+    url(r'^delete/mc/(?P<question_id>\d+)$', views.MultipleChoiceDeleteView.as_view(),
+        name='multiplechoice_delete'),
+
 
     url(r'^(?P<exam_id>\d+)/finalize/$', views.FinalizeView.as_view(), name = 'finalize_view'),
     url(r'^finalize/finalize/$', views.finalize_survey, name = 'finalize_exam'),

@@ -85,8 +85,8 @@ class EditView(LoginRequiredMixin,
     template_name = 'interviews/edit.html'
     form_class = EditForm
     
-    # Raise a 403 if user is denied access
     raise_exception = True
+    redirect_unauthenticated_users = True
     
     def test_func(self, user):
         """
@@ -127,8 +127,8 @@ class DeleteView(LoginRequiredMixin,
     template_name = 'interviews/confirm_delete.html'
     success_url = reverse_lazy('interview_index')
     
-    # Raise a 403 if user is denied access
     raise_exception = True
+    redirect_unauthenticated_users = True
     
     def test_func(self, user):
         """
