@@ -681,8 +681,8 @@ class DistributeView(LoginRequiredMixin,
     form_class = DistributeForm
     success_url = reverse_lazy('profile')
     
-    # Raise a 403 if user is denied access
     raise_exception = True
+    redirect_unauthenticated_users = True
     
     def test_func(self, user):
         """
@@ -758,7 +758,7 @@ class DistributeView(LoginRequiredMixin,
 
 class DeleteView(LoginRequiredMixin,
                  UserPassesTestMixin,
-                 DeleteView):
+                 generic.DeleteView):
     """
     Confirm that an instructor would like to delete a ResponseSet. This exists in
     case an instructor accidentally creates a ResponseSet they did not intend to create.
@@ -771,8 +771,8 @@ class DeleteView(LoginRequiredMixin,
     template_name = 'exam/delete_responses.html'
     success_url = reverse_lazy('profile')
     
-    # Raise a 403 if user is denied access
     raise_exception = True
+    redirect_unauthenticated_users = True
     
     def test_func(self, user):
         """
@@ -785,7 +785,7 @@ class DeleteView(LoginRequiredMixin,
 
 class CleanupView(LoginRequiredMixin,
                   StaffuserRequiredMixin,
-                  FormView):
+                  generic.FormView):
     """
     A view for staff to manually delete expired, unsubmitted ExamResponses.
     
@@ -815,7 +815,7 @@ class CleanupView(LoginRequiredMixin,
         return HttpResponseRedirect(self.get_success_url())
 
     
-class ExamResponseView(UpdateView):
+class ExamResponseView(generic.UpdateView):
     """
     This is where students take the Exam. A student will get a URL that ends with the
     key to a specific ExamResponse. If that ER has expired or already been submitted, or
