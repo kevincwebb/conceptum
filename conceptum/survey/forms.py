@@ -9,19 +9,27 @@ from django.contrib.contenttypes.models import ContentType, ContentTypeManager
 from exam.models import Exam, FreeResponseQuestion, FreeResponseResponse, MultipleChoiceQuestion, MultipleChoiceOption, MultipleChoiceResponse
 from interviews.models import get_concept_list, DummyConcept as Concept
 import reversion
-#number of muliple choice choices
+
+
+####Max number of muliple choice choices
 NUM_CHOICES = 6;
 
-User = get_user_model()
 
 class SelectConceptForm(forms.ModelForm):
+    """
+    A form for selecting a concept
+    """
     class Meta:
         model = Concept
         exclude = ['name']
     concept = ModelChoiceField(queryset=get_concept_list(),
                                to_field_name="name", )
+
     
 class AddFreeResponseForm(forms.ModelForm):
+    """
+    Form for adding a free response question
+    """
     question = models.CharField(blank = False)
    
     class Meta:
@@ -31,12 +39,15 @@ class AddFreeResponseForm(forms.ModelForm):
             'question': forms.TextInput(attrs={'size': '60'})}
 
     def form_valid(self, form):
-        s, created = Exam.objects.get_or_create(name='Survey')
+        s, created = Exam.objects.get_or_create(name=views.SURVEY_NAME)
         q = FreeResponseQuestion(exam = s,
                                  question = self.cleaned_data.get('question'))
     
 
 class AddMultipleChoiceForm(forms.ModelForm):
+    """
+    Form for adding a multiple choice question
+    """
     class Meta:
         model = MultipleChoiceQuestion
         fields = ['question',]
@@ -70,7 +81,7 @@ class AddMultipleChoiceForm(forms.ModelForm):
             
             
     def form_valid(self):
-        s, created = Exam.objects.get_or_create(name='Survey')
+        s, created = Exam.objects.get_or_create(name=views.SURVEY_NAME)
         q = MultipleChoiceQuestion(exam = s, question = self.cleaned_data.get('question'),
                                    content_type = self.instance.content_type,
                                    object_id = self.instance.object_id)
@@ -84,11 +95,14 @@ class AddMultipleChoiceForm(forms.ModelForm):
             if (choice_text):
                 c = MultipleChoiceOption(question = q, text = choice_text)
                 c.save()
-               # reversion.add_meta(MultipleChoiceVersionOption, c)
 
 
 class MultipleChoiceEditForm(forms.ModelForm):
-    
+    """
+    Form for editing a multiple choice question. If there are less than NUM_CHOICES choices,
+    there is an extra field to add a new choice. If a choice's text is deleted and the form
+    is submitted, that choice will be deleted. 
+    """
     class Meta:
         model = MultipleChoiceQuestion
         fields = ['question']

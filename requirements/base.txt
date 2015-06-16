@@ -1,4 +1,4 @@
-Django==1.6.5
+Django==1.6.9
 bpython==0.12
 django-braces==1.4.0
 django-model-utils==1.5.0
