@@ -2,4 +2,134 @@
 body {
   padding-top: 50px;
   padding-bottom: 20px;
+    height:100%;
 }
+
+footer{
+    width:100%;
+    bottom:0;
+    margin-top:80px;
+    height:80px;
+    clear:both;
+    background-color:gray;
+}
+
+
+.collapsible_list li > input + * {
+    display:none;
+}
+
+.collapsible_list li > input:checked + * {
+    display:block;
+}
+
+.collapsible_list li > input:checked > .list{
+    background-color:rgb(200,200,202);
+}
+
+.collapsible_list > input {
+    display:none;
+}
+    
+.collapsible_list li > input{
+    display:none;
+}
+
+.collapsible_list label{
+    cursor:pointer;
+}
+    
+.collapsible_list{
+    list-style:none;
+    padding-left:0;
+    
+}
+
+
+.collapsible_overview li > input + * {
+    display:none;
+}
+
+.collapsible_overview li > input:checked + * {
+    display:block;
+}
+
+.collapsible_overview li > input:checked > .list{
+    background-color:rgb(200,200,202);
+}
+
+.collapsible_overview > input {
+    display:none;
+}
+    
+.collapsible_overview li > input{
+    display:none;
+}
+
+.collapsible_overview label{
+    cursor:pointer;
+}
+    
+.collapsible_overview{
+    list-style:none;
+    padding-left:0;
+}
+
+.overview{
+font-size:80%;
+}
+
+
+
+
+
+
+
+.list{
+    padding: 5px;
+    width: 700px;
+    background-color: rgb(215, 217, 218);
+    border-radius: 10px;
+    border-color: rgb(199, 196, 196);
+    border-width: thin;
+    border-style: solid;
+}
+
+.overview{
+    padding: 3px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    width:115%;
+    background-color: rgb(215, 217, 218);
+    border-radius: 10px;
+    border-color: rgb(199, 196, 196);
+    border-width: thin;
+    border-style: solid;
+}
+
+.plus{
+    float:right;
+    color: rgb(142, 142, 142);
+}
+
+.plus:hover{
+    color:rgb(100,100,100);
+}
+
+.list:hover{
+    background-color: rgb(200,200,202);
+}
+
+.list:hover > .plus{
+    color:rgb(100,100,100);
+}
+
+span.tab{
+    padding-right:5%;
+    min-width:200px;
+    display:inline-block;
+}
+
+
+
+

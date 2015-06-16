@@ -125,23 +125,26 @@ def responses(request, exam_id, rsid):
 
 
 def respSetStats(qStats):
-    numQuestions = qStats[0][0]
-    numCorrect = 0
-    maxScore = 0
-    lowScore = 100
-    medianScore = 0
-    for stats in qStats:
-        if(stats):
-            numCorrect+=stats[1]
-            if (numQuestions < stats[0]):
-                numQuestions = stats[0]
-            if (maxScore < stats[2]):
-                maxScore = stats[2]
-            if (lowScore > stats[2]):
-                lowScore = stats[2]
-    medianScore = numCorrect / float(numQuestions * len(qStats))
-    medianScore = medianScore *10000 //1 /100
-    return [numQuestions, numCorrect, medianScore, maxScore, lowScore]
+    if (qStats):
+        numQuestions = qStats[0][0]
+        numCorrect = 0
+        maxScore = 0
+        lowScore = 100
+        medianScore = 0
+        for stats in qStats:
+            if(stats):
+                numCorrect+=stats[1]
+                if (numQuestions < stats[0]):
+                    numQuestions = stats[0]
+                if (maxScore < stats[2]):
+                    maxScore = stats[2]
+                if (lowScore > stats[2]):
+                    lowScore = stats[2]
+        medianScore = numCorrect / float(numQuestions * len(qStats))
+        medianScore = medianScore *10000 //1 /100
+        return [numQuestions, numCorrect, medianScore, maxScore, lowScore]
+    else:
+        return [0,0,0,0,0]
     
 
 #returns a list with [numquestions, numcorrect, percent correct]

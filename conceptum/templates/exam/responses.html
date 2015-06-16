@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block head_title %}{% trans "Take Test" %}{% endblock %}
+{% block head_title %}{% trans "Exam Responses" %}{% endblock %}
 
 {% block extra_headers %}
 
@@ -16,15 +16,20 @@
 
 <div class="container">
 
-<h1> Response Set for "{{response_set}}" </h1>
+<h1> Response Set for class "{{response_set.course}}" </h1>
 <h3> Responses to: "{{response_set.exam}}" (id {{exam_id}})</h3>
+<h3> Created on {{response_set.created}}</h3>
 
     
 
 <hr>
 <!-- need the response set to be passed in -->
-  <h2>Submitted Responses to {{response_set}}</h2>
-  <ul>
+<ul class = "collapsible_list">
+<li> 
+    {% load staticfiles %}
+    <label for="toplist_node1"><h2 class = "list">Submitted Responses to {{response_set}} <div class = "plus"> + </div> </h2></label>
+    <input type = "checkbox" id = "toplist_node1">
+  <ul class = "inner_list">
   {% if responses %}
     {% for response in responses %}
       <li><a href = "/exams/{{response.response_set.exam.id}}/responses/{{response.response_set.id}}/{{response.key}}/">{{ response.respondent }}</a></li> 
@@ -33,14 +38,19 @@
     None
   {% endif %}
   </ul>
-    
+    <br>
     <a href="{% url 'exam_response_sets' exam_id%}">Other Response Sets for Exam {{exam_id}}</a><br>
+    </li>
     
-    
-<hr>
+
 <!--[numQuestions, numCorrect, medianScore, maxScore, lowScore]-->
-<h2>Statistics</h2>
-<ul>
+
+<ul class = "collapsible_list">
+<li> 
+    {% load staticfiles %}
+    <label for="toplist_node2"><h2 class = "list">Statistics <div class = "plus"> + </div> </h2></label>
+    <input type = "checkbox" id = "toplist_node2">
+  <ul class = "inner_list">
     {% if stats %}
         <li> Average Score: {{stats.2}}%</li>
         <li> Number of questions: {{stats.0}}</li>
@@ -55,6 +65,8 @@
     {% else %}
     <li> none </li>
     {% endif %}
+</ul>
+    
 </ul>
 
 <br>

@@ -20,11 +20,11 @@
   <div class="horizontal-heading">
     <h1>Welcome, {{ user.name }}</h1>
   </div>    
-    <b>Primary Email:</b>{{ user.email }}<br>
-    <b>Name:</b>{{ user.name }}<br>
-    <b>Institution:</b>{{ user.profile.institution }}<br>    
-    <b>Homepage:</b>{{ user.profile.homepage }}<br>
-    <b>Other Info:</b>{{ user.profile.text_info }}<br>
+    <b>Primary Email:</b> {{ user.email }}<br>
+    <b>Name:</b> {{ user.name }}<br>
+    <b>Institution:</b> {{ user.profile.institution }}<br>    
+    <b>Homepage:</b> {{ user.profile.homepage }}<br>
+    <b>Other Info:</b> {{ user.profile.text_info }}<br>
 
     <br>
     {% if user.profile.is_contrib or user.is_staff %}
@@ -44,9 +44,10 @@
     <h3>Distribute Survey/Exam</h3>
     <a href = {% url 'exam_index' %} class='btn btn-primary'>New Distribution</a>
     <h4>Your distributed exams</h4>
+
     {% for response_set in user.profile.responseset_set.all %}
-      <a href = {% url 'distribute_send' response_set.id %}> {{ response_set }} </a>
-      <a href = {% url 'distribute_delete' response_set.id %} class='btn btn-sm btn-danger'> Delete </a>
+      <span class="tab"><a href = {% url 'distribute_send' response_set.id %}> {{ response_set }} </a> </span>
+          <a href = {% url 'distribute_delete' response_set.id %} class='btn btn-sm btn-danger'> Delete </a>
       
       <br>
     {% endfor %}

@@ -62,7 +62,7 @@ def get_setup(request):
             
             return redirect('stage1 dispatch')
         else:
-            return HttpReponse("some error handling here")
+            return HttpResponse("some error handling here")
             #do some error handling
 
             

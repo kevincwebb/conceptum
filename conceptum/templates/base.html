@@ -41,7 +41,15 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">Conceptum</a>
+        
+            <a class="navbar-brand" href="/">Conceptum</a>
+            <a class="navbar-brand" href="/stage1/">Concepts</a>
+            <a class="navbar-brand" href="/interviews/">Interviews</a>
+            <a class="navbar-brand" href="/exams/">Exams</a>
+            
+            
+            
+            
         </div>
         <div class="navbar-collapse collapse">
           {% if user.is_authenticated %}
@@ -84,4 +92,15 @@
 
     {% block extra_js %}{% endblock extra_js %}
   </body>
+<!--
+<footer>
+<div id = "footer">
+<ul>
+<li>About Conceptum</li>
+<li>Home</li>
+<li>Exams</li>
+</ul>
+    </div>
+</footer>
+-->
 </html>

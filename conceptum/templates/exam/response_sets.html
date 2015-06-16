@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block head_title %}{% trans "Take Test" %}{% endblock %}
+{% block head_title %}{% trans "Response Sets" %}{% endblock %}
 
 {% block extra_headers %}
 
@@ -15,13 +15,42 @@
 {% block content %}
 
 <div class="container">
+<!--
+<ul class = "collapsible_list">
+<li> 
+    {% load staticfiles %}
+    <label for="toplist_node1"><h2 class = "list">Statistics <div class = "plus"> + </div> </h2></label>
+    <input type = "checkbox" id = "toplist_node1">
+
+<ul class = "inner_list">
+-->
 
 <h3> Response Sets of Exam {{ exam_id }} </h3>
     
 <!-- need the response set to be passed in -->
 <ul>   
 {% for set in responses %}     <!-- maybe do some collapsible statistics on each response set -->
-    <li><a href = "/exams/{{set.exam.id}}/responses/{{set.id}}/">{{ set }}</a></li>
+    <li class = "rset"><a href = "/exams/{{set.exam.id}}/responses/{{set.id}}/">{{ set }}</a>
+<ul class = "collapsible_list">
+<li> 
+    {% load staticfiles %}
+    <label for="toplist_node{{set.id}}"><div class = "overview">Overview <div class = "plus"> + </div> </div></label>
+    <input type = "checkbox" id = "toplist_node{{set.id}}">
+
+<ul class = "inner_list">
+    <li> Course: {{set.course}}</li>
+    <li> Instructor: {{set.instructor}}</li>
+    <li> Date Created: {{set.created}}</li>
+    <li> Number of Questions: ##</li>
+    <li> Number of Responses: ##</li>
+    <li> Average Score: ##</li>
+        
+</ul>
+    </li>
+</ul>
+
+        
+    
 {% endfor %}
 </ul>
     

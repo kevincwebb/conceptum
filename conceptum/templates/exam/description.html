@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block head_title %}{% trans "Take Test" %}{% endblock %}
+{% block head_title %}{% trans "Test Description" %}{% endblock %}
 
 {% block extra_headers %}
 
@@ -19,7 +19,7 @@
 
 <h3> Description of Exam {{ exam_id }} </h3>
 
-{{ exam_desc }}
+{{ exam.description }}
     
 <hr>
 <h3> Exam Questions </h3>       <!-- perhaps some toggleability for correct answers/statistics from response sets -->

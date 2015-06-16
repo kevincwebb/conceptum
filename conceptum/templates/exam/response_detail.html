@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block head_title %}{% trans "Distribute Exam" %}{% endblock %}
+{% block head_title %}{% trans "Exam Response Details" %}{% endblock %}
 
 {% block extra_headers %}
 
@@ -32,7 +32,7 @@ qList is a 2d list of the following format:
 	<h1>{{ exam.name }}</h1>
 	<h4>{{ exam.description}}</h3>
 	<br>
-	<h3>{{ response.respondent }} submitted at {{response.submitted}}</h2>
+	<h3>{{ response.respondent }} submitted on {{response.submitted}}</h2>
 
 <ul class = "collapsible_list">
 <li> 
