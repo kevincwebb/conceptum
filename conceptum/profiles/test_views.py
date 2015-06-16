@@ -13,7 +13,7 @@ User = get_user_model()
 class ViewsTest(SimpleTestCase):
     
     def setUp(self):
-        self.user, created = User.objects.get_or_create(email='vt_email@test.com',
+        self.user, created = User.objects.get_or_create(email='setup_vt_email@test.com',
                                                         name='Dave Test',
                                                         is_active=True)
         self.user.set_password('password')

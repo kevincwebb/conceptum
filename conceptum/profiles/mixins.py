@@ -3,7 +3,9 @@ from django.core.exceptions import PermissionDenied
 class ContribRequiredMixin(object):
     """
     View mixin which verifies that the logged in user is allowed to contribute
-    (user.profile.is_contrib==True).  Always raises a PermissionDenied exception
+    (user.profile.is_contrib==True or user.is_staff==True).
+    
+    Works similar to django-braces mixins, but always raises a PermissionDenied
     if the user fails the test, unlike the django-braces mixins which have
     class settings to determine the behavior.
     """

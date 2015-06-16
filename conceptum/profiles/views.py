@@ -8,18 +8,28 @@ from profiles.models import ContributorProfile
 from .forms import EditProfileForm
 
 
-
 class ProfileView(LoginRequiredMixin, TemplateView):
+    """
+    Simple view for viewing a use's profile page.  Most of the work here takes place
+    in the template.
+    """
     template_name = 'profiles/profile.html'
     model = ContributorProfile
     
 
 class EditProfileView(LoginRequiredMixin, FormView):
+    """
+    View for users to edit their user/profile information.
+    Name, Institution, Homepage, and Text info are editable fields.
+    """
     template_name = 'profiles/edit.html'
     form_class = EditProfileForm
     success_url = reverse_lazy('profile')
 
     def get_initial(self):
+        """
+        Initializes form with user's existing data
+        """
         user = self.request.user
         initial = { 'name' : user.name,
                     'institution' : user.profile.institution,

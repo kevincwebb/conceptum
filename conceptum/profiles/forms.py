@@ -8,11 +8,10 @@ from .models import ContributorProfile
 User = get_user_model()
 
 class EditProfileForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super(EditProfileForm, self).__init__(*args, **kwargs)
-        for field_name, field in self.fields.items():
-            field.widget.attrs['class'] = 'form-control'
-
+    """
+    Form for users to edit their user/profile information.
+    Name, Institution, Homepage, and Text info are editable fields.
+    """
     class Meta:
         model = ContributorProfile
         fields = ['name', 'institution', 'homepage', 'text_info']
@@ -21,7 +20,15 @@ class EditProfileForm(forms.ModelForm):
                            max_length=255,
                            widget=forms.TextInput())
     
+    def __init__(self, *args, **kwargs):
+        super(EditProfileForm, self).__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-control'
+    
     def save(self, request):
+        """
+        Save the updated information to the database.
+        """
         user = User.objects.get(pk=request.user.id)
         profile = user.profile
         data = self.cleaned_data

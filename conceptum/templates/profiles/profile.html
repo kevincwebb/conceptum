@@ -16,15 +16,22 @@
 
 <div class="container">
 
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 
   <div class="horizontal-heading">
     <h1>Welcome, {{ user.name }}</h1>
   </div>    
-    <b>Primary Email:</b>{{ user.email }}<br>
-    <b>Name:</b>{{ user.name }}<br>
-    <b>Institution:</b>{{ user.profile.institution }}<br>    
-    <b>Homepage:</b>{{ user.profile.homepage }}<br>
-    <b>Other Info:</b>{{ user.profile.text_info }}<br>
+    <b>Primary Email:</b> {{ user.email }}<br>
+    <b>Name:</b> {{ user.name }}<br>
+    <b>Institution:</b> {{ user.profile.institution }}<br>    
+    <b>Homepage:</b> {{ user.profile.homepage }}<br>
+    <b>Other Info:</b> {{ user.profile.text_info }}<br>
 
     <br>
     {% if user.profile.is_contrib or user.is_staff %}

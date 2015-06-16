@@ -12,7 +12,8 @@ MAX_EMAILS = 30
 class MultiEmailField(forms.Field):
     """
     Field to collect email addresses as one large text input, where addresses are
-    seperated by semi-colon.  Used in DistributeFrom
+    seperated by semi-colon. After processing, the data is accessed as an array
+    of email strings.
     """
     def to_python(self, value):
         """
@@ -46,6 +47,11 @@ class ExamResponseChoiceField(forms.ModelMultipleChoiceField):
         return obj.respondent
 
 class NewResponseSetForm(forms.ModelForm):
+    """
+    Form in which a distributor provides course info and selects modules
+    
+    TODO: module selection field
+    """
     class Meta:
         model = ResponseSet
         fields = ['course', 'pre_test'] #'modules' ]
@@ -55,6 +61,17 @@ class NewResponseSetForm(forms.ModelForm):
         #}
 
 class DistributeForm(forms.Form):
+    """
+    Form for a distributor to provide an expiration date and time and a list of
+    student emails.
+    
+    'recipients' is a custom field MultiEmailField that takes a long text input of emails
+    seperated by semicolons and formats it as an array.
+    
+    'resend' is a custom field ExamResponseChoiceField that is effectively a ModelChoiceField.
+    The choices for this field are ExamResponses (in this set) which have been previously
+    sent out but have not yet been submitted.
+    """
     
     expiration_date = forms.DateField(initial= (date.today() + timedelta(days=7)),
                                       help_text='YYYY-MM-DD')
@@ -105,16 +122,27 @@ class DistributeForm(forms.Form):
 
 
 class BlankForm(forms.Form):
+    """
+    Used in CleanupView, which doesn't actually need any fields.
+    """
     class Meta:
         fields = []
 
     
 class ExamResponseForm(forms.ModelForm):
+    """
+    Has fields for every question in an exam.  These fields are generated in the __init__()
+    method.  After an ExamResponse has been submitted, the save() method updates the
+    FreeResponseResponse and QuestionResponseResponse objects with the student's responses.
+    """
     class Meta:
         model = ExamResponse
         fields = []
         
     def __init__(self, *args, **kwargs):
+        """
+        Generate a field for each associated QuestionResponse object.
+        """
         super(ExamResponseForm, self).__init__(*args, **kwargs) 
         for response in self.instance.freeresponseresponse_set.all():
             self.fields["FR_response_%d" % response.id] = \
@@ -130,6 +158,9 @@ class ExamResponseForm(forms.ModelForm):
                                        widget=forms.RadioSelect())
             
     def save(self):
+        """
+        Save the student's responses.
+        """
         for response in self.instance.freeresponseresponse_set.all():
             response.response = self.cleaned_data.get("FR_response_%d" % response.id)
             response.save()
