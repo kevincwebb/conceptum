@@ -1,9 +1,0 @@
-<h3> Description of Exam {{ exam_id }} </h3>
-
-{{ exam_desc }}
-
-<h3> Discuss this Exam </h3>
-<!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a> -->
-
-<a href="{% url 'exam_discuss' exam_id %}">Discuss</a><br>
-<a href="{% url 'distribute_new' exam_id %}">Distribute</a>

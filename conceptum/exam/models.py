@@ -251,6 +251,34 @@ class FreeResponseResponse(QuestionResponse):
     response = models.CharField(max_length=RESPONSE_FREE_LENGTH, blank=True)
 
 
+class MultipleChoiceQuestion(Question):
+    """
+    Represents a question in which the answerer must choose between a set of
+    predefined choices.
+    """
+    randomize = models.BooleanField('randomize choices order', default=False)
+
+
+class MultipleChoiceOption(models.Model):
+    """
+    Represents one option in the set of choices for a multiple choice question.
+    """
+    question = models.ForeignKey(MultipleChoiceQuestion)
+    text = models.CharField(max_length=CHOICE_LENGTH)
+    rank = models.IntegerField(null=True, blank = True)
+
+    def __unicode__(self):
+        return self.text
+    
+#class OptionVersion(models.Model):
+#    revision = models.ForeignKey(Revision)  # This is required
+#    question= models.ForeignKey(Version)
+    
+reversion.register(MultipleChoiceOption)
+reversion.register(MultipleChoiceQuestion, follow=["multiplechoiceoption_set"])
+# do we need to register FreeResponseQuestion too?
+
+
 class MultipleChoiceResponse(QuestionResponse):
     """
     Records the response to a multiple choice question.

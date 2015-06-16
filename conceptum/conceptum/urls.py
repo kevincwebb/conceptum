@@ -24,7 +24,6 @@ urlpatterns = patterns('',
     url(r'^exams/', include('exam.urls')),
     url(r'^stage1/', include('cistage1.urls')),
     url(r'^interviews/', include('interviews.urls')),
-    url(r'^survey/', include('survey.urls')),
     
 )
 

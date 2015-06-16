@@ -6,47 +6,18 @@ from django.test import SimpleTestCase, TestCase
 
 from allauth.account.models import EmailAddress
 
+from profiles.tests import set_up_user
 from profiles.models import ContributorProfile
 from .models import Interview, Excerpt, get_concept_list, DummyConcept
 
 User = get_user_model()
 concept_list = get_concept_list()
 
-def set_up_user():
-    """
-    A function to be called by setUp in order to get a user for all authenticated activity.
-    This function creates a User and related ContributorProfile and EmailAddress, and
-    returns the new user object
-    
-    Important attributes of the user:
-        password='password'
-        is_active=True
-        is_staff=False
-        profile.is_contrib=False
-        
-    EmailAddress has verified=True.
-    """
-    user, created = User.objects.get_or_create(email='interview_email@test.com',
-                                                    name='Dave Test',
-                                                    is_active=True)
-    if created:
-        user.set_password('password')
-        user.save()
-        ContributorProfile.objects.create(user=user,
-                                          institution='Test University',
-                                          homepage='http://www.test.com/',
-                                          text_info='Here is info about me')
-        EmailAddress.objects.create(user=user,
-                                    email=user.email,
-                                    primary=True,
-                                    verified=True)
-    else:
-        # just in case permissions have been modified
-        user.is_staff = False
-        user.save()
-        user.profile.is_contrib = False
-        user.profile.save()
-    return user
+### function moved to profiles.tests
+#def set_up_user():
+#    """
+#    this function has been moved to profiles.tests.py
+#    """
 
 def get_or_create_interview(user, interviewee='Dr. Test', date=datetime.date(2014,01,01)):
     """
@@ -122,7 +93,6 @@ class ViewsPermissionsTest(SimpleTestCase):
     def test_add_view(self):
         """
         User must be authenticated* to view this page
-        *TODO: When permissions are ready, update so that user must have can_contribute permission
         """
         # User not logged in
         response = self.client.get(reverse('interview_add'))
@@ -153,9 +123,7 @@ class ViewsPermissionsTest(SimpleTestCase):
         
         # Unauthenticated user (anonymous)
         response = self.client.get(reverse('interview_edit', args=(interview.id,)))
-        self.assertEqual(response.status_code, 403)
-        # future behavior may change so that an unauthenticated user is redirected to login
-        # self.assertRedirects(response, '/accounts/login/?next=/interviews/%s/edit/' % interview.id)
+        self.assertRedirects(response, '/accounts/login/?next=/interviews/%s/edit/' % interview.id)
         
         # Non-staff arbitraty user (self.user)
         self.client.login(email=self.user.email, password='password')
@@ -191,9 +159,7 @@ class ViewsPermissionsTest(SimpleTestCase):
         
         # Unauthenticated user (anonymous)
         response = self.client.get(reverse('interview_delete', args=(interview.id,)))
-        self.assertEqual(response.status_code, 403)
-        # future behavior may change so that an unauthenticated user is redirected to login
-        # self.assertRedirects(response, '/accounts/login/?next=/interviews/%s/edit/' % interview.id)
+        self.assertRedirects(response, '/accounts/login/?next=/interviews/%s/delete/' % interview.id)
         
         # Non-staff arbitraty user (self.user)
         self.client.login(email=self.user.email, password='password')

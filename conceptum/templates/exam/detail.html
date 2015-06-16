@@ -17,24 +17,23 @@
 <div class="container">
     
 <div class="form-horizontal-heading">
-  <h2><b>Final Survey</b></h2>
+  <h2><b>Survey Questions</b></h2>
 </div>
-
+<h4>Click on a question to edit it </h4>
 
 <div>
-  <a href = {% url 'survey_index' %} class="btn btn-primary"> Back to Survey Development </a>
+  <a href = {% url 'select_concept' object.id %} class="btn btn-primary"> Add Questions </a>
   {%if user.is_staff%}
-  <a href = {% url 'finalize_view' %} class="btn btn-warning"> Select More Questions for Final Survey</a>
+  <a href = {% url 'finalize_view' exam.id %} class="btn btn-warning"> Select Questions for Final Survey</a>
 {%endif%}
   <br>
     <br>
 </div>
 
 <div align="left">
-<form action = {% url 'delete_final_question' %}  method = "post" >{% csrf_token %}
 <TABLE WIDTH="750">
   <thead>
-    <tr>
+    <tr >
       <th>Free Response</th>
       <th>Multiple Choice</th>
     </tr>
@@ -51,42 +50,27 @@
     <tr bgcolor="#B2B2B2">
       <th>Concept</th>
       <th>Question</th>
-        {%if user.is_staff%}
-      <th>Delete?</th>
-      {%endif%}
     </tr>
   </thead>
     <tbody>
     {% for concept, questions in freeresponsequestion_list.iteritems %}
-       <tr>
+        <tr>
         {% if concept%}
-        <td bgcolor = "#B2B2B2">{{concept}} </td>
-        {%if questions %}
-        {% for q in questions %}
+              <td bgcolor = "#B2B2B2">{{concept}} </td>
+              {%if questions %}
+              <td>{% for q in questions %}
               {%with forloop.counter as index%}
                 {% if index == 1 %}
-                 <td>{{q}}</td>
-                   {%if user.is_staff%}
-                 <td><input type="checkbox" name="fr_selected" value="{{q.id}}"> </td>
-                 {%endif%}
+                 <a href="{% url 'freeresponse_edit' q.id %}">{{q}}</a> </td>
                   {%else%}
-                    <tr> <td bgcolor = "#CECECE"></td> 
-                    <td> {{q}} </td>
-                      {%if user.is_staff%}
-                    <td><input type="checkbox" name="fr_selected" value="{{q.id}}"> </td>
-                  {%endif%}
-                    </tr>
-                {%endif%}
-             {%endwith%}
-             
+         <tr> <td bgcolor = "#CECECE"></td> 
+              <td> <a href="{% url 'freeresponse_edit' q.id %}">{{q}}</a> </td></tr>
+            {%endif%}
+            {%endwith%}
           {%endfor%}
-          
           {% else %}
             <td>---</td>
-              {%if user.is_staff%}
-            <td>---</td>
             {%endif%}
-        {%endif%}
        </tr>
        {%endif%}
     {% endfor %}
@@ -101,64 +85,51 @@
 </TR>
 </TABLE>
 </TD>
-<TD WIDTH="500">
+<TD WIDTH="400">
 <TABLE >
 <TR>
-<TD align="middle" WIDTH="500">
+<TD align="middle" WIDTH="400">
 {% if multiplechoicequestion_list %}
     <div style="overflow: auto; width:500px; height: 500px;">
    <table  class="table table-bordered"  >
                  <thead>
     <tr bgcolor="#B2B2B2">
-      <th >Concept</th>
+      <th>Concept</th>
       <th>Question</th>
       <th>Options</th>
-        {%if user.is_staff%}
-      <th>Delete?</th>
-      {%endif%}
     </tr>
   </thead>
     <tbody>
     {% for concept, questions in multiplechoicequestion_list.iteritems %}
        <tr >
         {% if concept%}
-        <td bgcolor = "#B2B2B2">{{concept}} </td>
+            <td bgcolor = "#B2B2B2">{{concept}} </td>
         {%if questions %}
-        {% for q in questions %}
+            <td>{% for q in questions %}
               {%with forloop.counter as index%}
                 {% if index == 1 %}
-                 <td>{{q}}</td>
-                  <td>{%for option in option_list %}
+                 <a href="{% url 'multiplechoice_edit' q.id %}">{{q}}</a> </td>
+            <td>{%for option in option_list %}
                 {% if option.question.id == q.id%}
-            <li>{{option.text}}</li>
+                <li>{{option.text}}</li>
           {%endif%}
           {%endfor%}
           </td>
-                    {%if user.is_staff%}
-           <td><input type="checkbox" name="mc_selected" value="{{q.id}}"> </td>
-            {%endif%}
                   {%else%}
-            <tr> <td bgcolor = "#CECECE"></td> 
-              <td>{{q}}</td>
-           
-          <td WIDTH="200">{%for option in option_list %}
+      <tr> <td bgcolor = "#CECECE"></td> 
+          <td> <a href="{% url 'multiplechoice_edit' q.id %}">{{q}}</a> </td> 
+          <td WIDTH="250">{%for option in option_list %}
           {% if option.question.id == q.id%}
-            <li>{{option.text}}</li>
+              <li>{{option.text}}</li>
           {%endif%}
           {%endfor%}
           </td>
-            {%if user.is_staff%}
-          <td><input type="checkbox" name="mc_selected" value="{{q.id}}"> </td>
-          {%endif%}
            {%endif%}
             {%endwith%}
           {%endfor%}
           {% else %}
             <td>---</td>
             <td>---</td>
-              {%if user.is_staff%}
-            <td>---</td>
-            {%endif%}
             {%endif%}
        </tr>
        {%endif%}
@@ -170,30 +141,15 @@
     <p>No multiple choice questions have been created yet.</p>
 {% endif %}
 
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
 
-</TD>
-</TR>
-</TABLE>
-</TD>
-</TR>
-</TABLE>
-{%if user.is_staff%}
-<input type="submit" value="Delete Questions" class="btn btn-danger"></input>
-{%endif%}
-</form>
 </div>
 
-
-
-
+</div> <!-- container -->
 
 {% endblock %}
-
-</form>
-</div>
-
-
-
-
-
-

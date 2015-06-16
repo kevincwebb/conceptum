@@ -50,7 +50,7 @@ def get_entry(request, node_id):
     """
     if request.method == 'POST':
         
-        formset = AtomFormSet(request.post)
+        formset = AtomFormSet(request.POST)
 
         if formset.is_valid():
 

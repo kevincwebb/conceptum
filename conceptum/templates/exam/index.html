@@ -1,5 +1,30 @@
-<h3> You're at the Exam Index! </h3>
+{% extends "base.html" %}
 
-{% for exam in all_exams %}
-        <li><a href="{% url 'exam_description' exam.id %}">{{ exam.name }}</a></li>
-{% endfor %}
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Exams Home" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+ 
+  <div class="horizontal-heading">
+    <h3>You're at the Surve/Exam Home!</h3>
+  </div>
+
+  {% for exam in exams %}
+    <li><a href="{% url 'exam_detail' exam.id %}">{{ exam.name }}</a></li>
+  {% endfor %}
+
+
+</div> <!-- container -->
+
+{% endblock %}
