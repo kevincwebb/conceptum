@@ -19,23 +19,73 @@ EXAM_NAME_LENGTH = 100
 EXAM_DESC_LENGTH = 500
 QUESTION_LENGTH = 1000
 CHOICE_LENGTH = 500
+MAX_CHOICES = 6
+REQUIRED_CHOICES = 1
 RESPONSE_FREE_LENGTH = 2000
 RESPONDENT_NAME_LENGTH = 100
 COURSE_NAME_LENGTH = 100
+
 
 """
 IMPORTANT NOTE: This app has a dependency on allauth for some of the behind-the-scences
 email generation in ExamResponse.send()
 """
 
+#class ExamStage(enum.Enum):
+#    CLOSED = 0
+#    DEV = 1
+#    DIST = 2
+#    
+#    labels = {
+#        CLOSED: 'Closed',
+#        DEV: 'Development',
+#        DIST: 'Distribution',
+#    }
+#    
+#    # We may want to enforce something like this:
+#    #
+#    #   acceptable transition:
+#    #   DEV --> CLOSED
+#    #   DIST --> CLOSED
+#    #   DEV --> DIST
+#    #
+#    #_transitions = {
+#    #    CLOSED: (DEV, DIST),
+#    #    DIST: (DEV,)
+#    #}
+#
+#class ExamType(enum.Enum):
+#    SURVEY = 0
+#    CI = 1
+#    #OTHER = 2 ??
+#
+#    labels = {
+#        SURVEY: 'Survey',
+#        CI: 'CI'
+#    }
+#    
+#    # This enforces that an exam cannot change type
+#    _transitions = {}
+
+
 class Exam(models.Model):
     """
     Represents a collection of questions that can be used as a concept
     inventory, survey, or other form of exam.
+    
+    
     """
+    # Constants for stage field
+    #CLOSED = 0
+    #DEV = 1
+    #DIST = 2
+    
     name = models.CharField(max_length=EXAM_NAME_LENGTH)
     description = models.CharField(max_length=EXAM_DESC_LENGTH)
     randomize = models.BooleanField('randomize question order', default=False)        
+    
+    # is_survey = models.BooleanField(default=False)
+    # stage = models.IntegerField(default=DEV)
     
     def __unicode__(self):
         return self.name

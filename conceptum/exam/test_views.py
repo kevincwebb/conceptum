@@ -3,7 +3,6 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.test import SimpleTestCase
 
-
 from profiles.tests import set_up_user
 from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, MultipleChoiceOption
 
@@ -172,6 +171,54 @@ class ViewsTest(SimpleTestCase):
         response = self.client.post(reverse('select_concept', args=[exam.id]),
                                     {'concept':concept,})
         self.assertRedirects(response, reverse('question_create',
-                                               kwargs ={'exam_id':exam.id,
-                                                        'concept_id':concept.id,
-                                                        'question_type':'fr'}))
+            kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}))
+        
+    def test_question_create_view(self):
+        exam = get_or_create_exam()
+        concept = DummyConcept.objects.get(name = "Concept A")
+        
+        # User not logged in, redirected
+        response = self.client.get(reverse('question_create',
+            kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}))
+        self.assertRedirects(response,
+                             '/accounts/login/?next=/exams/%s/%s/fr/'%(exam.id,concept.id))
+        
+        # User logged in, not contrib
+        self.client.login(email=self.user.email, password='password')
+        response = self.client.get(reverse('question_create',
+            kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}))
+        self.assertEqual(response.status_code, 403)
+        
+        # User is contrib
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
+        response = self.client.get(reverse('question_create',
+            kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}))
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse('question_create',
+            kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'mc'}))
+        self.assertEqual(response.status_code, 200)
+        
+        # exam_id does not exist
+        response = self.client.get(reverse('question_create',
+            kwargs ={'exam_id':99,'concept_id':concept.id,'question_type':'fr'}))
+        self.assertEqual(response.status_code, 404)
+        
+        # concept_id does not exist
+        response = self.client.get(reverse('question_create',
+            kwargs ={'exam_id':exam.id,'concept_id':99,'question_type':'fr'}))
+        self.assertEqual(response.status_code, 404)
+        
+        # question type does not exist
+        response = self.client.get(reverse('question_create',
+            kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'wrong'}))
+        self.assertEqual(response.status_code, 404)
+        
+        # Check interview and excerpt data
+        
+        # Check that fields are visible
+        
+        # Check that submit redirects us
+        
+        # Don't need to check form stuff
+        

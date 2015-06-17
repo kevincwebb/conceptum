@@ -8,12 +8,10 @@ from django.db import models
 
 from interviews.models import get_concept_list, DummyConcept as Concept #TEMPORARY: DummyConcept
 from .models import ExamResponse, FreeResponseQuestion, MultipleChoiceQuestion, \
-                    MultipleChoiceOption, ResponseSet
+                    MultipleChoiceOption, ResponseSet, \
+                    MAX_CHOICES, REQUIRED_CHOICES
 
-
-MAX_CHOICES = 6 ####Max number of muliple choice choices
-REQUIRED_CHOICES = 1
-MAX_EMAILS = 30
+MAX_EMAILS = 30 # I don't think this is currently checked
 
 class MultiEmailField(forms.Field):
     """
@@ -110,8 +108,14 @@ class AddMultipleChoiceForm(forms.ModelForm):
         
         # Require at least REQUIRED_CHOICES choices
         if choice_counter < 1:
-            raise forms.ValidationError("You must provide at least %d choice" % REQUIRED_CHOICES,
+            raise forms.ValidationError("You must provide at least %d choice." % REQUIRED_CHOICES,
                                         code = 'no_choices')
+        
+        # Check for duplicates
+        for i in range(1,choice_counter+1):
+            for j in range(i+1, choice_counter+1):
+                if (self.cleaned_data["choice_%d" % i]==self.cleaned_data["choice_%d" % j]):
+                    raise forms.ValidationError("You have two identical choices.")
         
         return cleaned_data
 

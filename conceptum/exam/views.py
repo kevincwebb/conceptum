@@ -17,12 +17,11 @@ from profiles.mixins import ContribRequiredMixin, StaffRequiredMixin
 from interviews.models import get_concept_list, DummyConcept as Concept #TEMPORARY: DummyConcept
 from interviews.models import Excerpt #not temporary
 from .models import Exam, ResponseSet, ExamResponse, QuestionResponse, FreeResponseQuestion,\
-                    MultipleChoiceQuestion, MultipleChoiceOption
+                    MultipleChoiceQuestion, MultipleChoiceOption, FreeResponseResponse,\
+                    MultipleChoiceResponse
 from .forms import SelectConceptForm, AddFreeResponseForm, AddMultipleChoiceForm, \
                    NewResponseSetForm, DistributeForm, ExamResponseForm, BlankForm, \
                    MultipleChoiceEditForm
-
-FINAL_SURVEY_NAME = 'Final Survey'
 
 ####DELETE AFTER SURVEY MERGE####
 #def index(request):
