@@ -15,16 +15,29 @@
 {% block content %}
 
 <div class="container">
-<h1> "{{exam}}" </h1>
-
-<h3> Description of Exam {{ exam_id }} </h3>
-
-{{ exam.description }}
+<h1> {{exam}} </h1>
+<ul class = "collapsible_list">
+    <li><h3><span class="tab">Description of {{ exam }}</span>
     
-<hr>
-<h3> Exam Questions </h3>       <!-- perhaps some toggleability for correct answers/statistics from response sets -->
+        <label for="description_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "description_node" checked>
+        <ul class = "inner_list">
+            {{ exam.description }}<br>
+            <br>
+            Exam ID: {{exam_id}}
+        </ul>
+    </li>
+    </ul>
+    
 
-<ol>    
+<ul class = "collapsible_list">
+    <li><h3><span class="tab">Exam Questions</span>
+    
+        <label for="question_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "question_node" checked>
+     <!-- perhaps some toggleability for correct answers/statistics from response sets -->
+
+<ol class = "inner_list">    
 {% if qList %}
 <!-- qList = [ q1, q2, ...] where
 	q1 = [question, [option1, option2, ...]
@@ -47,13 +60,31 @@
 	 No exam questions 
 {% endif %}
 </ol>
+    </li>
+</ul>
 
-<hr>
+
+
+<ul class = "collapsible_list">
+    <li><h3><span class="tab"><a href="{% url 'exam_response_sets' exam_id%}" >Responses</a></span>
+    
+        <label for="responses_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "responses_node">
+        
+        <ul class = "inner_list">
+            {% for set in responses %}
+            <li><a href = "{% url 'exam_responses' set.exam.id set.id%}">{{set}} distributed by {{set.instructor}}</a></li>
+            {% endfor %}
+            <li class = "etc"><a href="{% url 'exam_response_sets' exam_id%}" >All responses ...</a></li>
+        
+</ul>
+    </li>
+</ul>
 
 <h3> Discuss this Exam </h3>
 <!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a> -->
 
-<a href="{% url 'exam_response_sets' exam_id%}">Responses</a><br>
+
 <a href="{% url 'exam_discuss' exam_id %}">Discuss</a><br>
 <a href="{% url 'distribute_new' exam_id %}">Distribute</a>
     

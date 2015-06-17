@@ -23,33 +23,15 @@
     
 
 <hr>
-<!-- need the response set to be passed in -->
-<ul class = "collapsible_list">
-<li> 
-    {% load staticfiles %}
-    <label for="toplist_node1"><h2 class = "list">Submitted Responses to {{response_set}} <div class = "plus"> + </div> </h2></label>
-    <input type = "checkbox" id = "toplist_node1">
-  <ul class = "inner_list">
-  {% if responses %}
-    {% for response in responses %}
-      <li><a href = "/exams/{{response.response_set.exam.id}}/responses/{{response.response_set.id}}/{{response.key}}/">{{ response.respondent }}</a></li> 
-    {% endfor %}
-  {% else %}
-    None
-  {% endif %}
-  </ul>
-    <br>
-    <a href="{% url 'exam_response_sets' exam_id%}">Other Response Sets for Exam {{exam_id}}</a><br>
-    </li>
     
-
 <!--[numQuestions, numCorrect, medianScore, maxScore, lowScore]-->
 
 <ul class = "collapsible_list">
-<li> 
-    {% load staticfiles %}
-    <label for="toplist_node2"><h2 class = "list">Statistics <div class = "plus"> + </div> </h2></label>
-    <input type = "checkbox" id = "toplist_node2">
+    <li><h3><span class="tab">Statistics </span>
+    
+        <label for="stats_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "stats_node">
+    
   <ul class = "inner_list">
     {% if stats %}
         <li> Average Score: {{stats.2}}%</li>
@@ -66,8 +48,37 @@
     <li> none </li>
     {% endif %}
 </ul>
+    </li>
     
 </ul>
+    
+    
+    
+    
+<!-- need the response set to be passed in -->
+<ul class = "collapsible_list">
+    <li><h3><span class="tab">Submitted Responses to {{response_set}} </span>
+    
+        <label for="responses_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "responses_node" checked>
+    
+    
+    
+  <ul class = "inner_list">
+  {% if responses %}
+    {% for response in responses %}
+      <li><a href = "/exams/{{response.response_set.exam.id}}/responses/{{response.response_set.id}}/{{response.key}}/">{{ response.respondent }}</a></li> 
+    {% endfor %}
+  {% else %}
+    None
+  {% endif %}
+  </ul>
+    <br>
+    <a href="{% url 'exam_response_sets' exam_id%}">Other Response Sets for Exam {{exam_id}}</a><br>
+    </li>
+    
+
+
 
 <br>
 <hr>

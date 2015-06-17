@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 
 from braces.views import LoginRequiredMixin, UserPassesTestMixin, StaffuserRequiredMixin
 
@@ -17,6 +18,7 @@ from .forms import NewResponseSetForm, DistributeForm, ExamResponseForm, BlankFo
 
 # Create your views here.
 
+@login_required
 def index(request):
     all_exams = Exam.objects.all()
     template = loader.get_template('exam/index.html')
@@ -24,11 +26,15 @@ def index(request):
                              { 'all_exams': all_exams},)
     return HttpResponse(template.render(context))
 
+@login_required
 def description(request, exam_id):
     
     exam = Exam.objects.get(pk=exam_id)
     exam_desc = Exam.objects.get(pk=exam_id).description
     exam_questions = exam.multiplechoicequestion_set.all()
+    responses = exam.responseset_set.order_by('created').all();
+    if (len(responses) > 5):
+        responses = responses[:5]
     ######
     qList = []
     q = []
@@ -44,9 +50,11 @@ def description(request, exam_id):
     context = RequestContext(request,
                              { 'exam': exam,
                                 'qList' : qList,
-                               'exam_id': exam_id},)
+                               'exam_id': exam_id,
+                               'responses':responses},)
     return HttpResponse(template.render(context))
 
+@login_required
 def discuss(request, exam_id):
     exam = Exam.objects.get(pk=exam_id)
     template=loader.get_template('exam/discuss.html')
@@ -57,7 +65,7 @@ def discuss(request, exam_id):
 
 
 ####################################### WIP #####################################################
-
+@login_required
 def ExamResponseDetail(request, exam_id, rsid, key):
 
         template = loader.get_template('exam/response_detail.html')
@@ -84,6 +92,7 @@ def ExamResponseDetail(request, exam_id, rsid, key):
         #return render(request, 'exam/response_detail.html', {'response': response, 'exam': exam})
     
 # page with all response sets for a given exam
+@login_required
 def response_sets(request, exam_id):
     
     exam = Exam.objects.get(pk=exam_id)
@@ -100,10 +109,11 @@ def response_sets(request, exam_id):
     return HttpResponse(template.render(context))
 
 # page with all exam responses for a given exam and response set id (rsid)
+@login_required
 def responses(request, exam_id, rsid):
     response_set = ResponseSet.objects.get(pk=rsid)
     exam = Exam.objects.get(pk=exam_id)
-    responses = response_set.examresponse_set.all()
+    responses = response_set.examresponse_set.order_by('respondent').all()
 
     """
     eventually do statistical analysis here to pass to template

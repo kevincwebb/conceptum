@@ -28,34 +28,34 @@
 <h3> Response Sets of Exam {{ exam_id }} </h3>
     
 <!-- need the response set to be passed in -->
-<ul>   
+<ul class = "collapsible_overview">    
 {% for set in responses %}     <!-- maybe do some collapsible statistics on each response set -->
-    <li class = "rset"><a href = "/exams/{{set.exam.id}}/responses/{{set.id}}/">{{ set }}</a>
-<ul class = "collapsible_list">
-<li> 
-    {% load staticfiles %}
+    <li class = "table"><span class="over_tab"><a href = "{% url 'exam_responses' set.exam.id set.id%}">{{ set }}</a></span>
+    
     <label for="toplist_node{{set.id}}"><div class = "overview">Overview <div class = "plus"> + </div> </div></label>
     <input type = "checkbox" id = "toplist_node{{set.id}}">
 
-<ul class = "inner_list">
-    <li> Course: {{set.course}}</li>
-    <li> Instructor: {{set.instructor}}</li>
-    <li> Date Created: {{set.created}}</li>
-    <li> Number of Questions: ##</li>
-    <li> Number of Responses: ##</li>
-    <li> Average Score: ##</li>
+<ul class = "overview_inner_list">
+    <li> • Course: {{set.course}}</li>
+    <li> • Instructor: {{set.instructor}}</li>
+    <li> • Date Created: {{set.created}}</li>
+    <li> • Number of Questions: ##</li>
+    <li> • Number of Responses: ##</li>
+    <li> • Average Score: ##</li>
         
 </ul>
+    
     </li>
+{% endfor %}
 </ul>
 
         
     
-{% endfor %}
-</ul>
-    
+
+
+ <a href = "{% url 'exam_description' exam_id %}">Back to Exam {{exam_id}}</a>  <br> 
 <a href="{% url 'exam_index' %}">Back to Exam Index</a><br>
-<hr>
+
     
 <h3> Discuss this Exam </h3>
 <!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a> -->

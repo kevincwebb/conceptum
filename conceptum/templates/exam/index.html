@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block head_title %}{% trans "Take Test" %}{% endblock %}
+{% block head_title %}{% trans "Exam Index" %}{% endblock %}
 
 {% block extra_headers %}
 
@@ -16,12 +16,28 @@
 
 <div class="container">
     
-<h3> You're at the Exam Index! </h3>
+<h3> Exam Index </h3>
 
 {% for exam in all_exams %}
-        <li><a href="{% url 'exam_description' exam.id %}">{{ exam.name }}</a></li>
-{% endfor %}
+    <ul class = "collapsible_overview">    
+    <li class = "table"><span class="over_tab"><a href="{% url 'exam_description' exam.id %}">{{ exam.name }}</a></span>
     
+    <label for="toplist_node{{exam.id}}"><div class = "overview">Overview <div class = "plus"> + </div> </div></label>
+    <input type = "checkbox" id = "toplist_node{{exam.id}}">
+
+<ul class = "overview_inner_list">
+    <li> • Questions: ##</li>
+    <li> • Responses: ##</li>
+    <li> • Date Created: ##</li>
+    <li> • Times Distrubuted: ##</li>
+    <li> • Average Score: ##</li>
+    <li> • Concepts: xxx, xxx, xxx, xxxx</li>
+        
+</ul>
+    </li>
+{% endfor %}
+        
+    </ul>
 </div> <!-- container -->
 
 {% endblock %}
