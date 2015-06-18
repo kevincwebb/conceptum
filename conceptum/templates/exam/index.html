@@ -21,7 +21,7 @@
   </div>
 
   {% for exam in exams %}
-    <li><a href="{% url 'exam_detail' exam.id %}">{{ exam.name }}</a></li>
+    <li><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a></li>
   {% endfor %}
 
 

@@ -1,15 +1,18 @@
 from datetime import timedelta
 
-from django.db import models
+from django.db import models, IntegrityError
 from django.contrib.contenttypes.models import ContentType, ContentTypeManager
 from django.contrib.contenttypes import generic
 from django.contrib.sites.models import Site
-from django.utils import timezone
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+
 
 from allauth.account.adapter import get_adapter
-import reversion
-from reversion.models import Revision, Version
+from django_enumfield import enum
+#import reversion
+#from reversion.models import Revision, Version
 
 from profiles.models import ContributorProfile
 from .managers import ExamResponseManager
@@ -27,45 +30,67 @@ COURSE_NAME_LENGTH = 100
 
 
 """
-IMPORTANT NOTE: This app has a dependency on allauth for some of the behind-the-scences
-email generation in ExamResponse.send()
+IMPORTANT NOTE: This app has a dependency on allauth for some of the
+behind-the-scences email generation in ExamResponse.send()
 """
 
-#class ExamStage(enum.Enum):
-#    CLOSED = 0
-#    DEV = 1
-#    DIST = 2
-#    
-#    labels = {
-#        CLOSED: 'Closed',
-#        DEV: 'Development',
-#        DIST: 'Distribution',
-#    }
-#    
-#    # We may want to enforce something like this:
-#    #
-#    #   acceptable transition:
-#    #   DEV --> CLOSED
-#    #   DIST --> CLOSED
-#    #   DEV --> DIST
-#    #
-#    #_transitions = {
-#    #    CLOSED: (DEV, DIST),
-#    #    DIST: (DEV,)
-#    #}
-#
-#class ExamType(enum.Enum):
-#    SURVEY = 0
-#    CI = 1
-#    #OTHER = 2 ??
-#
-#    labels = {
-#        SURVEY: 'Survey',
-#        CI: 'CI'
-#    }
-#    
-#    # This enforces that an exam cannot change type
-#    _transitions = {}
+class ExamKind(enum.Enum):
+    """
+    an Enum-class (see django-enumfield) with 2 values:
+        SURVEY - The exam is a survey; it will be used to collect preliminary
+                    data on student thinking.
+        CI     - The exam is a Concept Inventory; it is the exam that will be
+                    used to collect final data.
+    
+    While a boolean field could have been used, this leaves the possibility of
+    having a type of exam that is neither a survey nor a CI. This would be done
+    by adding a field to this class.
+    """
+    SURVEY = 0
+    CI = 1
+
+    labels = {
+        SURVEY: 'Survey',
+        CI: 'CI'
+    }
+    
+    # This would enforce that an exam cannot change kind
+    # _transitions = {}
+
+
+class ExamStage(enum.Enum):
+    """
+    an Enum-class (see django-enumfield) with 3 values:
+        DEV   - The exam is in development stage.
+        DIST  - The exam is in distribution stage. It cannot be edited.
+        CLOSE - The exam is closed. Its data will be available, but it cannot
+                    be edited or distributed.
+    
+    acceptable state transitions:
+        DEV --> DIST
+        DEV --> CLOSED
+        DIST--> CLOSED
+        
+    Attempting to change the value from e.g. CLOSED to DEV throws an
+    InvalidStatusOperationError.
+    
+    Once an exam leaves the development stage, it needs to be locked against further changes
+    because it may have begun to be distributed.
+    """
+    CLOSED = 0
+    DEV = 1
+    DIST = 2
+    
+    labels = {
+        CLOSED: 'Closed',
+        DEV: 'Development',
+        DIST: 'Distribution',
+    }
+    
+    _transitions = {
+        CLOSED: (DEV, DIST),
+        DIST: (DEV,)
+    }
 
 
 class Exam(models.Model):
@@ -73,23 +98,36 @@ class Exam(models.Model):
     Represents a collection of questions that can be used as a concept
     inventory, survey, or other form of exam.
     
+    The kind of exam is recorded in the 'kind' field. This is an EnumField with
+    2 options: SURVEY and CI. Surveys and CIs have different uses in the overall
+    project, so this field allows us to distinguish between them.
     
+    The stage of the exam (another EnumField) refers to the exam's own stage.
+    It is available for development, distribution, or neither (closed). Views,
+    forms, etc. should check the stage before performing operations on exam
+    objects. All Questions will raise 
     """
-    # Constants for stage field
-    #CLOSED = 0
-    #DEV = 1
-    #DIST = 2
-    
     name = models.CharField(max_length=EXAM_NAME_LENGTH)
     description = models.CharField(max_length=EXAM_DESC_LENGTH)
     randomize = models.BooleanField('randomize question order', default=False)        
     
-    # is_survey = models.BooleanField(default=False)
-    # stage = models.IntegerField(default=DEV)
+    kind = enum.EnumField(ExamKind, default=ExamKind.CI)
+    stage = enum.EnumField(ExamStage, default=ExamStage.DEV)
     
     def __unicode__(self):
         return self.name
 
+    def can_develop(self):
+        return self.stage == ExamStage.DEV
+    
+    def can_distribute(self):
+        return self.stage == ExamStage.DIST
+    
+    def is_survey(self):
+        return self.kind == ExamKind.SURVEY
+    
+    def is_CI(self):
+        return self.kind == ExamKind.CI
 
 def question_imageupload_to(question, filename):
     """
@@ -125,6 +163,23 @@ class Question(models.Model):
 
     def __unicode__(self):
         return self.question
+    
+    def clean(self):
+        """
+        Validate that forms are not trying to modify exams unless they are
+        in the development stage.
+        """
+        if not exam.can_develop():
+            raise ValidationError('This exam is no longer editable')
+        super(Question, self).save(*args, **kwargs)
+    
+    def save(self, *args, **kwargs):
+        """
+        Questions should not be editable unless exam.can_develop()
+        """
+        if not exam.can_develop():
+            raise IntegrityError('This exam is no longer editable')
+        super(Question, self).save(*args, **kwargs)
 
 
 class FreeResponseQuestion(Question):
@@ -153,6 +208,23 @@ class MultipleChoiceOption(models.Model):
 
     def __unicode__(self):
         return self.text
+
+    def clean(self):
+        """
+        Validate that forms are not trying to modify exams unless they are
+        in the development stage.
+        """
+        if not question.exam.can_develop():
+            raise ValidationError('This exam is no longer editable')
+        super(MultipleChoiceOption, self).save(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        """
+        Options should not be editable unless exam.can_develop()
+        """
+        if not question.exam.can_develop():
+            raise IntegrityError('This exam is no longer editable')
+        super(MultipleChoiceOption, self).save(*args, **kwargs)
     
 
 class ResponseSet(models.Model):

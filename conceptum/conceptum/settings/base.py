@@ -198,10 +198,10 @@ DJANGO_APPS = (
     # Admin panel and documentation:
     'django.contrib.admin',
     # 'django.contrib.admindocs',
+    
     'reversion',
 
-    # order necessary to force django_comments
-    # to inherit threaded templates
+    # order necessary to force django_comments to inherit threaded templates
     'threadedcomments',
     'django_comments',
 
@@ -212,7 +212,7 @@ DJANGO_APPS = (
     # Used as a tree structure for CI Stage 1
     'mptt',
     
-
+    'django_enumfield',
 
 )
 

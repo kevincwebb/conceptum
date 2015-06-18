@@ -209,16 +209,18 @@ class ViewsTest(SimpleTestCase):
             kwargs ={'exam_id':exam.id,'concept_id':99,'question_type':'fr'}))
         self.assertEqual(response.status_code, 404)
         
-        # question type does not exist
+        # question type not 'fr' or 'mc'
         response = self.client.get(reverse('question_create',
-            kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'wrong'}))
+            kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'xx'}))
         self.assertEqual(response.status_code, 404)
         
-        # Check interview and excerpt data
-        
-        # Check that fields are visible
-        
         # Check that submit redirects us
+        response = self.client.get(reverse('exam_detail',
+            kwargs ={'exam_id':exam.id,}))
+        self.assertEqual(response.status_code, 200)
         
-        # Don't need to check form stuff
+        # possible other tests...
+        #   Check interview and excerpt data
+        #   Check that fields are visible
+        #   Don't need to check form stuff
         

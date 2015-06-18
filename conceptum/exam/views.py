@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template import RequestContext, loader
 from django.views import generic
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.core.urlresolvers import reverse, reverse_lazy, resolve
 #from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
@@ -18,7 +18,7 @@ from interviews.models import get_concept_list, DummyConcept as Concept #TEMPORA
 from interviews.models import Excerpt #not temporary
 from .models import Exam, ResponseSet, ExamResponse, QuestionResponse, FreeResponseQuestion,\
                     MultipleChoiceQuestion, MultipleChoiceOption, FreeResponseResponse,\
-                    MultipleChoiceResponse
+                    MultipleChoiceResponse, ExamKind, ExamStage
 from .forms import SelectConceptForm, AddFreeResponseForm, AddMultipleChoiceForm, \
                    NewResponseSetForm, DistributeForm, ExamResponseForm, BlankForm, \
                    MultipleChoiceEditForm
@@ -89,10 +89,18 @@ class ExamIndexView(LoginRequiredMixin,
             return 'exam/index_empty.html'
         else:
             return 'exam/index.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        r = resolve(request.path)
+        if r.namespace == 'survey':
+            self.k = ExamKind.SURVEY
+        if r.namespace == 'CI_exam':
+            self.k = ExamKind.CI
+        return super(ExamIndexView, self).dispatch(request, *args, **kwargs)
        
     def get_context_data(self,**kwargs):
         context = super(ExamIndexView, self).get_context_data(**kwargs)
-        context['exams'] = Exam.objects.all()
+        context['exams'] = Exam.objects.filter(kind=self.k)
         return context
     
 
