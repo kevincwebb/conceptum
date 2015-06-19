@@ -5,7 +5,6 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template import RequestContext, loader
 from django.views import generic
 from django.core.urlresolvers import reverse, reverse_lazy
-#from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.decorators import user_passes_test #TEMPORARY
@@ -22,7 +21,7 @@ from .models import Exam, ResponseSet, ExamResponse, QuestionResponse, FreeRespo
 from .forms import SelectConceptForm, AddFreeResponseForm, AddMultipleChoiceForm, \
                    NewResponseSetForm, DistributeForm, ExamResponseForm, BlankForm, \
                    MultipleChoiceEditForm
-from .mixins import ExamKindMixin
+from .mixins import DevelopmentMixin, CurrentAppMixin
 
 ####DELETE AFTER SURVEY MERGE####
 #def index(request):
@@ -69,25 +68,12 @@ def discuss(request, exam_id):
     return HttpResponse(template.render(context))
 
 
-#def get_exam_kind_from_namespace(request):
-#    """
-#    Many views need to distinguish between kinds of exams. For example, a view that lists
-#    exam objects should list only surveys or only CI exams, depending on what stage we
-#    are at.
-#    """
-#    r = resolve(request.path)
-#    if r.namespace == 'survey':
-#        return ExamKind.SURVEY
-#    if r.namespace == 'CI_exam':
-#        return ExamKind.CI
-
-
 class ExamIndexView(LoginRequiredMixin,
-                    ExamKindMixin,
+                    CurrentAppMixin,
                     generic.ListView):
     """
-    Landing page for exams, which includes surveys and CI exams. From this page, users can
-    access exams for both development and deployment.
+    Landing page for exam development. This page will list all surveys or CI exams that
+    are in the Development stage.
     
     Only staff users have the ability to create new Surveys and Exams.
     
@@ -100,20 +86,20 @@ class ExamIndexView(LoginRequiredMixin,
     model = Exam
     
     def get_template_names(self, *args, **kwargs):
-        if (not Exam.objects.filter(kind=self.kind)):
+        if (not Exam.objects.filter(kind=self.exam_kind)):
             return 'exam/index_empty.html'
         else:
             return 'exam/index.html'
        
     def get_context_data(self,**kwargs):
         context = super(ExamIndexView, self).get_context_data(**kwargs)
-        context['exams'] = Exam.objects.filter(kind=self.kind)
+        context['exams'] = Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DEV)
         return context
     
 
 class ExamCreateView(LoginRequiredMixin,
                      StaffRequiredMixin,
-                     ExamKindMixin,
+                     CurrentAppMixin,
                      generic.CreateView):
     """
     CreateView to create a survey/exam.
@@ -131,15 +117,17 @@ class ExamCreateView(LoginRequiredMixin,
     template_name = 'exam/new_exam.html'
 
     def form_valid(self, form):
-        form.instance.kind = self.kind
+        form.instance.kind = self.exam_kind
         return super(ExamCreateView,self).form_valid(form)
 
     def get_success_url(self):
-        return reverse('exam:index')
+        return reverse('exam:index', current_app=self.current_app)
 
 
 class ExamDetailView(LoginRequiredMixin,
                 ContribRequiredMixin,
+                DevelopmentMixin,
+                CurrentAppMixin,
                 generic.DetailView):
     """
     View exam details:
@@ -181,7 +169,8 @@ class ExamDetailView(LoginRequiredMixin,
 
 class SelectConceptView(LoginRequiredMixin,
                         ContribRequiredMixin,
-                        generic.FormView,):
+                        CurrentAppMixin,
+                        generic.FormView):
     """
     Lists all Concepts in the database, Select a concept to add a question
     about that concept
@@ -200,12 +189,13 @@ class SelectConceptView(LoginRequiredMixin,
  
     def form_valid(self, form):
         concept = form.cleaned_data.get('concept')
-        return HttpResponseRedirect(reverse('exam:question_create',
+        return HttpResponseRedirect(reverse('exam:question_create', current_app=self.current_app,
             kwargs ={'exam_id':self.exam.id,'concept_id':concept.id,'question_type':'fr' }))
 
 
 class QuestionCreateView(LoginRequiredMixin,
                          ContribRequiredMixin,
+                         CurrentAppMixin,
                          generic.FormView):
     """
     FormView to add a new question
@@ -240,13 +230,12 @@ class QuestionCreateView(LoginRequiredMixin,
         
         context['exam'] = self.exam
         context['concept'] = self.concept
-        #context['concept_id'] - this may have been used in template, if so, change to concept.id
         context['excerpt_list']=Excerpt.objects.filter(content_type__pk=concept_type.id,
                                                        object_id=self.concept.id)
         return context
     
     def get_success_url(self):
-        return reverse('exam_detail', args=[self.exam.id])
+        return reverse('exam:detail', args=[self.exam.id], current_app=self.current_app)
     
     def form_valid(self, form):
         concept_type = ContentType.objects.get_for_model(Concept)
@@ -273,46 +262,77 @@ class QuestionCreateView(LoginRequiredMixin,
         return HttpResponseRedirect(self.get_success_url())
 
 
-class FreeResponseEditView(LoginRequiredMixin,
-                           ContribRequiredMixin,
-                           generic.UpdateView):
+class QuestionEditView(LoginRequiredMixin,
+                       ContribRequiredMixin,
+                       CurrentAppMixin,
+                       generic.UpdateView):
     """
     UpdateView for a user to edit an existing Question
     """
-    model = FreeResponseQuestion
     pk_url_kwarg = 'question_id'
-    fields =['question']
-    
-    template_name = 'exam/frquestion_update_form.html'
     
     def get_success_url(self):
-        return reverse('exam_detail', args=[self.object.exam.id])
+        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
 
-
-class MultipleChoiceEditView(LoginRequiredMixin,
-               ContribRequiredMixin,
-               generic.UpdateView):
-    """
-    UpdateView for a user to edit an existing Question
-    """
+class FreeResponseEditView(QuestionEditView):
+    model = FreeResponseQuestion
+    fiels = ['question']
+    template_name = 'exam/frquestion_update_form.html'
+    
+class MultipleChoiceEditView(QuestionEditView):
     model = MultipleChoiceQuestion
-    pk_url_kwarg = 'question_id'
-    template_name = 'exam/mcquestion_update_form.html'
     form_class = MultipleChoiceEditForm
+    template_name = 'exam/mcquestion_update_form.html'
     
     def get_initial(self):
         initial = {}
         for choice in self.object.multiplechoiceoption_set.all():
             initial['choice_%d' % choice.pk] = choice.text
         return initial
-    
-    def get_success_url(self):
-        return reverse('exam_detail', args=[self.object.exam.id])
+
+#class FreeResponseEditView(LoginRequiredMixin,
+#                           ContribRequiredMixin,
+#                           CurrentAppMixin,
+#                           generic.UpdateView):
+#    """
+#    UpdateView for a user to edit an existing Question
+#    """
+#    model = FreeResponseQuestion
+#    pk_url_kwarg = 'question_id'
+#    fields =['question']
+#    
+#    template_name = 'exam/frquestion_update_form.html'
+#    
+#    def get_success_url(self):
+#        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
+#
+#
+#class MultipleChoiceEditView(LoginRequiredMixin,
+#                             ContribRequiredMixin,
+#                             CurrentAppMixin,
+#                             generic.UpdateView):
+#    """
+#    UpdateView for a user to edit an existing Question
+#    """
+#    model = MultipleChoiceQuestion
+#    pk_url_kwarg = 'question_id'
+#    template_name = 'exam/mcquestion_update_form.html'
+#    form_class = MultipleChoiceEditForm
+#    
+#    def get_initial(self):
+#        initial = {}
+#        for choice in self.object.multiplechoiceoption_set.all():
+#            initial['choice_%d' % choice.pk] = choice.text
+#        return initial
+#    
+#    def get_success_url(self):
+#        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
 
 
 class FreeResponseVersionView(LoginRequiredMixin,
-               ContribRequiredMixin,
-               generic.UpdateView):
+                              ContribRequiredMixin,
+                              CurrentAppMixin,
+                              generic.UpdateView):
     """
     A view for viewing old versions of Free Response Questions
     """
@@ -344,12 +364,13 @@ class FreeResponseVersionView(LoginRequiredMixin,
         return context
 
     def get_success_url(self):
-        return reverse('exam_detail', args=[self.object.exam.id])
+        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
 
 
 class MultipleChoiceVersionView(LoginRequiredMixin,
-               ContribRequiredMixin,
-               generic.UpdateView):
+                                ContribRequiredMixin,
+                                CurrentAppMixin,
+                                generic.UpdateView):
     """
     A view for viewing old versions of Multiple Choice Questions and their
     corresponding options. 
@@ -424,7 +445,7 @@ class MultipleChoiceVersionView(LoginRequiredMixin,
         return context
     
     def get_success_url(self):
-        return reverse('exam_detail', args=[self.object.exam.id])
+        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
 
 
 @user_passes_test(contrib_check)
@@ -441,9 +462,13 @@ def revert_freeresponse(request, question_id):
             if version.id == int(request.POST['version']):
                 version.revert()
                 break
-        return HttpResponseRedirect(reverse('exam_detail', args=[q.exam.id]))
+        return HttpResponseRedirect(reverse('exam:detail',
+                                            args=[q.exam.id],
+                                            current_app=request.resolver_match.namespace))
     else:
-        return HttpResponseRedirect(reverse('freeresponse_versions', kwargs={'question_id' : q.id}))
+        return HttpResponseRedirect(reverse('exam:fr_versions',
+                                            kwargs={'question_id' : q.id},
+                                            current_app=request.resolver_match.namespace))
 
 
 @user_passes_test(contrib_check)
@@ -459,38 +484,75 @@ def revert_multiplechoice(request, question_id):
             if version.id == int(request.POST['version']):
                 version.revision.revert(delete=True)
                 break
-        return HttpResponseRedirect(reverse('exam_detail', args=[q.exam.id]))
+        return HttpResponseRedirect(reverse('exam:detail',
+                                            args=[q.exam.id],
+                                            current_app=request.resolver_match.namespace))
     else:
-        return HttpResponseRedirect(reverse('multiplechoice_versions', kwargs={'question_id' : q.id}))
+        return HttpResponseRedirect(reverse('exam:mc_versions',
+                                            kwargs={'question_id' : q.id},
+                                            current_app=request.resolver_match.namespace))
 
 
-class FreeResponseDeleteView(LoginRequiredMixin,
-                 ContribRequiredMixin,
-                 generic.DeleteView):
-
-    model = FreeResponseQuestion
+class QuestionDeleteView(LoginRequiredMixin,
+                             ContribRequiredMixin,
+                             CurrentAppMixin,
+                             generic.DeleteView):
+    """
+    "Abstract" view subclassed by FreeResponse and MultipleChoice versions.
+    """
     pk_url_kwarg = 'question_id'
     template_name = 'exam/confirm_delete.html'
     
     def get_success_url(self):
-        return reverse('exam_detail', args=[self.object.exam.id])
+        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
 
-class MultipleChoiceDeleteView(LoginRequiredMixin,
-                 ContribRequiredMixin,
-                 generic.DeleteView):
-       
+class FreeResponseDeleteView(QuestionDeleteView):
+    model = FreeResponseQuestion
+
+class MultipleChoiceDeleteView(QuestionDeleteView):
     model = MultipleChoiceQuestion
-    pk_url_kwarg = 'question_id'
-    template_name = 'exam/confirm_delete.html'
 
-    def get_success_url(self):
-        return reverse('exam_detail', args=[self.object.exam.id])
+#class FreeResponseDeleteView(LoginRequiredMixin,
+#                             ContribRequiredMixin,
+#                             CurrentAppMixin,
+#                             generic.DeleteView):
+#
+#    model = FreeResponseQuestion
+#    pk_url_kwarg = 'question_id'
+#    template_name = 'exam/confirm_delete.html'
+#    
+#    def get_success_url(self):
+#        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
+#
+#class MultipleChoiceDeleteView(LoginRequiredMixin,
+#                               ContribRequiredMixin,
+#                               CurrentAppMixin,
+#                               generic.DeleteView):
+#       
+#    model = MultipleChoiceQuestion
+#    pk_url_kwarg = 'question_id'
+#    template_name = 'exam/confirm_delete.html'
+#
+#    def get_success_url(self):
+#        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
 
+
+
+#################################################
+#                                               #
+#   Finalization currently does not work.       #
+#   This app is being redesigned, after which   #
+#   the finalization process will be very       #
+#   different (and simpler) than it is now.     #
+#                                               #
+#################################################
 
 class FinalizeView(LoginRequiredMixin,
                 StaffRequiredMixin,
                 generic.ListView):
     """
+    !THIS VIEW WILL CHANGE!
+    
     View all questions created for the survey and select the ones meant for the final survey.
     
     TODO: MultipleChoiceOption should not be the model here.
@@ -535,6 +597,8 @@ class FinalizeView(LoginRequiredMixin,
 @user_passes_test(staff_check)
 def finalize_survey(request):
     """
+    !THIS VIEW WILL CHANGE!
+    
     This view takes selected checkboxes corresponding to survey questions, and copys them
     into the Final Survey
     
@@ -576,6 +640,8 @@ class FinalView(LoginRequiredMixin,
                 ContribRequiredMixin,
                 generic.ListView):
     """
+    !THIS VIEW WILL CHANGE!
+    
     View all questions in the Final Survey
     
     TODO: right now this assumes there is only one final (the final survey)
@@ -612,6 +678,9 @@ class FinalView(LoginRequiredMixin,
 #function view for deleting a question from the final survey
 @user_passes_test(staff_check)
 def delete_final_question(request):
+    """
+    !THIS VIEW WILL CHANGE!
+    """
     mc = []
     fr = []
     for item in request.POST.lists():
@@ -627,6 +696,12 @@ def delete_final_question(request):
         q = MultipleChoiceQuestion.objects.get(pk = key)
         q.delete()
     return HttpResponseRedirect(reverse('final_exam'))
+
+#################################
+#                               #
+#   End of finalization views   #
+#                               #
+#################################
 
 
 class NewResponseSetView(LoginRequiredMixin,

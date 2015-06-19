@@ -18,7 +18,7 @@
 <div class="container">
 
 {%if question_type == 'fr'%}
-  <form action = {% url 'freeresponse_revert' question.id %} method = post >
+  <form action = {% url 'exam:fr_revert' question.id %} method = post >
                {% csrf_token %}
     <div style="overflow: auto; width:75%; height: 400px;">
    <table class="table table-bordered">
@@ -55,7 +55,7 @@
 {%endif%}
 
 {%if question_type == 'mc'%}
-  <form action = {% url 'multiplechoice_revert' current_question.id %}  method = post >
+  <form action = {% url 'exam:mc_revert' current_question.id %}  method = post >
 {% csrf_token %}
  <div style="overflow: auto; width:75%; height: 500px;">
    <table class="table table-bordered">
@@ -106,10 +106,10 @@
 {%endif%}
 <input type="submit" value="Submit" class="btn btn-primary">
   {%if question_type == 'fr'%}
-    <a href = {% url 'freeresponse_edit' question.id %} class="btn btn-primary"> Cancel </a>     
+    <a href = {% url 'exam:fr_edit' question.id %} class="btn btn-primary"> Cancel </a>     
     {%endif%}
     {%if question_type == 'mc'%}
-      <a href = {% url 'multiplechoice_edit' current_question.id %} class="btn btn-primary"> Cancel </a>
+      <a href = {% url 'exam:mc_edit' current_question.id %} class="btn btn-primary"> Cancel </a>
       {%endif%}
       
 

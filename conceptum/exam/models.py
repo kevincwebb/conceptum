@@ -74,8 +74,8 @@ class ExamStage(enum.Enum):
     Attempting to change the value from e.g. CLOSED to DEV throws an
     InvalidStatusOperationError.
     
-    Once an exam leaves the development stage, it needs to be locked against further changes
-    because it may have begun to be distributed.
+    Once an exam leaves the development stage, it needs to be locked against
+    further changes because it may have begun to be distributed.
     """
     CLOSED = 0
     DEV = 1
@@ -105,7 +105,8 @@ class Exam(models.Model):
     The stage of the exam (another EnumField) refers to the exam's own stage.
     It is available for development, distribution, or neither (closed). Views,
     forms, etc. should check the stage before performing operations on exam
-    objects. All Questions will raise 
+    objects. Questions and Options will raise an IntegrityError if save() is
+    called when the exam is not in the development stage.
     """
     name = models.CharField(max_length=EXAM_NAME_LENGTH)
     description = models.CharField(max_length=EXAM_DESC_LENGTH)
@@ -164,21 +165,13 @@ class Question(models.Model):
     def __unicode__(self):
         return self.question
     
-    def clean(self):
-        """
-        Validate that forms are not trying to modify exams unless they are
-        in the development stage.
-        """
-        if not exam.can_develop():
-            raise ValidationError('This exam is no longer editable')
-        super(Question, self).save(*args, **kwargs)
-    
     def save(self, *args, **kwargs):
         """
         Questions should not be editable unless exam.can_develop()
         """
-        if not exam.can_develop():
-            raise IntegrityError('This exam is no longer editable')
+        if not self.exam.can_develop():
+            raise IntegrityError('This question is not editable because '
+                                 'exam.stage is not DEV')
         super(Question, self).save(*args, **kwargs)
 
 
@@ -209,21 +202,13 @@ class MultipleChoiceOption(models.Model):
     def __unicode__(self):
         return self.text
 
-    def clean(self):
-        """
-        Validate that forms are not trying to modify exams unless they are
-        in the development stage.
-        """
-        if not question.exam.can_develop():
-            raise ValidationError('This exam is no longer editable')
-        super(MultipleChoiceOption, self).save(*args, **kwargs)
-
     def save(self, *args, **kwargs):
         """
         Options should not be editable unless exam.can_develop()
         """
-        if not question.exam.can_develop():
-            raise IntegrityError('This exam is no longer editable')
+        if not self.question.exam.can_develop():
+            raise IntegrityError('This option is not editable because '
+                                 'question.exam.stage is not DEV')
         super(MultipleChoiceOption, self).save(*args, **kwargs)
     
 
