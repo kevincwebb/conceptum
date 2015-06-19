@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Staff Functions" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="horizontal-heading-home">
+    <h1>Welcome, {{ user.name }}</h1>
+    
+    
+  </div>
+
+
+<div class="container-home">
+ 
+  
+
+    <!--
+    <ul class = "priv-list">
+    {% for priv in priv_list %}
+        <li> {{ priv }}</li>
+    {% endfor %}
+    </ul>
+-->
+    
+    
+    <div class = "current-stage">
+    <h3>Current Stage: DNE</h3>
+        <p>
+        This is a brief description of the current stage and it's really informative. When the stage manager is developed we should maybe store a brief description of each stage somewhere to make this super easy to do without a really grody bunch of if/elif statements in the template. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla pulvinar, ex eget laoreet volutpat, lectus arcu lacinia diam, quis ornare metus lacus a tortor. Vestibulum a fermentum nunc, at condimentum ligula. Vivamus rhoncus et elit ac rhoncus. In ut erat tortor. Nam sed aliquet arcu.
+            
+       
+        
+        </p>
+    
+    {% if user.profile.is_contrib or user.is_staff %}    
+    <h4>Contribute</h4>
+        <ul>
+            <li>Some sort of statistics for current stage</li>
+            <li>Some sort of overview/index of current stage</li>
+            <li>Vote on the current stage</li>
+            <li>Do whatever people do </li>
+            <li>Distribute something</li>
+        
+        </ul>
+    
+        
+    {% endif %}
+        
+        
+
+             
+        
+        
+    
+    </div>
+    <br>
+      You have the following privileges: 
+    <ul>
+        <li>
+    {% for priv in priv_list %}
+        {{priv}}, 
+    {% endfor %}
+            </li>
+    </ul>
+
+</div> <!-- container -->
+    
+    
+    
+<nav>
+    <ul class = "side-nav">
+        
+    
+    {% if user.is_staff %}
+    <li class = "section-title">Admin</li>
+    <li> <a href = {% url 'pending_users' %}>-Approve Pending Users </a></li>
+    <li>-Control CI stage (Coming Soon)</li>
+    <li><a href = {% url 'distribute_cleanup' %}>-Cleanup Expired Exams </a></li>
+        
+    {% endif %}
+    {% if user.profile.is_contrib or user.is_staff %}
+        <li class = "section-title">Contributor</li>
+        <li>-My Interviews or Something</li>
+        <li>-My Exams or Something</li>
+        <li>-My Response Sets or Something</li>
+    {% endif %}
+    <li class = "section-title">User</li>
+        <li>-Look at Statistics or Something</li>
+        <li>-Whatever it is users do</li>
+    </ul>
+    
+  
+    </ul>  
+</nav>
+  
+
+
+{% endblock %}

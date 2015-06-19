@@ -32,9 +32,9 @@
 {% for set in responses %}     <!-- maybe do some collapsible statistics on each response set -->
     <li class = "table"><span class="over_tab"><a href = "{% url 'exam_responses' set.exam.id set.id%}">{{ set }}</a></span>
     
-    <label for="toplist_node{{set.id}}"><div class = "overview">Overview <div class = "plus"> + </div> </div></label>
+    <label for="toplist_node{{set.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> </div></label>
     <input type = "checkbox" id = "toplist_node{{set.id}}">
-
+<div class = "overview">
 <ul class = "overview_inner_list">
     <li> • Course: {{set.course}}</li>
     <li> • Instructor: {{set.instructor}}</li>
@@ -44,6 +44,8 @@
     <li> • Average Score: ##</li>
         
 </ul>
+    
+</div>
     
     </li>
 {% endfor %}
