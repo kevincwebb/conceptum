@@ -9,8 +9,9 @@ exam_patterns = patterns('',
     url(r'^dev/', include(patterns('',
         # index and detail views probably need to change to be dev specific
         url(r'^$', views.ExamIndexView.as_view(), name='index'),
-        url(r'^create$', views.ExamCreateView.as_view(), name='create'),
+        url(r'^create/$', views.ExamCreateView.as_view(), name='create'),
         url(r'^(?P<exam_id>\d+)/$', views.ExamDetailView.as_view(), name='detail'),
+        url(r'^(?P<exam_id>\d+)/select/$', views.SelectConceptView.as_view(), name='select_concept'),
         url(r'^(?P<exam_id>\d+)/(?P<concept_id>\d+)/(?P<question_type>\w+)/$',
             views.QuestionCreateView.as_view(), name='question_create'),
         
@@ -59,6 +60,7 @@ urlpatterns = patterns('',
         template_name='exam/exam_unavailable.html'), name='exam_unavailable'),
 )
 
+####################################################################################
 
 # kept in case things go really bad
 oldpatterns = patterns('',

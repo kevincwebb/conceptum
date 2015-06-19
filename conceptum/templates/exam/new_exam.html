@@ -20,7 +20,7 @@
     <h3>Provide Survey/Exam details</h3>
   </div>
   
-  <form class="form-horizontal" role="form"  action="{% url 'exam_create' %}" method="post">{% csrf_token %}
+  <form class="form-horizontal" role="form"  action="{% url 'exam:create' %}" method="post">{% csrf_token %}
   
   {{ form.non_field_errors }}
 
@@ -36,7 +36,7 @@
   
       <div class="submit">
         <button class="btn btn-primary" type="submit">Create</button>
-        <a href = {% url 'exam_index' %} class='btn btn-primary'> Cancel </a>
+        <a href = {% url 'exam:index' %} class='btn btn-primary'> Cancel </a>
       </div>
   </form>
   

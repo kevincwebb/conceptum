@@ -23,7 +23,7 @@
   There are no available exams. An administrator will need to create or unlock one.</br>
   {% if user.is_staff %}
     You are an administrator, so you can do that
-    <a href="{% url 'exam_create' %}">HERE</a>.
+    <a href="{% url 'exam:create' %}">HERE</a>.
   {% endif %}
 
 

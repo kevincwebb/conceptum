@@ -1,6 +1,9 @@
 from django.core.exceptions import PermissionDenied
+from django.core.urlresolvers import resolve
 
-from .models import Exam
+from .models import Exam, ExamKind
+
+
 
 
 class DevelopmentMixin(object):
@@ -40,9 +43,21 @@ class DistributeMixin(object):
     
 class ExamKindMixin(object):
     """
-    Requires that an exam be a survey
+    Many views need to distinguish between kinds of exams. For example, a view that lists
+    exam objects should list only surveys or only CI exams, depending on what stage we
+    are at.
+    
+    This mixin saves the appropriate ExamKind to self.kind
     """
-    def render_to_response(self, context, **response_kwargs):
-        response_kwargs['current_app'] = resolve(self.request.path).namespace
-        return super(SurveyMixin, self).render_to_response(context, **response_kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        r = resolve(request.path)
+        if r.namespace == 'survey':
+            self.kind = ExamKind.SURVEY
+        if r.namespace == 'CI_exam':
+            self.kind = ExamKind.CI
+        return super(ExamKindMixin, self).dispatch(request, *args, **kwargs)
+
+    #def render_to_response(self, context, **response_kwargs):
+    #    response_kwargs['current_app'] = resolve(self.request.path).namespace
+    #    return super(ExamKindMixin, self).render_to_response(context, **response_kwargs)
 

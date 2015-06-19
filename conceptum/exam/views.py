@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template import RequestContext, loader
 from django.views import generic
-from django.core.urlresolvers import reverse, reverse_lazy, resolve
+from django.core.urlresolvers import reverse, reverse_lazy
 #from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
@@ -22,6 +22,7 @@ from .models import Exam, ResponseSet, ExamResponse, QuestionResponse, FreeRespo
 from .forms import SelectConceptForm, AddFreeResponseForm, AddMultipleChoiceForm, \
                    NewResponseSetForm, DistributeForm, ExamResponseForm, BlankForm, \
                    MultipleChoiceEditForm
+from .mixins import ExamKindMixin
 
 ####DELETE AFTER SURVEY MERGE####
 #def index(request):
@@ -68,7 +69,21 @@ def discuss(request, exam_id):
     return HttpResponse(template.render(context))
 
 
+#def get_exam_kind_from_namespace(request):
+#    """
+#    Many views need to distinguish between kinds of exams. For example, a view that lists
+#    exam objects should list only surveys or only CI exams, depending on what stage we
+#    are at.
+#    """
+#    r = resolve(request.path)
+#    if r.namespace == 'survey':
+#        return ExamKind.SURVEY
+#    if r.namespace == 'CI_exam':
+#        return ExamKind.CI
+
+
 class ExamIndexView(LoginRequiredMixin,
+                    ExamKindMixin,
                     generic.ListView):
     """
     Landing page for exams, which includes surveys and CI exams. From this page, users can
@@ -85,27 +100,20 @@ class ExamIndexView(LoginRequiredMixin,
     model = Exam
     
     def get_template_names(self, *args, **kwargs):
-        if (not Exam.objects.all()):
+        if (not Exam.objects.filter(kind=self.kind)):
             return 'exam/index_empty.html'
         else:
             return 'exam/index.html'
-    
-    def dispatch(self, request, *args, **kwargs):
-        r = resolve(request.path)
-        if r.namespace == 'survey':
-            self.k = ExamKind.SURVEY
-        if r.namespace == 'CI_exam':
-            self.k = ExamKind.CI
-        return super(ExamIndexView, self).dispatch(request, *args, **kwargs)
        
     def get_context_data(self,**kwargs):
         context = super(ExamIndexView, self).get_context_data(**kwargs)
-        context['exams'] = Exam.objects.filter(kind=self.k)
+        context['exams'] = Exam.objects.filter(kind=self.kind)
         return context
     
 
 class ExamCreateView(LoginRequiredMixin,
                      StaffRequiredMixin,
+                     ExamKindMixin,
                      generic.CreateView):
     """
     CreateView to create a survey/exam.
@@ -117,10 +125,17 @@ class ExamCreateView(LoginRequiredMixin,
         - the same process would go for exams, once that stage is activated
     """
     model = Exam
+    fields = ['name',
+              'description',
+              'randomize']
     template_name = 'exam/new_exam.html'
 
+    def form_valid(self, form):
+        form.instance.kind = self.kind
+        return super(ExamCreateView,self).form_valid(form)
+
     def get_success_url(self):
-        return reverse('exam_index')
+        return reverse('exam:index')
 
 
 class ExamDetailView(LoginRequiredMixin,
@@ -185,9 +200,8 @@ class SelectConceptView(LoginRequiredMixin,
  
     def form_valid(self, form):
         concept = form.cleaned_data.get('concept')
-        return HttpResponseRedirect(reverse('question_create',kwargs ={'exam_id':self.exam.id,
-                                                                       'concept_id':concept.id,
-                                                                       'question_type':'fr' }))
+        return HttpResponseRedirect(reverse('exam:question_create',
+            kwargs ={'exam_id':self.exam.id,'concept_id':concept.id,'question_type':'fr' }))
 
 
 class QuestionCreateView(LoginRequiredMixin,

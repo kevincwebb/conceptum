@@ -39,15 +39,15 @@
   <button class="btn btn-primary btn-primary" type="submit">Submit</button>
   
   {% if question_type == 'free_response' %}
-  <a href = {% url 'question_create' exam_id=exam.id concept_id=concept.id question_type='mc' %}
+  <a href = {% url 'exam:question_create' exam_id=exam.id concept_id=concept.id question_type='mc' %}
      class="btn btn-primary"> Change to Multiple Choice Question </a>
   {% elif question_type == 'multiple_choice' %}
-  <a href = {% url 'question_create' exam_id=exam.id concept_id=concept.id question_type='fr' %}
+  <a href = {% url 'exam:question_create' exam_id=exam.id concept_id=concept.id question_type='fr' %}
      class="btn btn-primary"> Change to Free Response Question </a>
 {%endif%}
 
-<a href = {% url 'select_concept' exam.id %} class="btn btn-primary"> Choose A Different Concept </a>
-<a href = {% url 'exam_detail' exam.id %} class="btn btn-primary"> Cancel </a>
+<a href = {% url 'exam:select_concept' exam.id %} class="btn btn-primary"> Choose A Different Concept </a>
+<a href = {% url 'exam:detail' exam.id %} class="btn btn-primary"> Cancel </a>
   <br>
   </form>
   <br>
