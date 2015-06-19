@@ -32,20 +32,28 @@ class IndexView(LoginRequiredMixin,
     context_object_name = 'interview_list'
     
     
-    # def get_context_data(self, **kwargs):
-    #     """
-    #     The hyperlink to the edit page should only be visible if this user is allowed
-    #     to edit, i.e., this user is the original uploader or has staff privileges.
-    #     The template should use the boolean user_can_edit to do this check
-    #     """
-    #     interview_list = []
-    #     for intv in Interview.objects.all():
-    #         excerpts = intv.excerpt_set.all()
-    #         interview = [intv]
-    #         interview.extend(excerpts)
-    #         interview_list.append(interview)
-    #     context['interview_list'] = interview_list
-    #     return context
+    def get_context_data(self, **kwargs):
+        """
+        The hyperlink to the edit page should only be visible if this user is allowed
+        to edit, i.e., this user is the original uploader or has staff privileges.
+        The template should use the boolean user_can_edit to do this check
+        """
+        
+        context = super(IndexView, self).get_context_data(**kwargs)
+        interview_list = []
+        for intv in Interview.objects.all():
+            excerpts_obj = intv.excerpt_set.all()
+            excerpts = []
+            for exc in excerpts_obj:
+                excerpts.append(exc.content_object.name)
+                
+            excerpts = ", ".join(excerpts)
+            interview = [intv]
+            interview.append(excerpts)
+            interview.append(len(excerpts_obj))
+            interview_list.append(interview)
+        context['interview_list'] = interview_list
+        return context
 
     def get_queryset(self):
         return Interview.objects.all()

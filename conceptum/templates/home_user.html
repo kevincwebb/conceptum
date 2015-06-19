@@ -44,7 +44,7 @@
         </p>
     
     {% if user.profile.is_contrib or user.is_staff %}    
-    <h4>Contribute</h4>
+    <h4>Actions</h4>
         <ul>
             <li>Some sort of statistics for current stage</li>
             <li>Some sort of overview/index of current stage</li>
@@ -68,9 +68,7 @@
       You have the following privileges: 
     <ul>
         <li>
-    {% for priv in priv_list %}
-        {{priv}}, 
-    {% endfor %}
+            {{priv_list}}
             </li>
     </ul>
 

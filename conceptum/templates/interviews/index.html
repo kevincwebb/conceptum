@@ -22,7 +22,7 @@
   
 {% if interview_list %}
 <ul class = "collapsible_overview"> 
-{% for interview in interview_list %}
+{% for interview, concepts, numquestions in interview_list %}
        
     <li class = "table"><span class="over_tab"><a href="{% url 'interview_detail' interview.id %}">{{ interview }}</a></span>
     
@@ -30,11 +30,8 @@
     <input type = "checkbox" id = "toplist_node{{exam.id}}">
 <div class = "overview">
 <ul class = "overview_inner_list">
-    <li> • Questions: ##</li>
-    <li> • Concepts: 
-        {% for exc in interview.excerpts %}
-            {{exc}}, 
-        {% endfor %}
+    <li> • Questions: {{numquestions}}</li>
+    <li> • Concepts: {{concepts}}
     </li>
         
 </ul>

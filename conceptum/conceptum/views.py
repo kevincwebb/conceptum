@@ -8,13 +8,16 @@ from braces.views import LoginRequiredMixin, StaffuserRequiredMixin
 def home(request):
     if request.user.is_authenticated():
         user = request.user
-        priv_list = ["user"]
+        priv_list = []
         if (user.is_superuser):
-            priv_list = ["superuser", "admin", "contributor", "user"]
-        elif(user.is_staff):
-            priv_list = ["admin", "contributor", "user"]
+            priv_list.append("superuser")
+        if(user.is_staff):
+            priv_list.append("admin")
+            priv_list.append("contributor")
         elif(user.profile.is_contrib):
-            priv_list = ["contributor", "user"]
+            priv_list.append("contributor")
+        priv_list.append("user")
+        priv_list = ", ".join(priv_list)
             
         context = {'CI_COURSE': settings.CI_COURSE,
                    'priv_list':priv_list}

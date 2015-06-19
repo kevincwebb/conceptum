@@ -22,8 +22,8 @@
        
     <li class = "table"><span class="over_tab"><a href="{% url 'exam_description' exam.id %}">{{ exam.name }}</a></span>
     
-    <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> </div></label>
-    <input type = "checkbox" id = "toplist_node{{exam.id}}">
+    <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> <div class = "minus"> - </div> </div></label>
+    <input type = "checkbox" id = "toplist_node{{exam.id}}" onclick = "PlusMinus(this)">
 
 <div class = "overview">
     {{exam.description}}
