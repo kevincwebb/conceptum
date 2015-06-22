@@ -24,7 +24,7 @@
       <p>Are you sure you want to delete "{{ object }}"?</p>
       <div class="submit">
         <button class="btn btn-warning" type="submit">Confirm Delete</button>
-        <a href = {% url 'survey_index'  %} class='btn btn-primary'> Cancel </a>
+        <a href = {% url 'exam_detail' object.exam.id %} class='btn btn-primary'> Cancel </a>
       </div>
   </form>
 

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Exams Home Empty" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+ 
+  <div class="horizontal-heading">
+    <h3>You're at the {{ current_app }} development home</h3>
+  </div>
+
+  There are no {{ current_app }}s available for development.
+  An administrator will need to create or unlock one.</br>
+  {% if user.is_staff %}
+    You are an administrator, so you can do that
+    <a href="{% url 'exam:create' %}">HERE</a>.
+  {% endif %}
+
+
+</div> <!-- container -->
+
+{% endblock %}

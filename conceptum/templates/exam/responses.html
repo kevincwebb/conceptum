@@ -74,7 +74,7 @@
   {% endif %}
   </ul>
     <br>
-    <a href="{% url 'exam_response_sets' exam_id%}">Other Response Sets for Exam {{exam_id}}</a><br>
+    <a href="{% url 'exam:response_sets' exam_id%}">Other Response Sets for Exam {{exam_id}}</a><br>
     </li>
     
 
@@ -89,9 +89,8 @@
 <!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a>-->
 
 
-<a href="{% url 'exam_discuss' exam_id %}">Discuss</a><br>
-<a href="{% url 'distribute_new' exam_id %}">Distribute</a>
-
+<a href="{% url 'exam:discuss' exam_id %}">Discuss</a><br>
+<a href="{% url 'exam:distribute_new' exam_id %}">Distribute</a>
     
 
 </div> <!-- container -->

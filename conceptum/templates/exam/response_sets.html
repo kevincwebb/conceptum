@@ -30,7 +30,7 @@
 <!-- need the response set to be passed in -->
 <ul class = "collapsible_overview">    
 {% for set in responses %}     <!-- maybe do some collapsible statistics on each response set -->
-    <li class = "table"><span class="over_tab"><a href = "{% url 'exam_responses' set.exam.id set.id%}">{{ set }}</a></span>
+    <li class = "table"><span class="over_tab"><a href = "{% url 'exam:responses' set.exam.id set.id%}">{{ set }}</a></span>
     
     <label for="toplist_node{{set.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> </div></label>
     <input type = "checkbox" id = "toplist_node{{set.id}}">
@@ -55,17 +55,16 @@
     
 
 
- <a href = "{% url 'exam_description' exam_id %}">Back to Exam {{exam_id}}</a>  <br> 
-<a href="{% url 'exam_index' %}">Back to Exam Index</a><br>
+ <a href = "{% url 'exam:detail' exam_id %}">Back to Exam {{exam_id}}</a>  <br> 
+<a href="{% url 'exam:index' %}">Back to Exam Index</a><br>
 
     
 <h3> Discuss this Exam </h3>
 <!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a> -->
 
-<a href="{% url 'exam_discuss' exam_id %}">Discuss</a><br>
-<a href="{% url 'distribute_new' exam_id %}">Distribute</a>
-    
-      
+<a href="{% url 'exam:discuss' exam_id %}">Discuss</a><br>
+<a href="{% url 'exam:distribute_new' exam_id %}">Distribute</a>
+
 </div> <!-- container -->
 
 {% endblock %}

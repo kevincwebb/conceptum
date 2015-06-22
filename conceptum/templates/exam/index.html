@@ -4,6 +4,7 @@
 {% load i18n %}
 {% load static %}
 
+
 {% block head_title %}{% trans "Exam Index" %}{% endblock %}
 
 {% block extra_headers %}
@@ -18,9 +19,9 @@
     
 <h3> Exam Index </h3>
 <ul class = "collapsible_overview"> 
-{% for exam in all_exams %}
+{% for exam in object_list %}
        
-    <li class = "table"><span class="over_tab"><a href="{% url 'exam_description' exam.id %}">{{ exam.name }}</a></span>
+    <li class = "table"><span class="over_tab"><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a></span>
     
     <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> <div class = "minus"> - </div> </div></label>
     <input type = "checkbox" id = "toplist_node{{exam.id}}" onclick = "PlusMinus(this)">
@@ -46,3 +47,21 @@
 </div> <!-- container -->
 
 {% endblock %}
+
+ 
+  <div class="horizontal-heading">
+    <h3>You're at the {{ current_app }} development home</h3>
+  </div>
+  Existing {{ current_app }}s in development:
+  {% for exam in exams %}
+    <li><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a></li>
+  {% endfor %}
+  </br>
+  {% if user.is_staff %}
+    <a href="{% url 'exam:create' %}">Create New Exam</a>
+  {% endif %}
+
+</div> <!-- container -->
+
+
+

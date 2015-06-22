@@ -1,17 +1,19 @@
 from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import BaseUserManager
-
-
-class ProfileManager(BaseUserManager):
-    pass
 
 
 class ContributorProfile(models.Model):
     """
-    A user profile for all users.
-    We may want to rename this to UserProfile, as all users will use this profile model,
-    not just Contributors
+    A user profile for all users. Holds institution, homepage, and text info about
+    a user. The name ContributorProfile may be misleading: all users have
+    ContributorProfiles, whether they have contributor permissions or not.
+    
+    The is_contrib field determines whether the user is allowed to access the site
+    as a "contributor" (will be involved in the development process) or as a base
+    user (can deploy the finished CI).  This field is set when a staff user approves
+    an account.
+    
+    The interest_in_ booleans are only used during account registration and approval. 
     """
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile')
     is_contrib = models.BooleanField(default=False)
@@ -20,16 +22,16 @@ class ContributorProfile(models.Model):
     interest_in_devel = models.BooleanField("interested in CI development", default=False)
     interest_in_deploy = models.BooleanField("interested in CI deployment", default=False)
     text_info = models.TextField(default="", blank=True)
-    
-    objects = ProfileManager()
 
     def __str__(self):
         return self.user.name
 
     def can_contrib(self):
         """
-        All staff users should be allowed to contribute. However, it's possible
-        to set user.is_staff=True and user.profile.is_contrib=false. Use this
-        method to check is_contrib and all staff users will pass.
+        Use this method to check a user's contributor privileges.
+        
+        All staff users should be allowed to contribute (have is_contrib=True). However,
+        it is possible to set user.is_staff=True and user.profile.is_contrib=false.
+        This method ensures that all staff users will pass the contrib test. 
         """
         return self.is_contrib or self.user.is_staff

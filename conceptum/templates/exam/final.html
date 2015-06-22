@@ -17,18 +17,20 @@
 <div class="container">
     
 <div class="form-horizontal-heading">
-  <h2><b>Finalize Survey Questions</b></h2>
+  <h2><b>Final Survey</b></h2>
 </div>
-<h4>Select questions for the final version of the survey. </h4>
+
 
 <div>
-
-
+  <a href = {% url 'exam_index' %} class="btn btn-primary"> Back to Survey Development </a>
+  {%if user.is_staff%}
+{%endif%}
+  <br>
+    <br>
 </div>
 
-
 <div align="left">
-<form action = {% url 'finalize_survey' %}  method = "post" >{% csrf_token %}
+<form action = {% url 'delete_final_question' %}  method = "post" >{% csrf_token %}
 <TABLE WIDTH="750">
   <thead>
     <tr>
@@ -48,7 +50,9 @@
     <tr bgcolor="#B2B2B2">
       <th>Concept</th>
       <th>Question</th>
-      <th>Select?</th>
+        {%if user.is_staff%}
+      <th>Delete?</th>
+      {%endif%}
     </tr>
   </thead>
     <tbody>
@@ -61,11 +65,16 @@
               {%with forloop.counter as index%}
                 {% if index == 1 %}
                  <td>{{q}}</td>
+                   {%if user.is_staff%}
                  <td><input type="checkbox" name="fr_selected" value="{{q.id}}"> </td>
+                 {%endif%}
                   {%else%}
                     <tr> <td bgcolor = "#CECECE"></td> 
                     <td> {{q}} </td>
-                    <td><input type="checkbox" name="fr_selected" value="{{q.id}}"> </td></tr>
+                      {%if user.is_staff%}
+                    <td><input type="checkbox" name="fr_selected" value="{{q.id}}"> </td>
+                  {%endif%}
+                    </tr>
                 {%endif%}
              {%endwith%}
              
@@ -73,7 +82,9 @@
           
           {% else %}
             <td>---</td>
+              {%if user.is_staff%}
             <td>---</td>
+            {%endif%}
         {%endif%}
        </tr>
        {%endif%}
@@ -101,7 +112,9 @@
       <th >Concept</th>
       <th>Question</th>
       <th>Options</th>
-      <th>Select?</th>
+        {%if user.is_staff%}
+      <th>Delete?</th>
+      {%endif%}
     </tr>
   </thead>
     <tbody>
@@ -120,8 +133,9 @@
           {%endif%}
           {%endfor%}
           </td>
+                    {%if user.is_staff%}
            <td><input type="checkbox" name="mc_selected" value="{{q.id}}"> </td>
-
+            {%endif%}
                   {%else%}
             <tr> <td bgcolor = "#CECECE"></td> 
               <td>{{q}}</td>
@@ -132,14 +146,18 @@
           {%endif%}
           {%endfor%}
           </td>
+            {%if user.is_staff%}
           <td><input type="checkbox" name="mc_selected" value="{{q.id}}"> </td>
+          {%endif%}
            {%endif%}
             {%endwith%}
           {%endfor%}
           {% else %}
             <td>---</td>
             <td>---</td>
+              {%if user.is_staff%}
             <td>---</td>
+            {%endif%}
             {%endif%}
        </tr>
        {%endif%}
@@ -151,14 +169,16 @@
     <p>No multiple choice questions have been created yet.</p>
 {% endif %}
 
+
 </TD>
 </TR>
 </TABLE>
 </TD>
 </TR>
 </TABLE>
-<input type="submit" value="Finalize Survey" class="btn btn-danger"></input>
-  <a href = {% url 'survey_index' %} class="btn btn-primary"> Cancel </a>
+{%if user.is_staff%}
+<input type="submit" value="Delete Questions" class="btn btn-danger"></input>
+{%endif%}
 </form>
 </div>
 
@@ -167,3 +187,12 @@
 
 
 {% endblock %}
+
+</form>
+</div>
+
+
+
+
+
+
