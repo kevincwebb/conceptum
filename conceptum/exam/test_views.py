@@ -4,7 +4,8 @@ from django.db import models
 from django.test import SimpleTestCase
 
 from profiles.tests import set_up_user
-from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, MultipleChoiceOption
+from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, MultipleChoiceOption,\
+                    ExamKind
 
 
 class DummyConcept(models.Model):
@@ -29,7 +30,9 @@ def get_or_create_exam():
     """
     gets or creates an exam and some questions
     """
-    exam, created = Exam.objects.get_or_create(name='Test Exam', description='an exam for testing')
+    exam, created = Exam.objects.get_or_create(name='Test Exam',
+                                               kind=ExamKind.CI,
+                                               description='an exam for testing')
     if created:
         concept_type = ContentType.objects.get_for_model(DummyConcept)
         concept = DummyConcept.objects.get(name = "Concept A")
@@ -54,46 +57,46 @@ class ViewsTest(SimpleTestCase):
     
     def test_index_view(self):
         # User not logged in, redirected
-        response = self.client.get(reverse('exam_index'))
-        self.assertRedirects(response, '/accounts/login/?next=/exams/')
+        response = self.client.get(reverse('CI_exam:index'))
+        self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dev/')
         
         # Activated user logs in, no exams in database
         for exam in Exam.objects.all():
             exam.delete()
         self.client.login(email=self.user.email, password='password')
-        response = self.client.get(reverse('exam_index'))
+        response = self.client.get(reverse('exam:index'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response,"no available exams")
+        self.assertContains(response,"no CIs available")
         
         # Test Exam should now be listed
         exam = get_or_create_exam()
-        response = self.client.get(reverse('exam_index'))
+        response = self.client.get(reverse('exam:index'))
         self.assertContains(response,exam.name)
         
     def test_detail_view(self):
         exam = get_or_create_exam()
         
         # User not logged in, redirected
-        response = self.client.get(reverse('exam_detail', args=[exam.id]))
-        self.assertRedirects(response, '/accounts/login/?next=/exams/%s/'%exam.id)
+        response = self.client.get(reverse('CI_exam:detail', args=[exam.id]))
+        self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dev/%s/'%exam.id)
         
         # User logged in, not contrib
         self.client.login(email=self.user.email, password='password')
-        response = self.client.get(reverse('exam_detail', args=[exam.id]))
+        response = self.client.get(reverse('exam:detail', args=[exam.id]))
         self.assertEqual(response.status_code, 403)
         
         # User is contrib
         self.user.profile.is_contrib = True
         self.user.profile.save()
-        response = self.client.get(reverse('exam_detail', args=[exam.id]))
+        response = self.client.get(reverse('exam:detail', args=[exam.id]))
         self.assertEqual(response.status_code, 200)
         
         # exam id does not exist
-        response = self.client.get(reverse('exam_detail', args=[99]))
+        response = self.client.get(reverse('exam:detail', args=[99]))
         self.assertEqual(response.status_code, 404)
         
         # make sure questions are displayed
-        response = self.client.get(reverse('exam_detail', args=[exam.id]))
+        response = self.client.get(reverse('exam:detail', args=[exam.id]))
         self.assertEqual(response.status_code, 200)
         for concept in (DummyConcept.objects.all()):
             self.assertContains(response, concept)
@@ -109,58 +112,58 @@ class ViewsTest(SimpleTestCase):
 
     def test_create_view(self):
         # User not logged in, redirected
-        response = self.client.get(reverse('exam_create'))
-        self.assertRedirects(response, '/accounts/login/?next=/exams/new/')
+        response = self.client.get(reverse('CI_exam:create'))
+        self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dev/create/')
         
         # User logged in, and contrib
         self.user.profile.is_contrib = True
         self.user.profile.save()
         self.client.login(email=self.user.email, password='password')
-        response = self.client.get(reverse('exam_create'))
+        response = self.client.get(reverse('exam:create'))
         self.assertEqual(response.status_code, 403)
         
         # User is staff
         self.user.is_staff = True
         self.user.save()
-        response = self.client.get(reverse('exam_create'))
+        response = self.client.get(reverse('exam:create'))
         self.assertEqual(response.status_code, 200)
         
         # Try to create a test
-        response = self.client.post(reverse('exam_create'),
+        response = self.client.post(reverse('exam:create'),
                                     {'name':'Test Create Exam','description':'xxxxxxxx'})
-        self.assertRedirects(response, reverse('exam_index'))
+        self.assertRedirects(response, reverse('exam:index'))
         self.assertTrue(Exam.objects.filter(name='Test Create Exam'))
 
     def test_select_view(self):
         exam = get_or_create_exam()
         
         # User not logged in, redirected
-        response = self.client.get(reverse('select_concept', args=[exam.id]))
-        self.assertRedirects(response, '/accounts/login/?next=/exams/%s/select/'%exam.id)
+        response = self.client.get(reverse('CI_exam:select_concept', args=[exam.id]))
+        self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dev/%s/select/'%exam.id)
         
         # User logged in, not contrib
         self.client.login(email=self.user.email, password='password')
-        response = self.client.get(reverse('select_concept', args=[exam.id]))
+        response = self.client.get(reverse('exam:select_concept', args=[exam.id]))
         self.assertEqual(response.status_code, 403)
         
         # User is contrib
         self.user.profile.is_contrib = True
         self.user.profile.save()
-        response = self.client.get(reverse('select_concept', args=[exam.id]))
+        response = self.client.get(reverse('exam:select_concept', args=[exam.id]))
         self.assertEqual(response.status_code, 200)
         
         # exam id does not exist
-        response = self.client.get(reverse('select_concept', args=[99]))
+        response = self.client.get(reverse('exam:select_concept', args=[99]))
         self.assertEqual(response.status_code, 404)
     
         # make sure concept choices are present
-        response = self.client.get(reverse('select_concept', args=[exam.id]))
+        response = self.client.get(reverse('exam:select_concept', args=[exam.id]))
         self.assertEqual(response.status_code, 200)
         for concept in (DummyConcept.objects.all()):
             self.assertContains(response, concept)
         
         # Select no concept, should get an error
-        response = self.client.post(reverse('select_concept', args=[exam.id]),
+        response = self.client.post(reverse('exam:select_concept', args=[exam.id]),
                                     {'concept':'',})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "This field is required.")
@@ -168,9 +171,9 @@ class ViewsTest(SimpleTestCase):
         # Select a concept. No object is created, but we should redirect to a
         # page to create a question for this concept
         concept = DummyConcept.objects.get(name = "Concept A")
-        response = self.client.post(reverse('select_concept', args=[exam.id]),
+        response = self.client.post(reverse('exam:select_concept', args=[exam.id]),
                                     {'concept':concept,})
-        self.assertRedirects(response, reverse('question_create',
+        self.assertRedirects(response, reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}))
         
     def test_question_create_view(self):
@@ -178,44 +181,44 @@ class ViewsTest(SimpleTestCase):
         concept = DummyConcept.objects.get(name = "Concept A")
         
         # User not logged in, redirected
-        response = self.client.get(reverse('question_create',
+        response = self.client.get(reverse('CI_exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}))
         self.assertRedirects(response,
-                             '/accounts/login/?next=/exams/%s/%s/fr/'%(exam.id,concept.id))
+                             '/accounts/login/?next=/exams/CI/dev/%s/%s/fr/'%(exam.id,concept.id))
         
         # User logged in, not contrib
         self.client.login(email=self.user.email, password='password')
-        response = self.client.get(reverse('question_create',
+        response = self.client.get(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}))
         self.assertEqual(response.status_code, 403)
         
         # User is contrib
         self.user.profile.is_contrib = True
         self.user.profile.save()
-        response = self.client.get(reverse('question_create',
+        response = self.client.get(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}))
         self.assertEqual(response.status_code, 200)
-        response = self.client.get(reverse('question_create',
+        response = self.client.get(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'mc'}))
         self.assertEqual(response.status_code, 200)
         
         # exam_id does not exist
-        response = self.client.get(reverse('question_create',
+        response = self.client.get(reverse('exam:question_create',
             kwargs ={'exam_id':99,'concept_id':concept.id,'question_type':'fr'}))
         self.assertEqual(response.status_code, 404)
         
         # concept_id does not exist
-        response = self.client.get(reverse('question_create',
+        response = self.client.get(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':99,'question_type':'fr'}))
         self.assertEqual(response.status_code, 404)
         
         # question type not 'fr' or 'mc'
-        response = self.client.get(reverse('question_create',
+        response = self.client.get(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'xx'}))
         self.assertEqual(response.status_code, 404)
         
         # Check that submit redirects us
-        response = self.client.get(reverse('exam_detail',
+        response = self.client.get(reverse('exam:detail',
             kwargs ={'exam_id':exam.id,}))
         self.assertEqual(response.status_code, 200)
         

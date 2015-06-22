@@ -63,14 +63,14 @@ class FormsTest(SimpleTestCase):
         question_text = 'Is this a new free response question?'
         
         # Make sure new question is saved
-        response = self.client.post(reverse('question_create',
+        response = self.client.post(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}),
             {'question':question_text})
         question, created = FreeResponseQuestion.objects.get_or_create(question=question_text)
         self.assertFalse(created)
         
         # Blank Fields
-        response = self.client.post(reverse('question_create',
+        response = self.client.post(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}),
             {})
         error = _("This field is required.")
@@ -80,7 +80,7 @@ class FormsTest(SimpleTestCase):
         long_text = ''
         for x in range(QUESTION_LENGTH):
             long_text+=str(x)
-        response = self.client.post(reverse('question_create',
+        response = self.client.post(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}),
             {'question':long_text})
         error = _("Ensure this value has at most %d characters (it has %d)." %
@@ -94,7 +94,7 @@ class FormsTest(SimpleTestCase):
         question_text = 'Is this a new multiplce choice question?'
         
         # Make sure new question is saved
-        response = self.client.post(reverse('question_create',
+        response = self.client.post(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'mc'}),
             {'question':question_text, 'choice_1':'yes', 'choice_2':'no'})
         q, created = MultipleChoiceQuestion.objects.get_or_create(question=question_text)
@@ -105,7 +105,7 @@ class FormsTest(SimpleTestCase):
         self.assertFalse(created)
         
         # Blank Fields
-        response = self.client.post(reverse('question_create',
+        response = self.client.post(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'mc'}),
             {})
         error = _("This field is required.")
@@ -117,7 +117,7 @@ class FormsTest(SimpleTestCase):
         long_text = ''
         for x in range(QUESTION_LENGTH):
             long_text+=str(x)
-        response = self.client.post(reverse('question_create',
+        response = self.client.post(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'mc'}),
             {'question':long_text})
         error = _("Ensure this value has at most %d characters (it has %d)." %
@@ -125,14 +125,14 @@ class FormsTest(SimpleTestCase):
         self.assertFormError(response, 'form', 'question', error, "" )
         
         # Duplicate Question
-        response = self.client.post(reverse('question_create',
+        response = self.client.post(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'mc'}),
             {'question':question_text, 'choice_1':'yes', 'choice_2':'yes'})
         error = _("You have two identical choices.")
         self.assertFormError(response, 'form', None, error, "")
         
         # Non-consecutive choices filled out
-        response = self.client.post(reverse('question_create',
+        response = self.client.post(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'mc'}),
             {'question':question_text, 'choice_2':'A', 'choice_5':'B'})
         c1, created = MultipleChoiceOption.objects.get_or_create(question=q,text='yes')

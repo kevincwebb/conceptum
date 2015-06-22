@@ -20,7 +20,7 @@ from .models import Exam, ResponseSet, ExamResponse, QuestionResponse, FreeRespo
                     MultipleChoiceResponse, ExamKind, ExamStage
 from .forms import SelectConceptForm, AddFreeResponseForm, AddMultipleChoiceForm, \
                    NewResponseSetForm, DistributeForm, ExamResponseForm, BlankForm, \
-                   MultipleChoiceEditForm
+                   MultipleChoiceEditForm, FreeResponseVersionForm
 from .mixins import DevelopmentMixin, CurrentAppMixin
 
 ####DELETE AFTER SURVEY MERGE####
@@ -276,57 +276,13 @@ class QuestionEditView(LoginRequiredMixin,
 
 class FreeResponseEditView(QuestionEditView):
     model = FreeResponseQuestion
-    fiels = ['question']
+    fields = ['question','image']
     template_name = 'exam/frquestion_update_form.html'
     
 class MultipleChoiceEditView(QuestionEditView):
     model = MultipleChoiceQuestion
     form_class = MultipleChoiceEditForm
     template_name = 'exam/mcquestion_update_form.html'
-    
-    def get_initial(self):
-        initial = {}
-        for choice in self.object.multiplechoiceoption_set.all():
-            initial['choice_%d' % choice.pk] = choice.text
-        return initial
-
-#class FreeResponseEditView(LoginRequiredMixin,
-#                           ContribRequiredMixin,
-#                           CurrentAppMixin,
-#                           generic.UpdateView):
-#    """
-#    UpdateView for a user to edit an existing Question
-#    """
-#    model = FreeResponseQuestion
-#    pk_url_kwarg = 'question_id'
-#    fields =['question']
-#    
-#    template_name = 'exam/frquestion_update_form.html'
-#    
-#    def get_success_url(self):
-#        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
-#
-#
-#class MultipleChoiceEditView(LoginRequiredMixin,
-#                             ContribRequiredMixin,
-#                             CurrentAppMixin,
-#                             generic.UpdateView):
-#    """
-#    UpdateView for a user to edit an existing Question
-#    """
-#    model = MultipleChoiceQuestion
-#    pk_url_kwarg = 'question_id'
-#    template_name = 'exam/mcquestion_update_form.html'
-#    form_class = MultipleChoiceEditForm
-#    
-#    def get_initial(self):
-#        initial = {}
-#        for choice in self.object.multiplechoiceoption_set.all():
-#            initial['choice_%d' % choice.pk] = choice.text
-#        return initial
-#    
-#    def get_success_url(self):
-#        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
 
 
 class FreeResponseVersionView(LoginRequiredMixin,
@@ -338,33 +294,75 @@ class FreeResponseVersionView(LoginRequiredMixin,
     """
     model = FreeResponseQuestion
     pk_url_kwarg = 'question_id'
-    template_name = 'exam/versions.html'
-    
-    def get_question(self, **kwargs):
-        return self.object
-
-    def get_versions(self,**kwargs):
-        version_list = reversion.get_unique_for_object(self.get_question())
-
-        d = {}
-        for version in version_list:
-            #if the version question isn't a duplicate
-            if(version.field_dict['question'] not in d.values()
-               #and if the version belongs to the same concept as the current question 
-               and int(version.field_dict['object_id']) == self.get_question().object_id):
-                #add the version to the return dictionary
-                d[version]=(version.field_dict['question'])
-        return d
+    template_name = 'exam/versions_new.html'
+    form_class = FreeResponseVersionForm
     
     def get_context_data(self, **kwargs):
         context = super(FreeResponseVersionView, self).get_context_data(**kwargs)
-        context['question']=self.get_question()
-        context['version_list'] = self.get_versions().items()
         context['question_type'] = 'fr'
         return context
 
     def get_success_url(self):
-        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
+        return reverse('exam:detail', args=[self.get_object().exam.id], current_app=self.current_app)
+
+
+#class FreeResponseVersionView(LoginRequiredMixin,
+#                              ContribRequiredMixin,
+#                              CurrentAppMixin,
+#                              generic.UpdateView):
+#    """
+#    A view for viewing old versions of Free Response Questions
+#    """
+#    model = FreeResponseQuestion
+#    pk_url_kwarg = 'question_id'
+#    template_name = 'exam/versions.html'
+#    form_class = FreeResponseVersionForm
+#
+#    def get_versions(self,**kwargs):
+#        version_list = reversion.get_unique_for_object(self.object)
+#
+#        d = {}
+#        for version in version_list:
+#            #if the version question isn't a duplicate
+#            if(version.field_dict['question'] not in d.values()
+#               #and if the version belongs to the same concept as the current question 
+#               and int(version.field_dict['object_id']) == self.object.object_id):
+#                #add the version to the return dictionary
+#                d[version]=(version.field_dict['question'])
+#        return d
+#    
+#    def get_context_data(self, **kwargs):
+#        context = super(FreeResponseVersionView, self).get_context_data(**kwargs)
+#        context['question']=self.object
+#        context['version_list'] = self.get_versions().items()
+#        context['question_type'] = 'fr'
+#        return context
+#
+#    def get_success_url(self):
+#        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
+
+
+@user_passes_test(contrib_check)
+def revert_freeresponse(request, question_id):
+    """
+    View for reverting a question back to a previous version
+    """
+    print request.user.profile
+    q = get_object_or_404(FreeResponseQuestion, pk=question_id)
+    version_list = reversion.get_unique_for_object(q)
+    
+    if 'version' in request.POST.keys():
+        for version in version_list:
+            if version.id == int(request.POST['version']):
+                version.revert()
+                break
+        return HttpResponseRedirect(reverse('exam:detail',
+                                            args=[q.exam.id],
+                                            current_app=request.resolver_match.namespace))
+    else:
+        return HttpResponseRedirect(reverse('exam:fr_versions',
+                                            kwargs={'question_id' : q.id},
+                                            current_app=request.resolver_match.namespace))
 
 
 class MultipleChoiceVersionView(LoginRequiredMixin,
@@ -377,7 +375,7 @@ class MultipleChoiceVersionView(LoginRequiredMixin,
     """
     model = MultipleChoiceQuestion
     pk_url_kwarg = 'question_id'
-    template_name = 'exam/versions.html'
+    template_name = 'exam/versions_new.html'
     
     #returns the current version of the question
     def get_question(self, **kwargs):
@@ -448,27 +446,7 @@ class MultipleChoiceVersionView(LoginRequiredMixin,
         return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
 
 
-@user_passes_test(contrib_check)
-def revert_freeresponse(request, question_id):
-    """
-    View for reverting a question back to a previous version
-    """
-    print request.user.profile
-    q = get_object_or_404(FreeResponseQuestion, pk=question_id)
-    version_list = reversion.get_unique_for_object(q)
-    
-    if 'version' in request.POST.keys():
-        for version in version_list:
-            if version.id == int(request.POST['version']):
-                version.revert()
-                break
-        return HttpResponseRedirect(reverse('exam:detail',
-                                            args=[q.exam.id],
-                                            current_app=request.resolver_match.namespace))
-    else:
-        return HttpResponseRedirect(reverse('exam:fr_versions',
-                                            kwargs={'question_id' : q.id},
-                                            current_app=request.resolver_match.namespace))
+
 
 
 @user_passes_test(contrib_check)
@@ -499,6 +477,8 @@ class QuestionDeleteView(LoginRequiredMixin,
                              generic.DeleteView):
     """
     "Abstract" view subclassed by FreeResponse and MultipleChoice versions.
+    
+    TODO: also delete related version objects
     """
     pk_url_kwarg = 'question_id'
     template_name = 'exam/confirm_delete.html'
@@ -512,38 +492,13 @@ class FreeResponseDeleteView(QuestionDeleteView):
 class MultipleChoiceDeleteView(QuestionDeleteView):
     model = MultipleChoiceQuestion
 
-#class FreeResponseDeleteView(LoginRequiredMixin,
-#                             ContribRequiredMixin,
-#                             CurrentAppMixin,
-#                             generic.DeleteView):
-#
-#    model = FreeResponseQuestion
-#    pk_url_kwarg = 'question_id'
-#    template_name = 'exam/confirm_delete.html'
-#    
-#    def get_success_url(self):
-#        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
-#
-#class MultipleChoiceDeleteView(LoginRequiredMixin,
-#                               ContribRequiredMixin,
-#                               CurrentAppMixin,
-#                               generic.DeleteView):
-#       
-#    model = MultipleChoiceQuestion
-#    pk_url_kwarg = 'question_id'
-#    template_name = 'exam/confirm_delete.html'
-#
-#    def get_success_url(self):
-#        return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
-
-
 
 #################################################
 #                                               #
 #   Finalization currently does not work.       #
 #   This app is being redesigned, after which   #
 #   the finalization process will be very       #
-#   different (and simpler) than it is now.     #
+#   different (and simpler) than it is now.     ##################################################
 #                                               #
 #################################################
 
@@ -698,7 +653,7 @@ def delete_final_question(request):
     return HttpResponseRedirect(reverse('final_exam'))
 
 #################################
-#                               #
+#                               ##################################################################
 #   End of finalization views   #
 #                               #
 #################################

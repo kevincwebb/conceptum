@@ -10,6 +10,7 @@ from interviews.models import get_concept_list, DummyConcept as Concept #TEMPORA
 from .models import ExamResponse, FreeResponseQuestion, MultipleChoiceQuestion, \
                     MultipleChoiceOption, ResponseSet, \
                     MAX_CHOICES, REQUIRED_CHOICES
+import reversion
 
 MAX_EMAILS = 30 # I don't think this is currently checked
 
@@ -68,7 +69,7 @@ class AddFreeResponseForm(forms.ModelForm):
    
     class Meta:
         model = FreeResponseQuestion
-        fields = ['question']
+        fields = ['question','image']
         widgets = {'question': forms.TextInput(attrs={'size': '60'})}
     
 
@@ -78,7 +79,7 @@ class AddMultipleChoiceForm(forms.ModelForm):
     """
     class Meta:
         model = MultipleChoiceQuestion
-        fields = ['question']
+        fields = ['question','image']
         widgets = {
             'question': forms.TextInput(attrs={'size': '60'})}
     
@@ -107,7 +108,7 @@ class AddMultipleChoiceForm(forms.ModelForm):
                 self.cleaned_data["choice_%d" % choice_counter] = choice
         
         # Require at least REQUIRED_CHOICES choices
-        if choice_counter < 1:
+        if choice_counter < REQUIRED_CHOICES:
             raise forms.ValidationError("You must provide at least %d choice." % REQUIRED_CHOICES,
                                         code = 'no_choices')
         
@@ -128,7 +129,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
     """
     class Meta:
         model = MultipleChoiceQuestion
-        fields = ['question']
+        fields = ['question','image']
         widgets = {
             'question': forms.TextInput(attrs={'size': '60'})}
         
@@ -139,28 +140,33 @@ class MultipleChoiceEditForm(forms.ModelForm):
         This method creates text field for each choice.  The choice's text value is used as
         initial data.
         Creates extra field for adding a new choice. 
-        """
-        
-        super(MultipleChoiceEditForm, self).__init__(*args, **kwargs)
-        
+        """    
+        super(MultipleChoiceEditForm, self).__init__(*args, **kwargs)   
         i = 1
-        for choice in MultipleChoiceOption.objects.all():
-            if(choice.question.id == self.instance.id):
-                self.fields["choice_%d" % choice.id] = \
-                    forms.CharField(label=_("choice %s" % i),
-                                    required=False,)
-                i = i + 1
-        
+        for choice in self.instance.multiplechoiceoption_set.all():
+            self.fields["choice_%d" % choice.id] = \
+                forms.CharField(label=_("choice %s" % i),
+                                required=False,
+                                initial=choice.text)
+            i = i + 1
         if(i <= MAX_CHOICES):
-            #finds the current largest MultipleChoiceOption id number and
-            #sets NEW_ID to 1 greater.(the newly created MultipleChoiceOption's id = NEW_ID in save()
-            max_id = MultipleChoiceOption.objects.all().order_by("-id")[0].id
-            new_id = max_id + 1
-            self.NEW_ID = new_id
-            self.fields["choice_%d" % new_id] = \
-                        forms.CharField(label=_("Add A Choice:"),
-                                        required=False,)
+            self.fields["choice_new"] = forms.CharField(label=_("Add A Choice:"), required=False)
+  
+    def clean(self):
+        cleaned_data = super(MultipleChoiceEditForm, self).clean()
         
+        # Require at least REQUIRED_CHOICES choices
+        choice_counter = 0
+        for choice in self.instance.multiplechoiceoption_set.all():
+            if self.cleaned_data.get("choice_%d" % choice.id):
+                choice_counter += 1
+        if self.cleaned_data.get("choice_new"):
+            choice_counter += 1
+        if choice_counter < REQUIRED_CHOICES:
+            raise forms.ValidationError("You must provide at least %d choice." % REQUIRED_CHOICES,
+                                        code = 'no_choices')
+        
+        return cleaned_data
   
     def save(self):
         """
@@ -168,31 +174,62 @@ class MultipleChoiceEditForm(forms.ModelForm):
         that choice will be deleted if it previously existed.
         Creates a new multiplechoiceoption if add_choice_feild is not empty
         """
-        q = self.instance # the question
-        q.question = self.cleaned_data.get('question')
+        self.instance.question = self.cleaned_data.get('question')
+        self.instance.save()
         
+        # check to see if each choice still has text in the field, will change if edited,
+        # and delete choice if field is blank
+        for choice in self.instance.multiplechoiceoption_set.all():
+            text = self.cleaned_data.get("choice_%d" % choice.id)
+            if text:
+                if(choice.text != text):
+                    choice.text = text
+                    choice.save()
+            else:
+                choice.delete()
         
-        if (self.NEW_ID > -1):
-            if(self.cleaned_data.get("choice_%d" % self.NEW_ID) ):
-                choice_text = self.cleaned_data.get("choice_%d" % self.NEW_ID)
-                if (choice_text):
-                    c = MultipleChoiceOption(question = q, text = choice_text)
-                    c.save()
-        #checks to see if each choice still has text in the field, will change if edited,
-        #and delete choice if field is blank
-        for choice in MultipleChoiceOption.objects.all():
-            if(choice.question == self.instance):
-                text = self.cleaned_data.get("choice_%d" % choice.id)
-                if text:
-                    if(choice.text != text):
-                        c = MultipleChoiceOption(question = q, text = text)
-                        c.save()
-                        choice.delete()
-                else:
-                    choice.delete()
-        q.save()
+        # create a new option, if provided
+        new_text = self.cleaned_data.get("choice_new")
+        if (new_text):
+            MultipleChoiceOption.objects.create(question=self.instance, text=new_text)
+            
         return self.instance
 
+
+class FreeResponseVersionForm(forms.ModelForm):
+    class Meta:
+        model = FreeResponseQuestion
+        fields = [] 
+    
+    def get_version_choices(self):
+        l = []
+        first = True
+        for version in reversion.get_unique_for_object(self.instance):
+            question_text = version.field_dict['question']
+            if first:
+                question_text += " (Current Version)"
+                first = False
+            l.append( (version.id,question_text))
+        return l
+    
+    def __init__(self, *args, **kwargs):
+        """
+        This method creates text field for each choice.  The choice's text value is used as
+        initial data.
+        Creates extra field for adding a new choice. 
+        """
+        super(FreeResponseVersionForm, self).__init__(*args, **kwargs)
+        self.fields['version']=forms.ChoiceField(choices=self.get_version_choices(),
+                                                 widget=forms.RadioSelect())
+    
+    def save(self):
+        version_id = self.cleaned_data.get('version')
+        print version_id
+        for version in reversion.get_unique_for_object(self.instance):
+            print version.id
+            if version.id == int(version_id):
+                version.revert()
+                break
 
 class NewResponseSetForm(forms.ModelForm):
     """

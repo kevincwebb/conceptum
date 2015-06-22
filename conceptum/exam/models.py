@@ -8,11 +8,8 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-
 from allauth.account.adapter import get_adapter
 from django_enumfield import enum
-#import reversion
-#from reversion.models import Revision, Version
 
 from profiles.models import ContributorProfile
 from .managers import ExamResponseManager
@@ -152,7 +149,6 @@ class Question(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
-
     
     question = models.CharField(max_length=QUESTION_LENGTH)
     image = models.ImageField(upload_to=question_imageupload_to, blank=True)

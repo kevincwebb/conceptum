@@ -107,10 +107,9 @@
 <input type="submit" value="Submit" class="btn btn-primary">
   {%if question_type == 'fr'%}
     <a href = {% url 'exam:fr_edit' question.id %} class="btn btn-primary"> Cancel </a>     
-    {%endif%}
-    {%if question_type == 'mc'%}
-      <a href = {% url 'exam:mc_edit' current_question.id %} class="btn btn-primary"> Cancel </a>
-      {%endif%}
+  {%endif%}
+  {%if question_type == 'mc'%}
+    <a href = {% url 'exam:mc_edit' current_question.id %} class="btn btn-primary"> Cancel </a>
+  {%endif%}
       
-
 {% endblock %}
