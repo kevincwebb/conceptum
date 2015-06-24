@@ -9,15 +9,15 @@ from .models import Exam, ExamKind
 class DevelopmentMixin(object):
     """
     Use this mixin for views with a specific exam or question object.
-    Gets the exam object (or 404 if not found) and sets the attribute self.exam.
-    Raises PermissionDenied if the exam is not in the development stage (ExamKind=DEV)
+    Gets the exam object (or 404 if not found).
+    Sets the attribute `self.exam` so it can be used in the view.
+    Raises PermissionDenied if the exam is not in the development stage (ExamKind=DEV).
 
     To use with a view, you must pass 'exam_id' or 'question_id' to the view as a keyword
-    argument. If 'question_id' is used, you must provide second argument, 'question_type',
-    either as another kwarg or by defining it as a field in the view. 'question_type' should
-    be the string 'fr' or 'mc'.
+    argument. If 'question_id' is used, this mixin checks self.model to determine if the
+    question is a FreeResponseQuestion or MultipleChoiceQuestion.
 
-    Alternatively, you can override the get_exam_for_mixin() function to return an exam
+    You can alternatively override the get_exam_for_mixin() function to return an exam
     object another way.
     """
     def get_exam_for_mixin(self):
@@ -25,43 +25,48 @@ class DevelopmentMixin(object):
         expects url kwarg 'exam_id' or 'question_id'
         override this if you need to get the exam another way
         """
-        if self.kwargs['exam_id']:
+        if self.kwargs.get('exam_id'):
             return get_object_or_404(Exam, pk=self.kwargs['exam_id'])
-        if self.kwargs[question_id]:
-            if self.kwargs['question_type']:
-                question_type = self.kwargs['question_type']
-            elif self.question_type:
-                question_type = self.question_type
-            if question_type == 'fr':
-                return get_object_or_404(FreeResponseQuestion, pk=question_type).exam
-            if question_type == 'mc':
-                return get_object_or_404(MultipleChoiceQuestion, pk=question_type).exam
+        if self.kwargs.get('question_id'):
+            if self.model:
+                return get_object_or_404(self.model, pk=self.kwargs['question_id']).exam
         return ImproperlyConfigured('DevelopmentMixin was not provided with correct kwargs')
     
     def dispatch(self, request, *args, **kwargs):
         self.exam = self.get_exam_for_mixin()
         if not self.exam.can_develop():
             raise PermissionDenied  # Return a 403
+        #if not self.exam.kind ==self.exam_kind
+        #    raise PermissionDenied
         return super(DevelopmentMixin, self).dispatch(request, *args, **kwargs)
     
     
-#class DistributeMixin(object):
-#    """
-#    Requires that an exam be in the distribution stage
-#    """
-#    def get_exam():
-#        """
-#        expects url kwarg 'exam_id'
-#        override this to get exam another way, such as question.exam
-#        """
-#        get_object_or_404(Exam, pk=self.kwargs['exam_id'])
-#    
-#    def dispatch(self, request, *args, **kwargs):
-#        self.exam = self.get_exam()
-#        if not exam.stage == Exam.DIST:
-#            raise PermissionDenied  # Return a 403
-#        return super(DistributeMixin, self).dispatch(request, *args, **kwargs)
+class DistributionMixin(object):
+    """
+    Use this mixin for views with a specific exam.
+    Gets the exam object (or 404 if not found).
+    Sets the attribute `self.exam` so it can be used in the view.
+    Raises PermissionDenied if the exam is not in the distribution stage (ExamKind=DIST).
+
+    To use with a view, you must pass 'exam_id' to the view as a keyword argument,
+    or override the get_exam_for_mixin() function to return an exam object another way.
+    """
+    def get_exam_for_mixin(self):
+        """
+        expects url kwarg 'exam_id'
+        override this if you need to get the exam another way
+        """
+        if self.kwargs.get('exam_id'):
+            return get_object_or_404(Exam, pk=self.kwargs['exam_id'])
+        return ImproperlyConfigured('DistributeMixin was not provided with correct kwargs')
     
+    def dispatch(self, request, *args, **kwargs):
+        self.exam = self.get_exam_for_mixin()
+        if not self.exam.can_distribute():
+            raise PermissionDenied  # Return a 403
+        return super(DistributionMixin, self).dispatch(request, *args, **kwargs)
+
+
 class CurrentAppMixin(object):
     """
     Gets information from the url namespace in order to determine the current app.
@@ -107,4 +112,3 @@ class CurrentAppMixin(object):
         """
         response_kwargs['current_app'] = self.current_app
         return super(CurrentAppMixin, self).render_to_response(context, **response_kwargs)
-

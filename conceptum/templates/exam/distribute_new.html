@@ -19,8 +19,9 @@
   <div class="horizontal-heading">
     <h3>Provide test details</h3>
   </div>
-  
-  <form class="form-horizontal" role="form"  action="{% url 'distribute_new' exam.id %}" method="post">{% csrf_token %}
+  Exam: {{ exam.name }} </br>
+  Description: {{ exam.description }}
+  <form class="form-horizontal" role="form"  action="{% url 'exam:distribute_new' exam.id %}" method="post">{% csrf_token %}
   
   {{ form.non_field_errors }}
 
@@ -36,7 +37,7 @@
   
       <div class="submit">
         <button class="btn btn-primary" type="submit">Next</button>
-        <a href = {% url 'exam_index' %} class='btn btn-primary'> Cancel </a>
+        <a href = {% url 'exam:index' %} class='btn btn-primary'> Cancel </a>
       </div>
   </form>
   

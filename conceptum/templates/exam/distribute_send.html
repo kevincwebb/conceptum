@@ -16,6 +16,8 @@
 
 <div class="container">
   <h1>CI Distribution</h1>
+  Exam: {{ object.exam.name }} </br>
+  Description: {{ object.exam.description }}
   <ul>
   <b>{{ object.course }}</b><br>
   <b>{{ object.instructor }}</b><br>
@@ -42,7 +44,7 @@
     check the "resend" box.
   </div>
   
-  <form class="form-horizontal" role="form"  action="{% url 'distribute_send' object.id%}" method="post">{% csrf_token %}
+  <form class="form-horizontal" role="form"  action="{% url 'exam:distribute_send' object.id%}" method="post">{% csrf_token %}
   
   {{ form.non_field_errors }}
 

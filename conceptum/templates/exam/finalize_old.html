@@ -17,25 +17,21 @@
 <div class="container">
     
 <div class="form-horizontal-heading">
-  <h2><b>{{current_app}} Questions</b></h2>
-  Exam: {{ exam.name }} </br>
-  Description: {{ exam.description }}
+  <h2><b>Finalize Survey Questions</b></h2>
 </div>
-<h4>Click on a question to edit it </h4>
+<h4>Select questions for the final version of the survey. </h4>
 
 <div>
-  <a href = {% url 'exam:select_concept' object.id %} class="btn btn-primary"> Add Questions </a>
-  {%if user.is_staff%}
-  <a href = {% url 'exam:finalize_view' exam.id %} class="btn btn-warning"> Finalize {{current_app}}</a>
-{%endif%}
-  <br>
-    <br>
+
+
 </div>
 
+
 <div align="left">
+<form action = {% url 'finalize_exam' %}  method = "post" >{% csrf_token %}
 <TABLE WIDTH="750">
   <thead>
-    <tr >
+    <tr>
       <th>Free Response</th>
       <th>Multiple Choice</th>
     </tr>
@@ -52,27 +48,33 @@
     <tr bgcolor="#B2B2B2">
       <th>Concept</th>
       <th>Question</th>
+      <th>Select?</th>
     </tr>
   </thead>
     <tbody>
     {% for concept, questions in freeresponsequestion_list.iteritems %}
-        <tr>
+       <tr>
         {% if concept%}
-              <td bgcolor = "#B2B2B2">{{concept}} </td>
-              {%if questions %}
-              <td>{% for q in questions %}
+        <td bgcolor = "#B2B2B2">{{concept}} </td>
+        {%if questions %}
+        {% for q in questions %}
               {%with forloop.counter as index%}
                 {% if index == 1 %}
-                 <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> </td>
+                 <td>{{q}}</td>
+                 <td><input type="checkbox" name="fr_selected" value="{{q.id}}"> </td>
                   {%else%}
-         <tr> <td bgcolor = "#CECECE"></td> 
-              <td> <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> </td></tr>
-            {%endif%}
-            {%endwith%}
+                    <tr> <td bgcolor = "#CECECE"></td> 
+                    <td> {{q}} </td>
+                    <td><input type="checkbox" name="fr_selected" value="{{q.id}}"> </td></tr>
+                {%endif%}
+             {%endwith%}
+             
           {%endfor%}
+          
           {% else %}
             <td>---</td>
-            {%endif%}
+            <td>---</td>
+        {%endif%}
        </tr>
        {%endif%}
     {% endfor %}
@@ -87,48 +89,58 @@
 </TR>
 </TABLE>
 </TD>
-<TD WIDTH="400">
+<TD WIDTH="500">
 <TABLE >
 <TR>
-<TD align="middle" WIDTH="400">
+<TD align="middle" WIDTH="500">
 {% if multiplechoicequestion_list %}
     <div style="overflow: auto; width:500px; height: 500px;">
    <table  class="table table-bordered"  >
                  <thead>
     <tr bgcolor="#B2B2B2">
-      <th>Concept</th>
+      <th >Concept</th>
       <th>Question</th>
       <th>Options</th>
+      <th>Select?</th>
     </tr>
   </thead>
     <tbody>
     {% for concept, questions in multiplechoicequestion_list.iteritems %}
        <tr >
         {% if concept%}
-          <td bgcolor = "#B2B2B2">{{concept}} </td>
-          {%if questions %}
-            <td>{% for q in questions %}
+        <td bgcolor = "#B2B2B2">{{concept}} </td>
+        {%if questions %}
+        {% for q in questions %}
               {%with forloop.counter as index%}
                 {% if index == 1 %}
-                  <a href="{% url 'exam:mc_edit' q.id %}">{{q}}</a> </td>
-                  <td>{%for option in q.multiplechoiceoption_set.all %}
-                    <li>{{option.text}}</li>
-                  {%endfor%}
-                  </td>
-                {%else%}
-                  <tr> <td bgcolor = "#CECECE"></td> 
-                  <td> <a href="{% url 'exam:mc_edit' q.id %}">{{q}}</a> </td> 
-                  <td WIDTH="250">{%for option in q.multiplechoiceoption_set.all %}
-                    <li>{{option.text}}</li>
-                  {%endfor%}
-                  </td>
-                {%endif%}
-              {%endwith%}
-            {%endfor%}
+                 <td>{{q}}</td>
+                  <td>{%for option in option_list %}
+                {% if option.question.id == q.id%}
+            <li>{{option.text}}</li>
+          {%endif%}
+          {%endfor%}
+          </td>
+           <td><input type="checkbox" name="mc_selected" value="{{q.id}}"> </td>
+
+                  {%else%}
+            <tr> <td bgcolor = "#CECECE"></td> 
+              <td>{{q}}</td>
+           
+          <td WIDTH="200">{%for option in option_list %}
+          {% if option.question.id == q.id%}
+            <li>{{option.text}}</li>
+          {%endif%}
+          {%endfor%}
+          </td>
+          <td><input type="checkbox" name="mc_selected" value="{{q.id}}"> </td>
+           {%endif%}
+            {%endwith%}
+          {%endfor%}
           {% else %}
             <td>---</td>
             <td>---</td>
-          {%endif%}
+            <td>---</td>
+            {%endif%}
        </tr>
        {%endif%}
     {% endfor %}
@@ -145,9 +157,13 @@
 </TD>
 </TR>
 </TABLE>
-
+<input type="submit" value="Finalize Survey" class="btn btn-danger"></input>
+  <a href = {% url 'exam_detail' exam.id %} class="btn btn-primary"> Cancel </a>
+</form>
 </div>
 
-</div> <!-- container -->
+
+
+
 
 {% endblock %}

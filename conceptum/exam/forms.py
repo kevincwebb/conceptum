@@ -4,7 +4,7 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.validators import validate_email, ValidationError
-from django.db import models
+from django.db import models, transaction
 
 from interviews.models import get_concept_list, DummyConcept as Concept #TEMPORARY: DummyConcept
 from .models import ExamResponse, FreeResponseQuestion, MultipleChoiceQuestion, \
@@ -133,8 +133,6 @@ class MultipleChoiceEditForm(forms.ModelForm):
         widgets = {
             'question': forms.TextInput(attrs={'size': '60'})}
         
-    NEW_ID = -1
-    
     def __init__(self, *args, **kwargs):
         """
         This method creates text field for each choice.  The choice's text value is used as
@@ -167,12 +165,17 @@ class MultipleChoiceEditForm(forms.ModelForm):
                                         code = 'no_choices')
         
         return cleaned_data
-  
+
+    @transaction.atomic()
+    @reversion.create_revision()  
     def save(self):
         """
-        Saves the updated choices. If a choice field is left blank,
-        that choice will be deleted if it previously existed.
-        Creates a new multiplechoiceoption if add_choice_feild is not empty
+        Saves the question and all choices.
+        Deletes a choice if its field is blank.
+        Creates a new choice if 'new_choice' field is not blank.
+        
+        It is important to save this question and all its options, even if they are unchanged,
+        so that they are included in the revision.
         """
         self.instance.question = self.cleaned_data.get('question')
         self.instance.save()
@@ -182,9 +185,8 @@ class MultipleChoiceEditForm(forms.ModelForm):
         for choice in self.instance.multiplechoiceoption_set.all():
             text = self.cleaned_data.get("choice_%d" % choice.id)
             if text:
-                if(choice.text != text):
-                    choice.text = text
-                    choice.save()
+                choice.text = text
+                choice.save()
             else:
                 choice.delete()
         
@@ -196,40 +198,61 @@ class MultipleChoiceEditForm(forms.ModelForm):
         return self.instance
 
 
-class FreeResponseVersionForm(forms.ModelForm):
-    class Meta:
-        model = FreeResponseQuestion
-        fields = [] 
+class QuestionVersionForm(forms.ModelForm):
     
     def get_version_choices(self):
+        """
+        A list of tuples (i,question)
+        
+        i is the index in reversion.get_unique_for_object and question is the
+        question text at that version
+        """
         l = []
-        first = True
+        i = 0 
         for version in reversion.get_unique_for_object(self.instance):
-            question_text = version.field_dict['question']
-            if first:
-                question_text += " (Current Version)"
-                first = False
-            l.append( (version.id,question_text))
+            l.append( (i,version.field_dict['question']))
+            i+=1
         return l
     
     def __init__(self, *args, **kwargs):
         """
-        This method creates text field for each choice.  The choice's text value is used as
-        initial data.
-        Creates extra field for adding a new choice. 
+        There is one field, a list of tuples
         """
-        super(FreeResponseVersionForm, self).__init__(*args, **kwargs)
+        super(QuestionVersionForm, self).__init__(*args, **kwargs)
         self.fields['version']=forms.ChoiceField(choices=self.get_version_choices(),
                                                  widget=forms.RadioSelect())
     
     def save(self):
-        version_id = self.cleaned_data.get('version')
-        print version_id
-        for version in reversion.get_unique_for_object(self.instance):
-            print version.id
-            if version.id == int(version_id):
-                version.revert()
-                break
+        """
+        The data saved in 'version' is an integer that is the selected version's index
+        in get_unique_for_object
+        """
+        index = int(self.cleaned_data.get('version'))
+        version_list = reversion.get_unique_for_object(self.instance)
+        version_list[index].revert()
+        return self.instance
+
+
+class FreeResponseVersionForm(QuestionVersionForm):
+    class Meta:
+        model = FreeResponseQuestion
+        fields = []
+
+        
+class MultipleChoiceVersionForm(QuestionVersionForm):
+    class Meta:
+        model = MultipleChoiceQuestion
+        fields = []
+    
+    def save(self):
+        """
+        The data saved in 'version' is an integer that is the selected version's index
+        in get_unique_for_object
+        """
+        index = int(self.cleaned_data.get('version'))
+        version_list = reversion.get_unique_for_object(self.instance)
+        version_list[index].revision.revert(delete=True)
+        return self.instance
 
 class NewResponseSetForm(forms.ModelForm):
     """
