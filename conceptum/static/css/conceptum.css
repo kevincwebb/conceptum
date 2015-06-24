@@ -194,16 +194,21 @@ footer{
 }
 
 span.over_tab{
-    padding-right:5%;
     width: calc(100% - 85px);
     display:inline-block;
 }
 
 span.tab{
     padding-right:5%;
-    min-width:17%;
+    min-width:15%;
     display:inline-block;
 }
+span.tab-button{
+    margin-right:0px;
+    width: calc(100% - 70px);
+    display:inline-block;
+}
+    
 
 #no-permissions{
     color:rgb(80,80,80);
@@ -220,7 +225,6 @@ li .etc{
 li.table { 
     list-style:none;
     border-radius:3px;
-    line-height:normal;
     margin-top:0px;
     margin-bottom:0px;
     background: #d8d8d8; 
@@ -310,7 +314,7 @@ nav ul li {
     
 }
 
-.current-stage h3, h4{
+.current-stage-heading{
     margin-left:-8px;
     padding:5px;
     width: calc(100% + 16px);
@@ -348,3 +352,48 @@ hr{
     border-color:gray;
 }
 
+
+.dist_button{
+    display:inline-block;
+    align-content:center;
+    text-align:center;
+    font-size:80%;
+    font-weight:500;
+    width:60px;
+    background-size:100%;
+    background-color:#428bca;
+    border-color:#ccc;
+    padding:5px;
+    padding-right:5px;
+    border-radius:4px;
+    color:#fff;
+}
+
+
+.dist_button:hover{
+    background-color:#3276b1;
+    border-color:#285e8e;
+    color:white;
+    text-decoration: none;
+    
+}
+
+
+.inner_list{
+    columns:1;
+    width:100%;
+}
+
+
+tbody{
+    width:100%;
+}
+
+td{
+    word-wrap:break-word;
+}
+    
+
+ol .alpha{
+    list-style-type:lower-roman;
+}

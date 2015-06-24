@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "exam/development_detail.html" %}
 
 {% load url from future %}
 {% load i18n %}
@@ -12,8 +12,36 @@
 
 {% endblock %}
 
-{% block content %}
 
+{% block buttons %}
+<div>
+  <a href = {% url 'exam:distribute_send' exam.id %} class="btn btn-primary"> Distribute </a>
+    <a href = {% url 'exam:distribute_discuss' exam.id %} class = "btn btn-primary"> Discuss </a>
+  {%if user.is_staff%}
+  <a href = {% url 'exam:response_sets' exam.id %} class="btn btn-primary"> Responses </a>
+{%endif%}
+  <br>
+    <br>
+</div>
+{% endblock %}
+
+
+
+<!-- TODO: add statistics drop-down, maybe response preview -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--- old stuff for reference -->
 <div class="container">
 <h1> {{exam}} </h1>
 <ul class = "collapsible_list">
@@ -42,10 +70,10 @@
 <!-- qList = [ q1, q2, ...] where
 	q1 = [question, [option1, option2, ...]
 -->
-	{% for question in qList %}
-		<li><h4>{{question.0}}</h4>
+	{% for question, options in qList %}
+		<li><h4>{{question}}</h4>
 		<ol type = "a">
-		{% for item in question.1 %}
+		{% for item in options %}
 			{% if item.id == 1 %}                    <!-- replace '1' with correct identifier -->
 				<li style = "color:green"> {{item}} </li>
 			{% else %}
@@ -91,4 +119,3 @@
       
 </div> <!-- container -->
 
-{% endblock %}

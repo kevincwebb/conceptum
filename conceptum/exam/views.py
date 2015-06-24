@@ -41,43 +41,49 @@ from .mixins import DevelopmentMixin, CurrentAppMixin
 #                              { 'all_exams': all_exams},)
 #     return HttpResponse(template.render(context))
 
-# @login_required
-# def description(request, exam_id):
-#     
-#     exam = Exam.objects.get(pk=exam_id)
-#     exam_desc = Exam.objects.get(pk=exam_id).description
-#     exam_questions = exam.multiplechoicequestion_set.all()
-#     responses = exam.responseset_set.order_by('created').all();
-#     if (len(responses) > 5):
-#         responses = responses[:5]
-#     ######
-#     qList = []
-#     q = []
-#     for question in exam_questions:
-#         q = [question.question]     #name of question, correct answer id
-#         qOptions = []
-#         qOptions.extend(question.multiplechoiceoption_set.all())
-#         q.append(qOptions)
-#         qList.append(q)
-#     
-#     ######
-#     template = loader.get_template('exam/description.html')
-#     context = RequestContext(request,
-#                              { 'exam': exam,
-#                                 'qList' : qList,
-#                                'exam_id': exam_id,
-#                                'responses':responses},)
-#     return HttpResponse(template.render(context))
+@login_required
+def description(request, exam_id):
+    
+    exam = Exam.objects.get(pk=exam_id)
+    exam_desc = Exam.objects.get(pk=exam_id).description
+    exam_questions = exam.multiplechoicequestion_set.all()
+    responses = exam.responseset_set.order_by('created').all();
+    if (len(responses) > 5):
+        responses = responses[:5]
+    ######
+    
+    ######
+    
+    # context['freeresponsequestion_list']=data[0]
+    #     context['multiplechoicequestion_list']=data[1]
+    #     context['option_list']= MultipleChoiceOption.objects.all()
+    #     
+    template = loader.get_template('exam/distribute_detail.html')
+    data = get_data(exam)
+    context = RequestContext(request,
+                             { 'exam': exam,
+                                'freeresponsequestion_list' : data[0],
+                               'multiplechoicequestion_list': data[1],
+                               'option_list': MultipleChoiceOption.objects.all(),
+                               'responses':responses},)
+    return HttpResponse(template.render(context))
 # =======
-####DELETE AFTER EXAM MERGE####
-#def description(request, exam_id):
-#    exam_desc = Exam.objects.get(pk=exam_id).description
-#    template = loader.get_template('exam/description.html')
-#    context = RequestContext(request,
-#                             { 'exam_desc': exam_desc,
-#                               'exam_id': exam_id},)
-#    return HttpResponse(template.render(context))
 
+
+def get_data(exam):
+    mc = {}
+    fr = {}
+    for concept in get_concept_list():
+        concept_type = ContentType.objects.get_for_model(concept)
+        fr_question_list = FreeResponseQuestion.objects.filter(exam = exam,
+                                                               content_type__pk=concept_type.id,
+                                                               object_id=concept.id)
+        mc_question_list = MultipleChoiceQuestion.objects.filter(exam = exam,
+                                                               content_type__pk=concept_type.id,
+                                                               object_id=concept.id)
+        fr[concept] = fr_question_list
+        mc[concept] = mc_question_list
+    return [fr, mc]
 
 def contrib_check(user):
     """
@@ -215,10 +221,9 @@ def qstats(mcRespSet):
         return [numQuestions, numCorrect, percFormatted]
     
         
-            
- ####################################### WIP #####################################################
-
-class ExamIndexView(LoginRequiredMixin,
+ 
+ 
+class ExamDistIndexView(LoginRequiredMixin,
                     CurrentAppMixin,
                     generic.ListView):
     """
@@ -239,11 +244,104 @@ class ExamIndexView(LoginRequiredMixin,
         if (not Exam.objects.filter(kind=self.exam_kind)):
             return 'exam/index_empty.html'
         else:
-            return 'exam/index.html'
+            return 'exam/index_dist.html'
        
     def get_context_data(self,**kwargs):
-        context = super(ExamIndexView, self).get_context_data(**kwargs)
-        context['exams'] = Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DEV)
+        context = super(ExamDistIndexView, self).get_context_data(**kwargs)
+        
+        
+        ex_list = Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DIST)
+        #format: [[exam, stat, list, goes, here...], [exam, stats, go, here], ...]
+        exams = []
+        for ex in ex_list:
+            qset = ex.multiplechoicequestion_set.all()
+            exam_item = [ex]
+            qs = "Questions: " + len(qset).__str__()
+            concepts = []
+            for q in qset:
+                concept = q.content_object.name
+                if ( len(concepts) <= 5 and concept not in concepts):
+                    concepts.append(q.content_object.name)
+                elif(len(concepts) == 5):
+                    concepts.append("...")
+                    break;
+            concepts = ", ".join(concepts)
+            concepts = "Concepts: " + concepts
+            
+            rsets = ex.responseset_set.all()
+            ##TODO##
+            avgscore = "Average Score: ##"
+            ####
+            numResponses = 0
+            for rset in rsets:
+                numResponses += len(rset.examresponse_set.all())
+                
+            responses = "Responses: " + numResponses.__str__()
+            
+            timesDistributed = "Times Distributed: " + len(rsets).__str__()
+            
+            exid = "Exam Id: " + ex.id.__str__()
+            
+            
+            
+            exam_item = [ex, [qs, responses, exid, avgscore, timesDistributed, concepts]]
+            exams.append(exam_item)
+            
+        context['exams'] = exams
+        
+        
+        return context
+ 
+            
+ ####################################### WIP #####################################################
+
+class ExamDevIndexView(LoginRequiredMixin,
+                    CurrentAppMixin,
+                    generic.ListView):
+    """
+    Landing page for exam development. This page will list all surveys or CI exams that
+    are in the Development stage.
+    
+    Only staff users have the ability to create new Surveys and Exams.
+    
+    TODO:
+        - Development should only be available to contributors
+        - Control what exams are available for development and deployment.
+          Only finished versions should be available for deployment, and these should
+          not be available for development.
+    """
+    model = Exam
+    
+    def get_template_names(self, *args, **kwargs):
+        if (not Exam.objects.filter(kind=self.exam_kind)):
+            return 'exam/index_empty.html'
+        else:
+            return 'exam/index_dev.html'
+       
+    def get_context_data(self,**kwargs):
+        context = super(ExamDevIndexView, self).get_context_data(**kwargs)
+        
+        ex_list = Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DEV)
+        #format: [[exam, stat, list, goes, here...], [exam, stats, go, here], ...]
+        exams = []
+        for ex in ex_list:
+            qset = ex.multiplechoicequestion_set.all()
+            exam_item = [ex]
+            qs = "Questions: " + len(qset).__str__()
+            concepts = []
+            for q in qset:
+                concept = q.content_object.name
+                if (concept not in concepts and len(concepts) <= 5):
+                    concepts.append(q.content_object.name)
+                elif(len(concepts) == 5):
+                    concepts.append("...")
+                    break;
+            concepts = ", ".join(concepts)
+            concepts = "Concepts: " + concepts
+            exam_item = [ex, [qs, concepts]]
+            exams.append(exam_item)
+            
+        context['exams'] = exams
         return context
     
 
@@ -291,7 +389,9 @@ class ExamDetailView(LoginRequiredMixin,
     """
     model = Exam
     pk_url_kwarg = 'exam_id'
-    template_name = 'exam/detail.html'
+
+    template_name = 'exam/development_detail.html'
+    
     
     def get_data(self, **kwargs):
         mc = {}
@@ -314,7 +414,11 @@ class ExamDetailView(LoginRequiredMixin,
         context['freeresponsequestion_list']=data[0]
         context['multiplechoicequestion_list']=data[1]
         context['option_list']= MultipleChoiceOption.objects.all()
+        context['exam'] = self.object
         return context
+    
+    
+    
 
 
 class SelectConceptView(LoginRequiredMixin,
@@ -1063,7 +1167,17 @@ class CleanupView(LoginRequiredMixin,
             expiration_datetime__lt=timezone.now()).filter(submitted__isnull=True):
                 exam_response.delete()
         return HttpResponseRedirect(self.get_success_url())
+#################
 
+def ExamResponseIRB(request, pk):
+    template = loader.get_template('exam/exam_response_IRB.html')
+    context = RequestContext(request,
+                             { 'pk':pk},)
+    return HttpResponse(template.render(context))
+
+
+
+################
     
 class ExamResponseView(generic.UpdateView):
     """
@@ -1075,7 +1189,7 @@ class ExamResponseView(generic.UpdateView):
     model = ExamResponse
     template_name='exam/exam_response.html'
     form_class = ExamResponseForm
-    success_url = reverse_lazy('response_complete')
+    success_url = reverse_lazy('exam:response_complete')
     
     def dispatch(self, *args, **kwargs):
         """
@@ -1087,7 +1201,7 @@ class ExamResponseView(generic.UpdateView):
                 return super(ExamResponseView, self).dispatch(*args, **kwargs)
         except Http404:
             pass
-        return HttpResponseRedirect(reverse('exam_unavailable'))
+        return HttpResponseRedirect(reverse('exam:exam_unavailable'))
         
     def form_valid(self, form):
         """

@@ -27,7 +27,7 @@
   <ul>
   {% if submitted_exams %}
     {% for response in submitted_exams %}
-      <li><a href = "/exams/{{response.response_set.exam.id}}/responses/{{response.response_set.id}}/{{response.key}}/">{{ response.respondent }}</a></li>
+      <li><a href = "{% url 'exam:response_detail' response.response_set.exam.id response.response_set.id response.key %}"> {{ response.respondent }}</a></li>
     {% endfor %}
   {% else %}
     None
@@ -42,7 +42,7 @@
     check the "resend" box.
   </div>
   
-  <form class="form-horizontal" role="form"  action="{% url 'distribute_send' object.id%}" method="post">{% csrf_token %}
+  <form class="form-horizontal" role="form"  action="{% url 'exam:distribute_send' object.id%}" method="post">{% csrf_token %}
   
   {{ form.non_field_errors }}
 

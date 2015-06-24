@@ -300,7 +300,7 @@ class ExamResponse(models.Model):
         send_mail function.
         """
         current_site = Site.objects.get_current()
-        test_url = reverse("exam_response", args=[self.key])
+        test_url = reverse("exam:take_test_IRB", args=[self.key])
         test_url = request.build_absolute_uri(test_url)
         # The ctx dictionary is a way to create variables to be used in the message
         # template (no need to get into the send_mail function below.)

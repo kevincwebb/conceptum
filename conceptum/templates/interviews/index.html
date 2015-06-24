@@ -22,7 +22,7 @@
   
 {% if interview_list %}
 <ul class = "collapsible_overview"> 
-{% for interview, concepts, numquestions in interview_list %}
+{% for interview, stats in interview_list %}
        
     <li class = "table"><span class="over_tab"><a href="{% url 'interview_detail' interview.id %}">{{ interview }}</a></span>
     

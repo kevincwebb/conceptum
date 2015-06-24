@@ -16,7 +16,7 @@ There are 3 ways to reference the url names in exam_patterns:
 exam_patterns = patterns('',
     # DEVELOPMENT
     url(r'^dev/', include(patterns('',
-        url(r'^$', views.ExamIndexView.as_view(), name='index'),
+        url(r'^$', views.ExamDevIndexView.as_view(), name='index'),
         url(r'^create/$', views.ExamCreateView.as_view(), name='create'),
         url(r'^(?P<exam_id>\d+)/$', views.ExamDetailView.as_view(), name='detail'),
         url(r'^(?P<exam_id>\d+)/select/$', views.SelectConceptView.as_view(), name='select_concept'),
@@ -50,11 +50,18 @@ exam_patterns = patterns('',
     # DISTRIBUTION
     url(r'^dist/', include(patterns('',
         #index
+        url(r'^$', views.ExamDistIndexView.as_view(), name='distribute_index'),
         #detail
         url(r'^(?P<exam_id>\d+)/new/$', views.NewResponseSetView.as_view(),
             name='distribute_new'),
-        url(r'^(?P<set_id>\d+)/$', views.DistributeView.as_view(), name='distribute_send'),
+        url(r'^send/(?P<set_id>\d+)/$', views.DistributeView.as_view(), name='distribute_send'),
         url(r'^(?P<pk>\d+)/delete/$', views.DeleteView.as_view(), name='distribute_delete'),
+        
+        #detail view of distribution page
+        url(r'^(?P<exam_id>\d+)/$', views.description, name='distribute_detail'),
+        
+        #1/discuss
+        url(r'^(?P<exam_id>\d+)/discuss/$',views.discuss, name='distribute_discuss'),
         
         # exams/1/responses/
         url(r'^(?P<exam_id>\d+)/responses/$', views.response_sets, name = 'response_sets'),
@@ -70,7 +77,9 @@ exam_patterns = patterns('',
     #url(r'^/', DistributeIndexView.as_view()), #just a default, something we might want
     
     # TAKE TEST
-    url(r'^taketest/(?P<pk>\w+)/$', views.ExamResponseView.as_view(),
+    url(r'^taketest/(?P<pk>\w+)/$', views.ExamResponseIRB,
+        name='take_test_IRB'), 
+    url(r'^taketest/(?P<pk>\w+)/form/$', views.ExamResponseView.as_view(),
         name='take_test'), #formerly exam_response
     url(r'^response_complete/$', TemplateView.as_view(
         template_name='exam/response_complete.html'), name='response_complete'),
@@ -90,7 +99,7 @@ urlpatterns = patterns('',
 # kept in case things go really bad
 oldpatterns = patterns('',
 
-    url(r'^$', views.ExamIndexView.as_view(), name='exam_index'),
+    url(r'^$', views.ExamDistIndexView.as_view(), name='exam_index'),
     url(r'^new/$', views.ExamCreateView.as_view(), name='exam_create'),
     url(r'^(?P<exam_id>\d+)/$', views.ExamDetailView.as_view(), name='exam_detail'),
     url(r'^(?P<exam_id>\d+)/select/$', views.SelectConceptView.as_view(), name='select_concept'),

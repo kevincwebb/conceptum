@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Interview Detail" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    
+<div class="form-horizontal-heading">
+<h2><b> {{exam}} Development</b></h2>
+</div>
+    <hr>
+<h4>Exam Description</h4>
+    <p> {{exam.description}}</p>
+
+
+{% block buttons %}
+<div>
+  <a href = {% url 'exam:select_concept' object.id %} class="btn btn-primary"> Add Questions </a>
+    <a href = {% url 'exam:discuss' object.id %} class = "btn btn-primary"> Discuss </a>
+  {%if user.is_staff%}
+  <a href = {% url 'exam:finalize_view' object.id %} class="btn btn-warning"> Select Questions for Final Survey</a>
+{%endif%}
+  <br>
+    <br>
+</div>
+<h5>Click on a question to edit it </h5>
+<div align="left">
+
+{% endblock %}
+    
+<ul class = "collapsible_list">
+    <li><h3><span class="tab">Multiple Choice</span>
+    
+        <label for="mc_question_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "mc_question_node" checked>
+        
+<TD>
+<TABLE class = "inner_list">
+<TR>
+<TD align="middle">
+{% if multiplechoicequestion_list %}
+    <div style="overflow: auto;">
+   <table  class="table table-bordered"  style="table-layout:fixed">
+    <thead>
+    <tr bgcolor="#B2B2B2">
+      <th width = 160px>Concept</th>
+      <th>Question</th>
+      <th width = 260px>Options</th>
+    </tr>
+  </thead>
+    <tbody>
+    {% for concept, questions in multiplechoicequestion_list.iteritems %}
+       <tr >
+        {% if concept%}
+            <td bgcolor = "#B2B2B2">{{concept}} </td>
+        {%if questions %}
+            <td class = "data">
+            {% for q in questions %}
+              {%with forloop.counter as index%}
+                {% if index == 1 %}
+                 <a href="{% url 'exam:mc_edit' q.id %}">{{q}}</a> </td>
+            <td><ol type = "a">
+                {%for option in option_list %}
+                    {% if option.question.id == q.id%}
+                    <li>{{option.text}}</li>
+                    {%endif%}
+                {%endfor%}
+                </ol>
+          </td>
+                  {%else%}
+      <tr> <td bgcolor = "#CECECE"></td> 
+          <td> <a href="{% url 'exam:mc_edit' q.id %}">{{q}}</a> </td> 
+          <td><ol type = "a">
+                {%for option in option_list %}
+                    {% if option.question.id == q.id%}
+                    <li>{{option.text}}</li>
+                    {%endif%}
+                {%endfor%}
+                </ol>
+          </td>
+           {%endif%}
+            {%endwith%}
+          {%endfor%}
+          {% else %}
+            <td>---</td>
+            <td>---</td>
+            {%endif%}
+       </tr>
+       {%endif%}
+    {% endfor %}
+  </tbody>
+</table>
+   </div>
+{% else %}
+    <p>No multiple choice questions have been created yet.</p>
+{% endif %}
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+    </li>
+    </ul>
+
+<br>
+
+    
+<ul class = "collapsible_list">
+    <li><h3><span class="tab">Free Response</span>
+    
+        <label for="fr_question_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "fr_question_node" checked>
+    
+<TABLE class = "inner_list">
+<TR>
+<TD WIDTH=100%>
+<TABLE WIDTH=100%>
+<TR>
+<TD align="middle">
+{% if freeresponsequestion_list %}
+  <div style="overflow: auto;">
+   <table  class="table table-bordered " style="table-layout:fixed">
+                 <thead>
+    <tr bgcolor="#B2B2B2">
+      <th  width = 160px>Concept</th>
+      <th>Question</th>
+    </tr>
+  </thead>
+    <tbody>
+    {% for concept, questions in freeresponsequestion_list.iteritems %}
+        <tr>
+        {% if concept%}
+              <td bgcolor = "#B2B2B2">{{concept}} </td>
+              {%if questions %}
+              <td>{% for q in questions %}
+              {%with forloop.counter as index%}
+                {% if index == 1 %}
+                 <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> </td>
+                  {%else%}
+         <tr> <td bgcolor = "#CECECE"></td> 
+              <td> <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> </td></tr>
+            {%endif%}
+            {%endwith%}
+          {%endfor%}
+          {% else %}
+            <td>---</td>
+            {%endif%}
+       </tr>
+       {%endif%}
+    {% endfor %}
+  </tbody>
+</table>
+  </div>
+
+{% else %}
+    <p>No free response questions have been created yet.</p>
+{% endif %}
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+    </li>
+</ul>
+
+</div>
+
+
+
+</div> <!-- container -->
+
+{% endblock %}

@@ -21,10 +21,11 @@
 <ul class = "collapsible_overview"> 
 {% for exam, stats in exams %}
        
-    <li class = "table"><span class="over_tab"><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a></span>
+    <li class = "table"><span class="over_tab"><span class = "tab-button"><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a></span>
+        <a href = {% url 'exam:detail' exam.id %} class="dist_button"> Edit</a></span>
     
-    <a href = {% url 'exam:detail' exam.id %} class="dist_button"> Edit</a>
-    <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> <div class = "minus"> - </div> </div></label>
+    
+    <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div id = "plus" class = "plus"> + </div> <div id = "minus" class = "minus"> - </div> </div></label>
     <input type = "checkbox" id = "toplist_node{{exam.id}}" onclick = "PlusMinus(this)">
 
 <div class = "overview">
