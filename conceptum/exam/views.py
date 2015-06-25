@@ -54,6 +54,7 @@ class ExamIndexView(LoginRequiredMixin,
     def get_context_data(self,**kwargs):
         context = super(ExamIndexView, self).get_context_data(**kwargs)
         context['exams'] = Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DEV)
+        context['finished_exams'] = Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DIST)
         return context
     
 
@@ -251,7 +252,7 @@ class QuestionVersionView(LoginRequiredMixin,
     template_name = 'exam/versions.html'
     
     def get_success_url(self):
-        return reverse('exam:detail', args=[self.get_object().exam.id], current_app=self.current_app)
+        return reverse('exam:detail', args=[self.exam.id], current_app=self.current_app)
 
 
 class FreeResponseVersionView(QuestionVersionView):
@@ -261,7 +262,8 @@ class FreeResponseVersionView(QuestionVersionView):
     def get_context_data(self, **kwargs):
         context = super(FreeResponseVersionView, self).get_context_data(**kwargs)
         context['question_type'] = 'fr'
-        context['version_list'] = reversion.get_unique_for_object(self.object)
+        # change to get_unique
+        context['version_list'] = reversion.get_for_object(self.object)
         return context
 
 
@@ -271,19 +273,24 @@ class MultipleChoiceVersionView(QuestionVersionView):
     
     def get_option_list(self):
         """
-        Returns a list of lists of MultipleChoiceOptions, latest version first.
-        e.g. l[0] is all MCOs associated with the current version
+        Returns a list of lists of MultipleChoiceOptions, oldest version first.
+        e.g. l[0] is all MCOs associated with the oldest version.
+        
+        List is reversed so that when items are popped from the list in the template,
+        the latest version will come first.
         """
         l=[]
         option_type = ContentType.objects.get_for_model(MultipleChoiceOption)
-        for version in reversed(reversion.get_unique_for_object(self.object)):
+        # change to get_unique
+        for version in reversed(reversion.get_for_object(self.object)):
             l.append(version.revision.version_set.filter(content_type__pk=option_type.id))
         return l
         
     def get_context_data(self, **kwargs):
         context = super(MultipleChoiceVersionView, self).get_context_data(**kwargs)
         context['question_type'] = 'mc'
-        context['version_list'] = reversion.get_unique_for_object(self.object)
+        # change to get_unique
+        context['version_list'] = reversion.get_for_object(self.object)
         context['option_list'] = self.get_option_list()
         return context
 
@@ -313,7 +320,7 @@ class QuestionDeleteView(LoginRequiredMixin,
         return HttpResponseRedirect(self.get_success_url())
     
     def get_success_url(self):
-        return reverse('exam:detail', args=[self.get_object().exam.id], current_app=self.current_app)
+        return reverse('exam:detail', args=[self.exam.id], current_app=self.current_app)
 
 class FreeResponseDeleteView(QuestionDeleteView):
     model = FreeResponseQuestion
@@ -321,15 +328,6 @@ class FreeResponseDeleteView(QuestionDeleteView):
 class MultipleChoiceDeleteView(QuestionDeleteView):
     model = MultipleChoiceQuestion
 
-
-#################################################
-#                                               #
-#   Finalization currently does not work.       #
-#   This app is being redesigned, after which   #
-#   the finalization process will be very       #
-#   different (and simpler) than it is now.     ##################################################
-#                                               #
-#################################################
 
 class FinalizeView(LoginRequiredMixin,
                    StaffRequiredMixin,
@@ -354,162 +352,6 @@ class FinalizeView(LoginRequiredMixin,
     def get_success_url(self):
         return reverse('exam:index', current_app=self.current_app)
 
-#class FinalizeView(LoginRequiredMixin,
-#                StaffRequiredMixin,
-#                generic.ListView):
-#    """
-#    !THIS VIEW WILL CHANGE!
-#    
-#    View all questions created for the survey and select the ones meant for the final survey.
-#    
-#    TODO: MultipleChoiceOption should not be the model here.
-#    """
-#    
-#    model = MultipleChoiceOption
-#    template_name = 'exam/finalize.html'
-#    
-#    def dispatch(self, *args, **kwargs):
-#        self.exam = get_object_or_404(Exam, pk=self.kwargs['exam_id'])
-#        return super(FinalizeView, self).dispatch(*args, **kwargs)
-#    
-#    def get_data(self, **kwargs):
-#        """
-#        this has been copied pasted from somewhere else, bad design.
-#        TODO: fix it ^
-#        """
-#        mc = {}
-#        fr = {}
-#        for concept in get_concept_list():
-#            concept_type = ContentType.objects.get_for_model(concept)
-#            fr_question_list = FreeResponseQuestion.objects.filter(exam = self.exam,
-#                                                                   content_type__pk=concept_type.id,
-#                                                                   object_id=concept.id)
-#            mc_question_list = MultipleChoiceQuestion.objects.filter(exam = self.exam,
-#                                                                   content_type__pk=concept_type.id,
-#                                                                   object_id=concept.id)
-#            fr[concept] = fr_question_list
-#            mc[concept] = mc_question_list
-#        return [fr, mc]
-#    
-#    def get_context_data(self, **kwargs):
-#        context = super(FinalizeView, self).get_context_data(**kwargs)
-#        data = self.get_data()
-#        context['exam']=self.exam
-#        context['freeresponsequestion_list']=data[0]
-#        context['multiplechoicequestion_list']=data[1]
-#        context['option_list']= MultipleChoiceOption.objects.all()
-#        return context
-
-
-#@user_passes_test(staff_check)
-#def finalize_survey(request):
-#    """
-#    !THIS VIEW WILL CHANGE!
-#    
-#    This view takes selected checkboxes corresponding to survey questions, and copys them
-#    into the Final Survey
-#    
-#    TODO: right now this assumes there is only one final (the final survey)
-#    """
-#    mc = []
-#    fr = []
-#    for item in request.POST.lists():
-#        if item[0] == 'fr_selected':
-#            fr = item[1]
-#        elif item[0] == 'mc_selected':
-#            mc = item[1]
-#    final, created = Exam.objects.get_or_create(name=FINAL_SURVEY_NAME)
-#    for key in fr:
-#        q = FreeResponseQuestion.objects.get(pk = key)
-#        if not final.freeresponsequestion_set.filter(question= q.question):
-#            #setting q.pk and q.id to None then saving it creates a copy of q
-#            q.pk = None
-#            q.id = None
-#            q.exam = final
-#            q.save()
-#    for key in mc:
-#        q = MultipleChoiceQuestion.objects.get(pk = key)
-#        if not final.multiplechoicequestion_set.filter(question= q.question):
-#            options = q.multiplechoiceoption_set.all()
-#            q.pk = None
-#            q.id = None
-#            q.exam = final
-#            q.save()
-#            for option in options:
-#                option.pk = None
-#                option.id = None
-#                option.question = q
-#                option.save()
-#    return HttpResponseRedirect(reverse('final_exam'))
-#
-#
-#class FinalView(LoginRequiredMixin,
-#                ContribRequiredMixin,
-#                generic.ListView):
-#    """
-#    !THIS VIEW WILL CHANGE!
-#    
-#    View all questions in the Final Survey
-#    
-#    TODO: right now this assumes there is only one final (the final survey)
-#    """
-#    
-#    model = MultipleChoiceOption
-#    template_name = 'exam/final.html'
-#    
-#    def get_data(self, **kwargs):
-#        """
-#        redundant method
-#        """
-#        mc = {}
-#        fr = {}
-#        for concept in get_concept_list():
-#            concept_type = ContentType.objects.get_for_model(concept)
-#            fr_question_list = FreeResponseQuestion.objects.filter(exam = Exam.objects.get(name = FINAL_SURVEY_NAME).id,
-#                                                                   content_type__pk=concept_type.id, object_id=concept.id)
-#            mc_question_list = MultipleChoiceQuestion.objects.filter(exam = Exam.objects.get(name = FINAL_SURVEY_NAME).id,
-#                                                                   content_type__pk=concept_type.id, object_id=concept.id)
-#            fr[concept] = fr_question_list
-#            mc[concept] = mc_question_list
-#        return [fr, mc]
-#    
-#    def get_context_data(self, **kwargs):
-#        context = super(FinalView, self).get_context_data(**kwargs)
-#        data = self.get_data()
-#        context['freeresponsequestion_list']=data[0]
-#        context['multiplechoicequestion_list']=data[1]
-#        context['option_list']= MultipleChoiceOption.objects.all()
-#        return context
-#
-#
-##function view for deleting a question from the final survey
-##@user_passes_test(staff_check)
-#def delete_final_question(request):
-#    """
-#    !THIS VIEW WILL CHANGE!
-#    """
-#    mc = []
-#    fr = []
-#    for item in request.POST.lists():
-#        if item[0] == 'fr_selected':
-#            fr = item[1]
-#        elif item[0] == 'mc_selected':
-#            mc = item[1]
-#    final = Exam.objects.get(name=FINAL_SURVEY_NAME)
-#    for key in fr:
-#        q = FreeResponseQuestion.objects.get(pk = key)
-#        q.delete()
-#    for key in mc:
-#        q = MultipleChoiceQuestion.objects.get(pk = key)
-#        q.delete()
-#    return HttpResponseRedirect(reverse('final_exam'))
-
-#################################
-#                               ##################################################################
-#   End of finalization views   #
-#                               #
-#################################
-
 
 class NewResponseSetView(LoginRequiredMixin,
                          DistributionMixin,
@@ -532,13 +374,6 @@ class NewResponseSetView(LoginRequiredMixin,
     """
     template_name = 'exam/distribute_new.html'
     form_class = NewResponseSetForm
-    
-    #def dispatch(self, *args, **kwargs):
-    #    """
-    #    Get exam_id from url
-    #    """
-    #    self.exam = get_object_or_404(Exam, pk=self.kwargs['exam_id'])
-    #    return super(NewResponseSetView, self).dispatch(*args, **kwargs)
     
     def get_context_data(self, **kwargs):
         """

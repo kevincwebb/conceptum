@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from allauth.account.adapter import get_adapter
 from django_enumfield import enum
+import reversion
 
 from profiles.models import ContributorProfile
 from .managers import ExamResponseManager
@@ -160,6 +161,24 @@ class Question(models.Model):
 
     def __unicode__(self):
         return self.question
+    
+    def get_unique_versions(self):
+        """
+        This is a little more thorough than django-reversion's get_unique_for_object.
+        
+        reversion.get_for_object(obj) returns a list of all versions of the given object,
+        ordered by date created. reversion.get_unique_for_object(obj) calls get_for_object
+        and removes duplicates, but only when they are adjacent in the list. Also, it only
+        looks at the object's own fields without following the reverse relations.
+            
+        get_unique_versions calls reversion.get_unique_for_object(self), and filters the
+        list to remove any duplicates (keeping the most recent version) from any position
+        in the list. It checks the question's serialized data and also its related
+        multiple choice options' serialized data.
+        """
+        versions = reversion.get_for_object(self)
+        # TODO: finish implementing
+        
     
     def save(self, *args, **kwargs):
         """

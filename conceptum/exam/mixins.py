@@ -8,17 +8,17 @@ from .models import Exam, ExamKind
 
 class DevelopmentMixin(object):
     """
+    If you use this mixin in a view you must also use CurrentAppMixin.
     Use this mixin for views with a specific exam or question object.
     Gets the exam object (or 404 if not found).
     Sets the attribute `self.exam` so it can be used in the view.
+    Raises PermissionDenied if the exam's kind does not match the current app.
     Raises PermissionDenied if the exam is not in the development stage (ExamKind=DEV).
 
-    To use with a view, you must pass 'exam_id' or 'question_id' to the view as a keyword
-    argument. If 'question_id' is used, this mixin checks self.model to determine if the
-    question is a FreeResponseQuestion or MultipleChoiceQuestion.
-
-    You can alternatively override the get_exam_for_mixin() function to return an exam
-    object another way.
+    You must pass 'exam_id' or 'question_id' to your view as a keyword argument.
+    If 'question_id' is used, this mixin checks self.model to determine if the
+    question is a FreeResponseQuestion or MultipleChoiceQuestion. You can alternatively
+    override the get_exam_for_mixin() function to return an exam object another way.
     """
     def get_exam_for_mixin(self):
         """
@@ -33,19 +33,25 @@ class DevelopmentMixin(object):
         return ImproperlyConfigured('DevelopmentMixin was not provided with correct kwargs')
     
     def dispatch(self, request, *args, **kwargs):
+        """
+        note: calls CurrentAppMixin's set_current_app method
+        """
+        assert issubclass(self.__class__, CurrentAppMixin)
         self.exam = self.get_exam_for_mixin()
-        if not self.exam.can_develop():
-            raise PermissionDenied  # Return a 403
-        #if not self.exam.kind ==self.exam_kind
-        #    raise PermissionDenied
+        self.set_current_app(request)
+        if (self.exam.kind != self.exam_kind
+            or not self.exam.can_develop()):
+                raise PermissionDenied
         return super(DevelopmentMixin, self).dispatch(request, *args, **kwargs)
     
     
 class DistributionMixin(object):
     """
+    If you use this mixin in a view you must also use CurrentAppMixin.
     Use this mixin for views with a specific exam.
     Gets the exam object (or 404 if not found).
     Sets the attribute `self.exam` so it can be used in the view.
+    Raises PermissionDenied if the exam's kind does not match the current app.
     Raises PermissionDenied if the exam is not in the distribution stage (ExamKind=DIST).
 
     To use with a view, you must pass 'exam_id' to the view as a keyword argument,
@@ -61,9 +67,15 @@ class DistributionMixin(object):
         return ImproperlyConfigured('DistributeMixin was not provided with correct kwargs')
     
     def dispatch(self, request, *args, **kwargs):
+        """
+        note: calls CurrentAppMixin's set_current_app method
+        """
+        assert issubclass(self.__class__, CurrentAppMixin)
         self.exam = self.get_exam_for_mixin()
-        if not self.exam.can_distribute():
-            raise PermissionDenied  # Return a 403
+        self.set_current_app(request)
+        if (self.exam.kind != self.exam_kind
+            or not self.exam.can_distribute()):
+                raise PermissionDenied
         return super(DistributionMixin, self).dispatch(request, *args, **kwargs)
 
 
@@ -86,12 +98,18 @@ class CurrentAppMixin(object):
             
     {{ current_app }} is also available as a template variable
     """
-    def dispatch(self, request, *args, **kwargs):
+    def set_current_app(self, request):
+        """
+        note that this function is expected by DevelopmentMixin and DistributionMixin
+        """
         self.current_app = request.resolver_match.namespace
         if self.current_app == 'survey':
             self.exam_kind = ExamKind.SURVEY
         if self.current_app == 'CI_exam':
             self.exam_kind = ExamKind.CI
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.set_current_app(request)
         return super(CurrentAppMixin, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self,**kwargs):

@@ -180,14 +180,13 @@ class MultipleChoiceEditForm(forms.ModelForm):
         self.instance.question = self.cleaned_data.get('question')
         self.instance.save()
         
-        # check to see if each choice still has text in the field, will change if edited,
-        # and delete choice if field is blank
         for choice in self.instance.multiplechoiceoption_set.all():
             text = self.cleaned_data.get("choice_%d" % choice.id)
             if text:
                 choice.text = text
                 choice.save()
             else:
+                # delete choice if field is blank
                 choice.delete()
         
         # create a new option, if provided
@@ -207,9 +206,28 @@ class QuestionVersionForm(forms.ModelForm):
         i is the index in reversion.get_unique_for_object and question is the
         question text at that version
         """
+        
+        
+        #version = reversion.get_for_object(self.instance)[0]
+        #revision = version.revision
+        #from reversion.revisions import RevisionManager
+        #manager = RevisionManager.get_manager(revision.manager_slug)
+        #adapter = manager.get_adapter(version.object.__class__)
+        #opts = adapter.model._meta.concrete_model._meta
+        #for thing in opts.local_fields:
+        #    print thing
+        #print "---"
+        #for thing in opts.local_many_to_many:
+        #    print thing
+        #print "---"
+        #for thing in adapter.get_fields_to_serialize():
+        #    print thing
+        
+                
         l = []
-        i = 0 
-        for version in reversion.get_unique_for_object(self.instance):
+        i = 0
+        #change to get_unique
+        for version in reversion.get_for_object(self.instance):
             l.append( (i,version.field_dict['question']))
             i+=1
         return l
@@ -228,7 +246,8 @@ class QuestionVersionForm(forms.ModelForm):
         in get_unique_for_object
         """
         index = int(self.cleaned_data.get('version'))
-        version_list = reversion.get_unique_for_object(self.instance)
+        #change to get_unique
+        version_list = reversion.get_for_object(self.instance)
         version_list[index].revert()
         return self.instance
 
@@ -250,7 +269,8 @@ class MultipleChoiceVersionForm(QuestionVersionForm):
         in get_unique_for_object
         """
         index = int(self.cleaned_data.get('version'))
-        version_list = reversion.get_unique_for_object(self.instance)
+        #change to get_unique
+        version_list = reversion.get_for_object(self.instance)
         version_list[index].revision.revert(delete=True)
         return self.instance
 
