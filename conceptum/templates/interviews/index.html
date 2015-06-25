@@ -30,9 +30,9 @@
     <input type = "checkbox" id = "toplist_node{{exam.id}}">
 <div class = "overview">
 <ul class = "overview_inner_list">
-    <li> • Questions: {{numquestions}}</li>
-    <li> • Concepts: {{concepts}}
-    </li>
+    {% for item in stats %}
+    <li> • {{item}}</li>
+    {% endfor %}
         
 </ul>
 

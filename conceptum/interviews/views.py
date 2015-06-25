@@ -48,9 +48,9 @@ class IndexView(LoginRequiredMixin,
                 excerpts.append(exc.content_object.name)
                 
             excerpts = ", ".join(excerpts)
+            excerpts = "Concepts: " + excerpts
             interview = [intv]
-            interview.append(excerpts)
-            interview.append(len(excerpts_obj))
+            interview.append([excerpts, "Questions: " + len(excerpts_obj).__str__()])
             interview_list.append(interview)
         context['interview_list'] = interview_list
         return context

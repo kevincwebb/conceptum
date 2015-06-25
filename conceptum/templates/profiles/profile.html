@@ -53,7 +53,7 @@
     <h4>Your distributed exams</h4>
 
     {% for response_set in user.profile.responseset_set.all %}
-      <span class="tab"><a href = {% url 'exam:distribute_send' response_set.id %}> {{ response_set }} </a> </span>
+      <span class="tab"><a href = {% url 'exam:distribute_send' response_set.id %}> {{ response_set }} for {{response_set.exam}}</a> </span>
           <a href = {% url 'exam:distribute_delete' response_set.id %} class='btn btn-sm btn-danger'> Delete </a>
       
       <br>

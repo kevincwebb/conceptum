@@ -27,10 +27,17 @@
 
 <h3> Response Sets of Exam {{ exam_id }} </h3>
     
+<p>
+Click on set for details and responses of each set. Click on "distribute" to send {{exam}} to new students, and add them to the set.
+</p>
+    
 <!-- need the response set to be passed in -->
 <ul class = "collapsible_overview">    
 {% for set in responses %}     <!-- maybe do some collapsible statistics on each response set -->
-    <li class = "table"><span class="over_tab"><a href = "{% url 'exam:responses' set.exam.id set.id%}">{{ set }}</a></span>
+    <li class = "table"><span class="over_tab"><span class = "tab-button"><a href = "{% url 'exam:responses' set.exam.id set.id%}">{{ set }}</a></span>
+        
+        <a href = {% url 'exam:distribute_send' set.id %} class="dist_button">Distribute</a>
+        </span>
     
     <label for="toplist_node{{set.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> </div></label>
     <input type = "checkbox" id = "toplist_node{{set.id}}">
@@ -55,15 +62,16 @@
     
 
 
- <a href = "{% url 'exam:distribute_detail' exam_id %}" class = "btn btn-primary">Back to Exam {{exam_id}}</a> 
-<a href="{% url 'exam:distribute_index' %}" class = "btn btn-warning">Back to Exam Index</a><br>
+ 
+<a href = "{% url 'exam:distribute_new' exam_id %}" class = "btn btn-warning">New Response Set</a> <br>
+    <br>
+    
+<a href = "{% url 'exam:distribute_detail' exam_id %}" class = "btn btn-primary">Back to Exam {{exam_id}}</a> 
+<a href="{% url 'exam:distribute_index' %}" class = "btn btn-primary">Back to Exam Index</a>
+<a href="{% url 'exam:discuss' exam_id %}" class = "btn btn-primary">Discuss this Exam</a><br><br>
+
 
     
-<h3> Discuss this Exam </h3>
-<!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a> -->
-
-<a href="{% url 'exam:discuss' exam_id %}">Discuss</a><br>
-<a href="{% url 'exam:distribute_new' exam_id %}">Distribute</a>
 
 </div> <!-- container -->
 

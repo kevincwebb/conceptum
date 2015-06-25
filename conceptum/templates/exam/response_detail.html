@@ -70,10 +70,10 @@ qList is a 2d list of the following format:
 <!-- qList = [ q1, q2, ...] where
 	q1 = [question, [option1, option2, ...]
 -->
-	{% for question in qList %}
-		<li><h4>{{question.0}}</h4>
+	{% for question, options in qList %}
+		<li><h4>{{question}}</h4>
 		<ol type = "a">
-		{% for item in question.2 %}
+		{% for item in options %}
 			{% if item.id == 1 and 1 == question.1 %}        <!-- eventually replace 1 with whatever identifies the correct answer -->
 				<li style="color:green"> <b>{{item}} </b> </li>
 			{% elif item.id == question.1 %}

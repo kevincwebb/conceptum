@@ -162,13 +162,16 @@ footer{
 }
 
 
-.plus_ind_button{
+.ind_button{
+        align-content:center;
+    text-align:center;
+    display:inline-block;
+    width:30px;
     margin-top:6px;
     line-height:90%;
     color: rgb(142, 142, 142);
     background-color: #dddddd;
     border-radius: 15px;
-    #border-color: #bbbbbb;
     border-color:#357ebd;
     border-width: 1px;
     border-style: solid;
@@ -178,11 +181,20 @@ footer{
 
 }
 
-.plus_ind_button:hover{
+.ind_button:hover{
     color:rgb(100,100,100);
     background-color: #cccccc;
 }
 
+
+.minus_ind_button{
+    display:inline-block;
+}
+
+
+.plus_ind_button{
+    display:none;
+}
 
 
 .list:hover{
@@ -200,7 +212,7 @@ span.over_tab{
 
 span.tab{
     padding-right:5%;
-    min-width:15%;
+    min-width:30%;
     display:inline-block;
 }
 span.tab-button{
@@ -304,11 +316,6 @@ nav ul li {
 
 .current-stage{
     width:77%; 
-
-    #background-color:#dfdfdf;
-    #border: solid #aaaaaa 1px; 
-    #border-radius:10px;
-
     padding:8px;
     padding-top:0px;
     
@@ -359,7 +366,7 @@ hr{
     text-align:center;
     font-size:80%;
     font-weight:500;
-    width:60px;
+    min-width:60px;
     background-size:100%;
     background-color:#428bca;
     border-color:#ccc;

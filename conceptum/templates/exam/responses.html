@@ -59,7 +59,7 @@
 <ul class = "collapsible_list">
     <li><h3><span class="tab">Submitted Responses to {{response_set}} </span>
     
-        <label for="responses_node"><div class = "plus_ind_button"> + </div></label></h3>
+        <label for="responses_node"><div class = "ind_button "> + </div></label></h3>
     <input type = "checkbox" id = "responses_node" checked>
     
     
@@ -67,7 +67,10 @@
   <ul class = "inner_list">
   {% if responses %}
     {% for response in responses %}
-      <li><a href = "/exams/{{response.response_set.exam.id}}/responses/{{response.response_set.id}}/{{response.key}}/">{{ response.respondent }}</a></li> 
+      <li><a href = "
+          {% url 'exam:response_detail' response.response_set.exam.id response.response_set.id response.key %}">
+          
+{{ response.respondent }}</a></li> 
     {% endfor %}
   {% else %}
     None

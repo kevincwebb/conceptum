@@ -25,7 +25,7 @@
 {% for exam, stats in exams %}
        
     <li class = "table"><span class="over_tab"><span class = "tab-button"><a href="{% url 'exam:distribute_detail' exam.id %}">{{ exam.name }}</a></span>
-        <a href = {% url 'exam:distribute_send' exam.id %} class="dist_button"> Distribute</a>
+        <a href = {% url 'exam:response_sets' exam.id %} class="dist_button"> Distribute </a>
         </span>
     
         

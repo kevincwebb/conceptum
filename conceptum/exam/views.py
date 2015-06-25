@@ -123,15 +123,20 @@ def ExamResponseDetail(request, exam_id, rsid, key):
         response_set = ResponseSet.objects.get(pk=rsid)       #response set to connect exam and exam response key (?)
         exam = response_set.exam            #exam
         response = response_set.examresponse_set.get(pk=key)      #exam response
-        responses = response.multiplechoiceresponse_set.all()
-        stats = qstats(responses)
+        mcresponses = response.multiplechoiceresponse_set.all()
+        frresponses = response.freeresponseresponse_set.all()
+        stats = qstats(mcresponses)
         qList = []
         q = []
-        for question in responses:
+        for question in mcresponses:
             q = [question.question, question.option_id]     #name of question, answer chosen
             qOptions = []
             qOptions.extend(question.question.multiplechoiceoption_set.all())
             q.append(qOptions)
+            qList.append(q)
+            
+        for question in frresponses:
+            q = [question.question, [question.response]]
             qList.append(q)
         context = RequestContext(request,
                                  {'qList':qList,
@@ -168,11 +173,17 @@ def responses(request, exam_id, rsid):
     """
     eventually do statistical analysis here to pass to template
     """
+    
     stats = []
-    for mcrs in responses:
-        stats.append(qstats(mcrs.multiplechoiceresponse_set.all()))
+    if not exam.is_survey():
         
-    set_stats = respSetStats(stats)
+        for mcrs in responses:
+            stats.append(qstats(mcrs.multiplechoiceresponse_set.all()))
+        set_stats = respSetStats(stats)
+    else:
+        set_stats = []
+        for frset in responses:
+            stats.append(frset.freeresponseresponse_set.all())
     template = loader.get_template('exam/responses.html')
     context = RequestContext(request,
                              { 'responses': responses,
@@ -995,7 +1006,7 @@ class NewResponseSetView(LoginRequiredMixin,
         return context
 
     def get_success_url(self):
-        return reverse('distribute_send', args=(self.object.id,))
+        return reverse('exam:distribute_send', args=(self.object.id,))
     
     def form_valid(self, form):
         """

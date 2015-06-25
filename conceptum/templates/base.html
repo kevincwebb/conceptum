@@ -50,12 +50,20 @@
 
             
             
-              
-                <a class="navbar-brand" href="{% url 'survey:index' %}">Surveys</a>
+             <ul class="nav navbar-nav">
+            <li class="dropdown">
+              <a href="#" data-toggle="dropdown" class = "navbar-brand">Surveys <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="{% url "survey:index" %}">Development</a></li>
+                <li><a href="{% url "survey:distribute_index" %}">Distribution</a></li>
+                
+              </ul>
+            </li>
+            </ul>
             
             
             
-                      <ul class="nav navbar-nav navbar-right">
+                      <ul class="nav navbar-nav">
             <li class="dropdown">
               <a href="#" data-toggle="dropdown" class = "navbar-brand">Exams <b class="caret"></b></a>
               <ul class="dropdown-menu">
