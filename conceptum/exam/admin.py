@@ -19,18 +19,6 @@ Warning! For versioning to work correctly, if you want to register a model with
 reversion.VersionAdmin, do not also register it as a ModelAdmin or Inline.
 (this message brought to you by many hours of frustration with django-reversion)
 """
-
-#class FreeResponseQuestionInLine(admin.TabularInline):
-#    model = FreeResponseQuestion
-#    fields = ('content_object',)
-#    readonly_fields = ('content_object',)
-# 
-#    
-#class MultipleChoiceQuestionInLine(admin.TabularInline):
-#    model = MultipleChoiceQuestion
-#    fields = ('content_object', )
-#    readonly_fields = ('content_object',)
-    
     
 class MultipleChoiceOptionInLine(admin.TabularInline):
     model = MultipleChoiceOption
@@ -39,7 +27,6 @@ class MultipleChoiceOptionInLine(admin.TabularInline):
 
 class ExamAdmin(admin.ModelAdmin):
     fields = ('name','description')
-    #inlines = [FreeResponseQuestionInLine,MultipleChoiceQuestionInLine, ]
 
 
 class FreeResponseQuestionAdmin(reversion.VersionAdmin):
@@ -49,10 +36,6 @@ class FreeResponseQuestionAdmin(reversion.VersionAdmin):
 class MultipleChoiceQuestionAdmin(reversion.VersionAdmin):
     list_display = ('question','exam', 'content_type', 'content_object',  'image', 'rank', 'optional', 'pk')
     inlines = [MultipleChoiceOptionInLine]
-
-
-#class MultipleChoiceOptionAdmin(reversion.VersionAdmin):
-#    list_display = ('text','question', 'rank', 'pk')
 
 
 class ResponseSetAdmin(admin.ModelAdmin):

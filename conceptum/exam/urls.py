@@ -18,6 +18,7 @@ exam_patterns = patterns('',
     url(r'^dev/', include(patterns('',
         url(r'^$', views.ExamIndexView.as_view(), name='index'),
         url(r'^create/$', views.ExamCreateView.as_view(), name='create'),
+        #url(r'^copy/(?P<exam_id>\d+)/$', views.ExamCopyView.as_view(), name='copy'),
         url(r'^(?P<exam_id>\d+)/$', views.ExamDetailView.as_view(), name='detail'),
         url(r'^(?P<exam_id>\d+)/select/$', views.SelectConceptView.as_view(), name='select_concept'),
         url(r'^(?P<exam_id>\d+)/(?P<concept_id>\d+)/(?P<question_type>\w{2})/$',
@@ -26,24 +27,18 @@ exam_patterns = patterns('',
         url(r'^fr/(?P<question_id>\d+)/', include(patterns('',
             url(r'^edit/$', views.FreeResponseEditView.as_view(), name='fr_edit'),
             url(r'^versions/$', views.FreeResponseVersionView.as_view(), name='fr_versions'),
-            #url(r'^revert/$', views.revert_freeresponse, name='fr_revert'),
             url(r'^delete/$', views.FreeResponseDeleteView.as_view(), name='fr_delete'),
         ))),
         
         url(r'^mc/(?P<question_id>\d+)/', include(patterns('',
             url(r'^edit/$', views.MultipleChoiceEditView.as_view(), name='mc_edit'),
             url(r'^versions/$', views.MultipleChoiceVersionView.as_view(), name='mc_versions'),
-            #url(r'^revert/$', views.revert_multiplechoice, name='mc_revert'),
             url(r'^delete/$', views.MultipleChoiceDeleteView.as_view(), name='mc_delete'),
         ))),
     ))),
 
     # FINALIZING
-    #this could go under urls 'dev/'
-    url(r'^(?P<exam_id>\d+)/finalize/$', views.FinalizeView.as_view(), name = 'finalize_view'),
-    #url(r'^finalize/finalize/$', views.finalize_survey, name = 'finalize_exam'),
-    #url(r'^final/$', views.FinalView.as_view(), name = 'final_exam'),
-    #url(r'^final/delete/$', views.delete_final_question, name = 'delete_final_question'),
+    url(r'^finalize/(?P<exam_id>\d+)/$', views.FinalizeView.as_view(), name = 'finalize_view'),
     
     # DISTRIBUTION
     url(r'^dist/', include(patterns('',

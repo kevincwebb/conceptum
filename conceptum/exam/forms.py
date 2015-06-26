@@ -203,31 +203,12 @@ class QuestionVersionForm(forms.ModelForm):
         """
         A list of tuples (i,question)
         
-        i is the index in reversion.get_unique_for_object and question is the
+        i is the index in get_unique_versions() and question is the
         question text at that version
         """
-        
-        
-        #version = reversion.get_for_object(self.instance)[0]
-        #revision = version.revision
-        #from reversion.revisions import RevisionManager
-        #manager = RevisionManager.get_manager(revision.manager_slug)
-        #adapter = manager.get_adapter(version.object.__class__)
-        #opts = adapter.model._meta.concrete_model._meta
-        #for thing in opts.local_fields:
-        #    print thing
-        #print "---"
-        #for thing in opts.local_many_to_many:
-        #    print thing
-        #print "---"
-        #for thing in adapter.get_fields_to_serialize():
-        #    print thing
-        
-                
         l = []
         i = 0
-        #change to get_unique
-        for version in reversion.get_for_object(self.instance):
+        for version in self.instance.get_unique_versions():
             l.append( (i,version.field_dict['question']))
             i+=1
         return l
@@ -243,11 +224,10 @@ class QuestionVersionForm(forms.ModelForm):
     def save(self):
         """
         The data saved in 'version' is an integer that is the selected version's index
-        in get_unique_for_object
+        in get_unique_versions()
         """
         index = int(self.cleaned_data.get('version'))
-        #change to get_unique
-        version_list = reversion.get_for_object(self.instance)
+        version_list = self.instance.get_unique_versions()
         version_list[index].revert()
         return self.instance
 
@@ -266,11 +246,10 @@ class MultipleChoiceVersionForm(QuestionVersionForm):
     def save(self):
         """
         The data saved in 'version' is an integer that is the selected version's index
-        in get_unique_for_object
+        in get_unique_versions()
         """
         index = int(self.cleaned_data.get('version'))
-        #change to get_unique
-        version_list = reversion.get_for_object(self.instance)
+        version_list = self.instance.get_unique_versions()
         version_list[index].revision.revert(delete=True)
         return self.instance
 

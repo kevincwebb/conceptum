@@ -60,7 +60,14 @@ class ViewsTest(SimpleTestCase):
         response = self.client.get(reverse('CI_exam:index'))
         self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dev/')
         
-        # Activated user logs in, no exams in database
+        # User logged in, not contrib
+        self.client.login(email=self.user.email, password='password')
+        response = self.client.get(reverse('exam:index'))
+        self.assertEqual(response.status_code, 403)        
+        
+        # Contrib user logs in, no exams in database
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
         for exam in Exam.objects.all():
             exam.delete()
         self.client.login(email=self.user.email, password='password')

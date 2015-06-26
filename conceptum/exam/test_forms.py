@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.db import models

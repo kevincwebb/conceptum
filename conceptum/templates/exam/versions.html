@@ -53,8 +53,8 @@
           <tr class = success>
           <td>{{ radio.choice_value}}  </td>
           {% comment %}
-          This may be confusing: as new versions are added, older
-          "version numbers" will change because they are really just indices
+          This may be confusing: radio.choice_value is just an index,
+          not a version number.
           {% endcomment %}
         {% endif %}
         <td>{{radio.choice_label}}</td>

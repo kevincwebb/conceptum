@@ -262,8 +262,7 @@ class FreeResponseVersionView(QuestionVersionView):
     def get_context_data(self, **kwargs):
         context = super(FreeResponseVersionView, self).get_context_data(**kwargs)
         context['question_type'] = 'fr'
-        # change to get_unique
-        context['version_list'] = reversion.get_for_object(self.object)
+        context['version_list'] = self.object.get_unique_versions()
         return context
 
 
@@ -281,16 +280,14 @@ class MultipleChoiceVersionView(QuestionVersionView):
         """
         l=[]
         option_type = ContentType.objects.get_for_model(MultipleChoiceOption)
-        # change to get_unique
-        for version in reversed(reversion.get_for_object(self.object)):
+        for version in reversed(self.object.get_unique_versions()):
             l.append(version.revision.version_set.filter(content_type__pk=option_type.id))
         return l
         
     def get_context_data(self, **kwargs):
         context = super(MultipleChoiceVersionView, self).get_context_data(**kwargs)
         context['question_type'] = 'mc'
-        # change to get_unique
-        context['version_list'] = reversion.get_for_object(self.object)
+        context['version_list'] = self.object.get_unique_versions()
         context['option_list'] = self.get_option_list()
         return context
 

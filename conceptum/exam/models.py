@@ -172,13 +172,47 @@ class Question(models.Model):
         looks at the object's own fields without following the reverse relations.
             
         get_unique_versions calls reversion.get_unique_for_object(self), and filters the
-        list to remove any duplicates (keeping the most recent version) from any position
+        list to remove duplicates (keeping the most recent version) from any position
         in the list. It checks the question's serialized data and also its related
         multiple choice options' serialized data.
+        
+        This is neither a subset nor superset of the list returned by get_unique_for_object.
         """
         versions = reversion.get_for_object(self)
-        # TODO: finish implementing
-        
+        unique_versions = []
+        for v in versions:
+            if not unique_versions:
+                unique_versions.append(v)
+                continue
+            # check against all versions in the new list
+            for u in unique_versions:
+                #check question length
+                if u.serialized_data != v.serialized_data:
+                    continue
+                
+                if self.__class__ is MultipleChoiceQuestion:
+                    # check number of options
+                    option_type = ContentType.objects.get_for_model(MultipleChoiceOption)
+                    v_options = list(v.revision.version_set.filter(content_type__pk=option_type.id))
+                    u_options = list(u.revision.version_set.filter(content_type__pk=option_type.id))
+                    if len(v_options) != len(u_options):
+                        continue
+                    
+                    # check if options are the same
+                    for v_option in v_options:
+                        for u_option in u_options:
+                            if u_option.serialized_data == v_option.serialized_data:
+                                u_options.remove(u_option)
+                                break       
+                    if u_options: #list not empty, so there was something that didn't match
+                        continue
+                #if we get here, then v == u, do not append v
+                break
+            
+            else: #we did not break, v != u for all u
+                unique_versions.append(v)    
+        return unique_versions
+    
     
     def save(self, *args, **kwargs):
         """
