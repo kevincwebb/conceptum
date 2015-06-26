@@ -7,9 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 
 import reversion
 
-#from profiles.tests import set_up_user
 from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, MultipleChoiceOption
-                    #QUESTION_LENGTH, REQUIRED_CHOICES
 
 
 class DummyConcept(models.Model):
@@ -29,43 +27,152 @@ def create_concepts():
     """
     for x in ['A','B','C','D']:
         DummyConcept.objects.get_or_create(name="Concept %s" % x)
-
-#def get_or_create_exam():
-#    """
-#    gets or creates an exam and some questions
-#    """
-#    exam, created = Exam.objects.get_or_create(name='Test Exam', description='an exam for testing')
-#    if created:
-#        concept_type = ContentType.objects.get_for_model(DummyConcept)
-#        concept = DummyConcept.objects.get(name = "Concept A")
-#        FreeResponseQuestion.objects.create(exam=exam,
-#                                            question="What is the answer to this FR question?",
-#                                            content_type=concept_type,
-#                                            object_id=concept.id)
-#        concept = DummyConcept.objects.get(name = "Concept B")
-#        mcq = MultipleChoiceQuestion.objects.create(exam=exam,
-#                                                    question="What is the answer to this MC question?",
-#                                                    content_type=concept_type,
-#                                                    object_id=concept.id)
-#        MultipleChoiceOption.objects.create(question=mcq, text="choice 1");
-#        MultipleChoiceOption.objects.create(question=mcq, text="choice 2");
-#        MultipleChoiceOption.objects.create(question=mcq, text="choice 3");
-#    return exam
+        
 
 class ModelsTest(SimpleTestCase):
     def setUp(self):
         create_concepts()
-        #self.user = set_up_user()
-        #self.user.profile.is_contrib = True
-        #self.user.profile.save()
-        #self.client.login(email=self.user.email, password='password')
  
     def test_fr_get_unique_versions(self):
-        exam, created = Exam.objects.get_or_create(name='Test Exam', description='an exam for testing')
+        # Reversion registration through the admin interface does not work in tests,
+        # nor does ReversionMiddleware work to create revisions
+        reversion.register(FreeResponseQuestion)
+        exam, created = Exam.objects.get_or_create(name='Test Exam',
+                                                   description='an exam for testing')
         concept_type = ContentType.objects.get_for_model(DummyConcept)
         concept = DummyConcept.objects.get(name = "Concept A")
-        question = FreeResponseQuestion.objects.create(exam=exam,
-                                                       question="Version 1",
-                                                       content_type=concept_type,
-                                                       object_id=concept.id)
         
+        # Check that initial version appears in the list
+        with reversion.create_revision():
+            question = FreeResponseQuestion.objects.create(exam=exam,
+                                                           question="Version 1 ?",
+                                                           content_type=concept_type,
+                                                           object_id=concept.id)
+        self.assertEqual(len(question.get_unique_versions()),1)
+        self.assertEqual(question.get_unique_versions()[0], reversion.get_for_object(question)[0])
+        
+        # Save question, should create another version. Since they are identical,
+        # our unique list should only have 1 version
+        with reversion.create_revision():
+            question.save()
+        self.assertEqual(len(reversion.get_for_object(question)), 2)
+        self.assertEqual(len(question.get_unique_versions()), 1)
+        
+        # Change the question, the unique list should have 2 versions, newest first
+        with reversion.create_revision():
+            question.question="Version 2 ?"
+            question.save()
+        self.assertEqual(len(reversion.get_for_object(question)), 3)
+        self.assertEqual(len(question.get_unique_versions()), 2)
+        self.assertEqual(question.get_unique_versions()[0].field_dict['question'],"Version 2 ?")
+        
+        # Revert to current version, unique list shouldn't change
+        with reversion.create_revision():
+            question.get_unique_versions()[0].revert()
+        self.assertEqual(len(reversion.get_for_object(question)), 4)
+        self.assertEqual(len(question.get_unique_versions()), 2)
+        
+        # Revert to old version, unique list should still only have 2 items,
+        # reverted version first
+        with reversion.create_revision():
+            question.get_unique_versions()[1].revert()
+        self.assertEqual(len(reversion.get_for_object(question)), 5)
+        self.assertEqual(len(question.get_unique_versions()), 2)
+        self.assertEqual(question.get_unique_versions()[0].field_dict['question'],"Version 1 ?")
+    
+    def test_mc_get_unique_versions(self):
+        """
+        Because MCQ and FRQ use the same get_unique_versions function, this test does not
+        repeat tests done by test_fr_get_unique_versions
+        """
+        reversion.register(MultipleChoiceQuestion, follow=["multiplechoiceoption_set"])
+        reversion.register(MultipleChoiceOption)
+        exam, created = Exam.objects.get_or_create(name='Test Exam',
+                                                   description='an exam for testing')
+        concept_type = ContentType.objects.get_for_model(DummyConcept)
+        option_type = ContentType.objects.get_for_model(MultipleChoiceOption)
+        concept = DummyConcept.objects.get(name = "Concept A")
+        
+        # Check that initial version appears in the list
+        with reversion.create_revision():
+            question = MultipleChoiceQuestion.objects.create(exam=exam,
+                                                             question="Version 1 ?",
+                                                             content_type=concept_type,
+                                                             object_id=concept.id)
+            option_1 = MultipleChoiceOption.objects.create(question=question,
+                                                           text="A v1")
+            option_2 = MultipleChoiceOption.objects.create(question=question,
+                                                           text="B v1")
+        self.assertEqual(len(question.get_unique_versions()),1)
+        self.assertEqual(question.get_unique_versions()[0], reversion.get_for_object(question)[0])
+        
+        # Change an option, should make a new unique version
+        with reversion.create_revision():
+            option_1.text = "A v2"
+            option_1.save()
+            question.save()
+        self.assertEqual(len(question.get_unique_versions()),2)
+        
+        # Add an option, should make a new unique version
+        with reversion.create_revision():
+            option_3 = MultipleChoiceOption.objects.create(question=question,
+                                                           text="C v1")
+            option_3.save()
+            question.save()
+        self.assertEqual(len(question.get_unique_versions()),3)
+        option_versions = question.get_unique_versions()[0].revision.version_set.filter(
+            content_type__pk=option_type.id)
+        options = (option.object for option in option_versions)
+        self.assertIn(option_3, options)
+        
+        # Save question and options, should not make a new unique version
+        with reversion.create_revision():
+            option_1.save()
+            option_2.save()
+            option_3.save()
+            question.save()
+        self.assertEqual(len(question.get_unique_versions()),3)
+        
+        # Revert, should delete an option but not make new unique version
+        with reversion.create_revision():
+            question.get_unique_versions()[1].revision.revert(delete=True)
+        self.assertEqual(len(question.get_unique_versions()),3)
+        self.assertNotIn(option_3, MultipleChoiceOption.objects.all())
+        
+        # Revert back, option_3 should exist again
+        with reversion.create_revision():
+            question.get_unique_versions()[1].revision.revert(delete=True)
+        self.assertEqual(len(question.get_unique_versions()),3)
+        self.assertIn(option_3, MultipleChoiceOption.objects.all())
+        
+        # Delete option_3 manally, doesn't create a new unique version
+        with reversion.create_revision():
+            option_3.delete()
+            question.save()
+        self.assertEqual(len(question.get_unique_versions()),3)
+        
+        # Revert back, option_3 is recreated
+        # Note, we have to 'get' the object because out local variable points to
+        # an object that was deleted
+        with reversion.create_revision():
+            question.get_unique_versions()[1].revision.revert(delete=True)
+        self.assertEqual(len(question.get_unique_versions()),3)
+        option_3 = MultipleChoiceOption.objects.get(text="C v1")
+        self.assertIn(option_3, MultipleChoiceOption.objects.all())
+        
+        # Delete an option manually, creates new unique version
+        with reversion.create_revision():
+            option_1.delete()
+            question.save()
+        self.assertEqual(len(question.get_unique_versions()),4)
+        self.assertNotIn(option_1, MultipleChoiceOption.objects.all())
+        
+        # Swap option texts. This should create a new unique version, because option
+        # versions are compared by their serialized data, not just text
+        with reversion.create_revision():
+            option_2.text = "C v1"
+            option_3.text = "B v1"
+            option_2.save()
+            option_3.save()
+            question.save()
+        self.assertEqual(len(question.get_unique_versions()),5)

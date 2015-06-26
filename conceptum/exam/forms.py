@@ -142,27 +142,43 @@ class MultipleChoiceEditForm(forms.ModelForm):
         super(MultipleChoiceEditForm, self).__init__(*args, **kwargs)   
         i = 1
         for choice in self.instance.multiplechoiceoption_set.all():
-            self.fields["choice_%d" % choice.id] = \
-                forms.CharField(label=_("choice %s" % i),
-                                required=False,
-                                initial=choice.text)
+            self.fields["choice_%d" % choice.id] = forms.CharField(label=_("Choice"),
+                                                                   required=False,
+                                                                   initial=choice.text)
+            self.fields["index_%d" % choice.id] = forms.IntegerField(label=_("Order"),
+                                                                   required=False,
+                                                                   initial=choice.index)
             i = i + 1
         if(i <= MAX_CHOICES):
             self.fields["choice_new"] = forms.CharField(label=_("Add A Choice:"), required=False)
+            self.fields["index_new"] = forms.IntegerField(label=_("Order"), required=False)
   
     def clean(self):
-        cleaned_data = super(MultipleChoiceEditForm, self).clean()
+        cleaned_data = super(MultipleChoiceEditForm, self).clean() 
         
-        # Require at least REQUIRED_CHOICES choices
+        indices = []
         choice_counter = 0
         for choice in self.instance.multiplechoiceoption_set.all():
             if self.cleaned_data.get("choice_%d" % choice.id):
+                if not self.cleaned_data.get("index_%d" % choice.id):
+                    raise forms.ValidationError("Make sure all choices have an order.")
+                index = self.cleaned_data['index_%d' % choice.id]
+                if index in indices:
+                    raise forms.ValidationError("Order must be unique.")
+                indices.append(index)
                 choice_counter += 1
+                
         if self.cleaned_data.get("choice_new"):
+            if not self.cleaned_data.get("index_new"):
+                raise forms.ValidationError("Make sure all choices have an order.")
             choice_counter += 1
+            
+        # Require at least REQUIRED_CHOICES choices
         if choice_counter < REQUIRED_CHOICES:
             raise forms.ValidationError("You must provide at least %d choice." % REQUIRED_CHOICES,
                                         code = 'no_choices')
+
+            
         
         return cleaned_data
 

@@ -209,7 +209,7 @@ class QuestionCreateView(LoginRequiredMixin,
             while (True):
                 choice_text = form.cleaned_data.get("choice_%d" % x)
                 if (choice_text):
-                    MultipleChoiceOption.objects.create(question = q, text = choice_text)
+                    MultipleChoiceOption.objects.create(question=q, text=choice_text, index=x)
                     x+=1
                 else:
                     break

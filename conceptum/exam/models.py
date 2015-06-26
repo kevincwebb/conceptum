@@ -6,6 +6,7 @@ from django.contrib.contenttypes import generic
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
 
 from allauth.account.adapter import get_adapter
@@ -152,6 +153,7 @@ class Question(models.Model):
     content_object = generic.GenericForeignKey('content_type', 'object_id')
     
     question = models.CharField(max_length=QUESTION_LENGTH)
+    number = models.IntegerField(null=True)
     image = models.ImageField(upload_to=question_imageupload_to, blank=True)
     rank = models.IntegerField(null=True, blank = True)
     optional = models.BooleanField(default=False)
@@ -186,19 +188,20 @@ class Question(models.Model):
                 continue
             # check against all versions in the new list
             for u in unique_versions:
-                #check question length
+                #check question
                 if u.serialized_data != v.serialized_data:
                     continue
                 
                 if self.__class__ is MultipleChoiceQuestion:
                     # check number of options
                     option_type = ContentType.objects.get_for_model(MultipleChoiceOption)
-                    v_options = list(v.revision.version_set.filter(content_type__pk=option_type.id))
-                    u_options = list(u.revision.version_set.filter(content_type__pk=option_type.id))
+                    v_options = v.revision.version_set.filter(content_type__pk=option_type.id)
+                    u_options = u.revision.version_set.filter(content_type__pk=option_type.id)
                     if len(v_options) != len(u_options):
                         continue
                     
                     # check if options are the same
+                    u_options = list(u_options)
                     for v_option in v_options:
                         for u_option in u_options:
                             if u_option.serialized_data == v_option.serialized_data:
@@ -238,15 +241,31 @@ class MultipleChoiceQuestion(Question):
     predefined choices.
     """
     randomize = models.BooleanField('randomize choices order', default=False)
+    
+    @property
+    def correct_option(self):
+        return self.multiplechoiceoption_set.get(is_correct=True)
 
 
 class MultipleChoiceOption(models.Model):
     """
     Represents one option in the set of choices for a multiple choice question.
+    
+    fields
+        index - the index of this option in a question's option set. This object
+                is automatically ordered by index. Use 1-based indexing to be more
+                friendly to user.
+        is_correct - marks this answer as the correct answer. only one answer per
+                question should be marked correct
     """
     question = models.ForeignKey(MultipleChoiceQuestion)
     text = models.CharField(max_length=CHOICE_LENGTH)
+    index = models.IntegerField(validators=[MaxValueValidator(MAX_CHOICES)])
+    is_correct = models.BooleanField(default=False)
     rank = models.IntegerField(null=True, blank = True)
+
+    class Meta:
+        ordering = ['index']
 
     def __unicode__(self):
         return self.text
