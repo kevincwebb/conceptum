@@ -98,12 +98,12 @@ class AddMultipleChoiceForm(forms.ModelForm):
         Empty choice fields will not be saved. 
         """
         super(AddMultipleChoiceForm, self).__init__(*args, **kwargs)
+        self.fields["correct"] = forms.ChoiceField(label=_("Correct Choice"),
+                                                   choices=self.choices())
         # Create fields for choices: choice_1, choice_2,...
         for x in range(1, MAX_CHOICES+1):
             self.fields["choice_%d" % x] = forms.CharField(label=_("choice %s" % x),
                                                            required=False,)
-        self.fields["correct"] = forms.ChoiceField(label=_("Correct Choice"),
-                                                   choices=self.choices())
 
     def clean(self):
         cleaned_data = super(AddMultipleChoiceForm, self).clean()
@@ -116,8 +116,13 @@ class AddMultipleChoiceForm(forms.ModelForm):
                 self.cleaned_data["choice_%d" % x] = None
                 choice_counter += 1
                 self.cleaned_data["choice_%d" % choice_counter] = choice
-                if int(self.cleaned_data.get("correct")) == x:
-                    self.cleaned_data["correct"] = choice_counter
+                
+##############################
+# fix this
+##############################
+
+                #if int(self.cleaned_data.get("correct")) == x:
+                #    self.cleaned_data["correct"] = choice_counter
         
         # Require at least REQUIRED_CHOICES choices
         if choice_counter < REQUIRED_CHOICES:
@@ -141,13 +146,22 @@ class MultipleChoiceEditForm(forms.ModelForm):
     """
     Form for editing a multiple choice question. If there are less than MAX_CHOICES choices,
     there is an extra field to add a new choice. If a choice's text is deleted and the form
-    is submitted, that choice will be deleted. 
+    is submitted, that choice will be deleted.
+    
+    The view expects that the 3rd field is the ChoicField for marking a correct answer,
+    followed by alternating choice and index fields.
     """
     class Meta:
         model = MultipleChoiceQuestion
         fields = ['question','image']
         widgets = {
             'question': forms.TextInput(attrs={'size': '60'})}
+    
+    def choices(self):
+        l = [('','---')]
+        for i in range(1,MAX_CHOICES+1):
+            l.append((i,i))
+        return l
         
     def __init__(self, *args, **kwargs):
         """
@@ -155,7 +169,21 @@ class MultipleChoiceEditForm(forms.ModelForm):
         initial data.
         Creates extra field for adding a new choice. 
         """    
-        super(MultipleChoiceEditForm, self).__init__(*args, **kwargs)   
+        super(MultipleChoiceEditForm, self).__init__(*args, **kwargs)
+        
+        
+##################################################################
+# modify choices method to use MCO.id
+# get initial
+#################################################################
+        
+        
+        self.fields["correct"] = forms.ChoiceField(label=_("Correct Choice"),
+                                                   choices=self.choices(),
+                                                   initial=1,
+                                                   widget=forms.RadioSelect)
+        # Create fields for choices and indices
+        # choice_1, index_1, choice_2, index_2, ...
         i = 1
         for choice in self.instance.multiplechoiceoption_set.all():
             self.fields["choice_%d" % choice.id] = forms.CharField(label=_("Choice"),
@@ -171,6 +199,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
         if(i <= MAX_CHOICES):
             self.fields["choice_new"] = forms.CharField(label=_("Add A Choice:"), required=False)
             self.fields["index_new"] = forms.IntegerField(label=_("Order"), required=False)
+            
   
     def clean(self):
         cleaned_data = super(MultipleChoiceEditForm, self).clean() 

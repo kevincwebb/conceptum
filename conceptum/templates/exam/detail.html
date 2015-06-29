@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block head_title %}{% trans "Interview Detail" %}{% endblock %}
+{% block head_title %}{% trans "Exam Detail" %}{% endblock %}
 
 {% block extra_headers %}
 
@@ -17,7 +17,7 @@
 <div class="container">
     
 <div class="form-horizontal-heading">
-  <h2><b>{{current_app}} Questions</b></h2>
+  <h2><b>{{current_app|capfirst}} Questions</b></h2>
   Exam: {{ exam.name }} </br>
   Description: {{ exam.description }}
 </div>
@@ -112,14 +112,22 @@
                 {% if index == 1 %}
                   <a href="{% url 'exam:mc_edit' q.id %}">{{q}}</a> </td>
                   <td>{%for option in q.multiplechoiceoption_set.all %}
-                    <li>{{option.text}}</li>
+                    {% if option.is_correct %}
+                      <li><b>{{option.text}}</b></li>
+                    {% else %}
+                      <li>{{option.text}}</li>
+                    {% endif %}
                   {%endfor%}
                   </td>
                 {%else%}
                   <tr> <td bgcolor = "#CECECE"></td> 
                   <td> <a href="{% url 'exam:mc_edit' q.id %}">{{q}}</a> </td> 
                   <td WIDTH="250">{%for option in q.multiplechoiceoption_set.all %}
-                    <li>{{option.text}}</li>
+                    {% if option.is_correct %}
+                      <li><b>{{option.text}}</b></li>
+                    {% else %}
+                      <li>{{option.text}}</li>
+                    {% endif %}
                   {%endfor%}
                   </td>
                 {%endif%}

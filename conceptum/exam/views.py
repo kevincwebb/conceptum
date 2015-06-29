@@ -206,13 +206,18 @@ class QuestionCreateView(LoginRequiredMixin,
                                                       content_type = concept_type,
                                                       object_id = self.concept.id)
             x=1
-            while (True):
+            choice_text = form.cleaned_data.get("choice_%d" % x)
+            while (choice_text):
+                correct = False
+                if int(form.cleaned_data.get("correct")) == x:
+                    correct = True
+                MultipleChoiceOption.objects.create(question=q,
+                                                    text=choice_text,
+                                                    index=x,
+                                                    is_correct=correct)
+                x+=1
                 choice_text = form.cleaned_data.get("choice_%d" % x)
-                if (choice_text):
-                    MultipleChoiceOption.objects.create(question=q, text=choice_text, index=x)
-                    x+=1
-                else:
-                    break
+
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -238,6 +243,25 @@ class MultipleChoiceEditView(QuestionEditView):
     model = MultipleChoiceQuestion
     form_class = MultipleChoiceEditForm
     template_name = 'exam/mcquestion_update_form.html'
+
+    def get_form_kwargs(self):
+        kwargs = super(MultipleChoiceEditView, self).get_form_kwargs()
+        #kwargs['correct_choice'] = '?'
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        """
+        builds a list of (choice_field,index_field) tuples
+        """
+        context = super(MultipleChoiceEditView, self).get_context_data(**kwargs)
+        form = self.get_form(self.form_class)
+        fields = list(form)
+        # fields[2] is a ChoiceField for marking the correct answer
+        # fields[3::2] is all choice_%d fields, fields[4::2] is all index_%d fields
+        # We zip these into one list so that the template can get tuple for all fields
+        # pertaining to a single choice
+        context['choice_fields'] = zip(fields[3::2], list(fields[2]), fields[4::2])
+        return context
 
 
 class QuestionVersionView(LoginRequiredMixin,

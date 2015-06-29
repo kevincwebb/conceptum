@@ -61,14 +61,18 @@
         {% if question_type == 'mc' %}
           <td>
             {% for option in option_list.pop %}
-              <li>{{option}}</li>
+              {% if option.is_correct %}
+                <li><b>{{option.text}}</b></li>
+              {% else %}
+                <li>{{option.text}}</li>
+              {% endif %}
             {% endfor %}
           </td>
         {% endif %}
         <td>{{radio.tag}}<br></td>
       </tr>
     {% endfor %}
-  </body>
+  </tbody>
   </table>
   </div>
     <button class="btn btn-primary" type="submit" value="Update"> Update </button>

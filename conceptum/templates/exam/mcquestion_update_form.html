@@ -22,7 +22,35 @@
   
 
 <form action="" method="post">{% csrf_token %}
-    {{ form.as_p }}
+    {{ form.non_field_errors}}
+    </br>
+    {{ form.question.label_tag }} {{ form.question}}</br>
+    {{ form.image.label_tag }} {{form.image}} </br>
+
+
+    <div style="overflow: auto; width:75%; height: 400px;">
+    <table class="table table-bordered">
+      <thead>
+        <tr bgcolor="#B2B2B2">
+          <th></th>
+          <th>Correct</th>
+          <th>Order</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for choice,radio,index in choice_fields %}
+        <tr>
+        <td>{{ choice.label_tag }} {{ choice}} </td>
+        <td>{{ radio.tag}} </td>
+        <td>{{ index.label_tag }} {{ index }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+    
+    
+    
     
     <button class="btn btn-primary " type="submit" value="Update"> Update </button>
     <a href = {% url 'exam:detail' object.exam.id %} class="btn btn-primary"> Cancel </a>
