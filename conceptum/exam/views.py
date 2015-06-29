@@ -281,7 +281,10 @@ class MultipleChoiceVersionView(QuestionVersionView):
         l=[]
         option_type = ContentType.objects.get_for_model(MultipleChoiceOption)
         for version in reversed(self.object.get_unique_versions()):
-            l.append(version.revision.version_set.filter(content_type__pk=option_type.id))
+            option_versions = version.revision.version_set.filter(content_type__pk=option_type.id)
+            options = list(version.object_version.object for version in option_versions)
+            options.sort(cmp=lambda x,y: cmp(x.index, y.index))
+            l.append(options)
         return l
         
     def get_context_data(self, **kwargs):

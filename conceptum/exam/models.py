@@ -260,7 +260,8 @@ class MultipleChoiceOption(models.Model):
     """
     question = models.ForeignKey(MultipleChoiceQuestion)
     text = models.CharField(max_length=CHOICE_LENGTH)
-    index = models.IntegerField(validators=[MaxValueValidator(MAX_CHOICES)])
+    index = models.IntegerField(validators=[MaxValueValidator(MAX_CHOICES),
+                                            MinValueValidator(1)])
     is_correct = models.BooleanField(default=False)
     rank = models.IntegerField(null=True, blank = True)
 

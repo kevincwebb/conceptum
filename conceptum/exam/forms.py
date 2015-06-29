@@ -83,6 +83,14 @@ class AddMultipleChoiceForm(forms.ModelForm):
         widgets = {
             'question': forms.TextInput(attrs={'size': '60'})}
     
+
+    
+    def choices(self):
+        l = [('','---')]
+        for i in range(1,MAX_CHOICES+1):
+            l.append((i,i))
+        return l
+    
     def __init__(self, *args, **kwargs):
         """
         This method creates text field for each option.
@@ -94,6 +102,8 @@ class AddMultipleChoiceForm(forms.ModelForm):
         for x in range(1, MAX_CHOICES+1):
             self.fields["choice_%d" % x] = forms.CharField(label=_("choice %s" % x),
                                                            required=False,)
+        self.fields["correct"] = forms.ChoiceField(label=_("Correct Choice"),
+                                                   choices=self.choices())
 
     def clean(self):
         cleaned_data = super(AddMultipleChoiceForm, self).clean()
@@ -106,6 +116,8 @@ class AddMultipleChoiceForm(forms.ModelForm):
                 self.cleaned_data["choice_%d" % x] = None
                 choice_counter += 1
                 self.cleaned_data["choice_%d" % choice_counter] = choice
+                if int(self.cleaned_data.get("correct")) == x:
+                    self.cleaned_data["correct"] = choice_counter
         
         # Require at least REQUIRED_CHOICES choices
         if choice_counter < REQUIRED_CHOICES:
@@ -117,6 +129,10 @@ class AddMultipleChoiceForm(forms.ModelForm):
             for j in range(i+1, choice_counter+1):
                 if (self.cleaned_data["choice_%d" % i]==self.cleaned_data["choice_%d" % j]):
                     raise forms.ValidationError("You have two identical choices.")
+        
+        # Make sure a valid choice is designated as correct
+        if not self.cleaned_data.get("choice_%s" % self.cleaned_data.get("correct")):
+            raise forms.ValidationError("The choice you marked correct is blank")
         
         return cleaned_data
 
@@ -146,8 +162,11 @@ class MultipleChoiceEditForm(forms.ModelForm):
                                                                    required=False,
                                                                    initial=choice.text)
             self.fields["index_%d" % choice.id] = forms.IntegerField(label=_("Order"),
-                                                                   required=False,
-                                                                   initial=choice.index)
+                                                                     required=False,
+                                                                     initial=choice.index,
+                                                                     validators=[
+                                                                     MaxValueValidator(MAX_CHOICES),
+                                                                     MinValueValidator(1)])
             i = i + 1
         if(i <= MAX_CHOICES):
             self.fields["choice_new"] = forms.CharField(label=_("Add A Choice:"), required=False)
@@ -158,27 +177,35 @@ class MultipleChoiceEditForm(forms.ModelForm):
         
         indices = []
         choice_counter = 0
+        # Require that all non-blank choices have an index
         for choice in self.instance.multiplechoiceoption_set.all():
             if self.cleaned_data.get("choice_%d" % choice.id):
                 if not self.cleaned_data.get("index_%d" % choice.id):
-                    raise forms.ValidationError("Make sure all choices have an order.")
-                index = self.cleaned_data['index_%d' % choice.id]
-                if index in indices:
-                    raise forms.ValidationError("Order must be unique.")
-                indices.append(index)
+                    raise forms.ValidationError("Make sure all non-blank choices have an order.")
+                indices.append(self.cleaned_data['index_%d' % choice.id])
                 choice_counter += 1
-                
+            else:
+                if self.cleaned_data.get("index_%d" % choice.id):
+                    raise forms.ValidationError("Make sure all blank choices do not have an order")
         if self.cleaned_data.get("choice_new"):
             if not self.cleaned_data.get("index_new"):
-                raise forms.ValidationError("Make sure all choices have an order.")
+                raise forms.ValidationError("Make sure all non-blank choices have an order.")
+            indices.append(self.cleaned_data['index_new'])
             choice_counter += 1
+        else:
+            if self.cleaned_data.get("index_new"):
+                raise forms.ValidationError("Make sure all blank choices do not have an order")
             
         # Require at least REQUIRED_CHOICES choices
         if choice_counter < REQUIRED_CHOICES:
             raise forms.ValidationError("You must provide at least %d choice." % REQUIRED_CHOICES,
                                         code = 'no_choices')
-
-            
+        
+        # Check given indices, should begin at 1 and increment by 1
+        indices.sort()
+        for i in range(1, choice_counter+1):
+            if i != indices.pop(0):
+                raise forms.ValidationError("Order must begin with 1, with no doubles or gaps")
         
         return cleaned_data
 
@@ -200,6 +227,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
             text = self.cleaned_data.get("choice_%d" % choice.id)
             if text:
                 choice.text = text
+                choice.index = self.cleaned_data.get("index_%d" % choice.id)
                 choice.save()
             else:
                 # delete choice if field is blank
@@ -208,7 +236,9 @@ class MultipleChoiceEditForm(forms.ModelForm):
         # create a new option, if provided
         new_text = self.cleaned_data.get("choice_new")
         if (new_text):
-            MultipleChoiceOption.objects.create(question=self.instance, text=new_text)
+            MultipleChoiceOption.objects.create(question=self.instance,
+                                                text=new_text,
+                                                index=self.cleaned_data.get("index_new"))
             
         return self.instance
 
