@@ -24,7 +24,9 @@
 <form action="" method="post">{% csrf_token %}
     {{ form.non_field_errors}}
     </br>
+    {{ form.question.errors }}
     {{ form.question.label_tag }} {{ form.question}}</br>
+    {{ form.image.errors }}
     {{ form.image.label_tag }} {{form.image}} </br>
 
 
@@ -38,11 +40,12 @@
         </tr>
       </thead>
       <tbody>
+        {{ form.correct.errors }}
         {% for choice,radio,index in choice_fields %}
         <tr>
-        <td>{{ choice.label_tag }} {{ choice}} </td>
-        <td>{{ radio.tag}} </td>
-        <td>{{ index.label_tag }} {{ index }}</td>
+          <td>{{ choice.label_tag }} {{ choice}} {{ choice.errors }}</td>
+          <td>{{ radio.tag}} </td>
+          <td>{{ index.label_tag }} {{ index }} {{index.errors}}</td>
         </tr>
         {% endfor %}
       </tbody>

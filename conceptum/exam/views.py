@@ -68,11 +68,12 @@ def discuss(request, exam_id):
     return HttpResponse(template.render(context))
 
     
- ####################### DEVELOPMENT ###########################################
+####################### DEVELOPMENT ###########################################
 
 class ExamDevIndexView(LoginRequiredMixin,
-                    CurrentAppMixin,
-                    generic.ListView):
+                       ContribRequiredMixin,
+                       CurrentAppMixin,
+                       generic.ListView):
     """
     Landing page for exam development. This page will list all surveys or CI exams that
     are in the Development stage.

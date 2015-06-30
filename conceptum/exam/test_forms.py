@@ -151,11 +151,12 @@ class DevFormsTest(SimpleTestCase):
         q.delete()
     
     def test_multiple_choice_edit_form(self):
-        exam = get_or_create_exam()
+        get_or_create_exam().delete()
+        exam = get_or_create_exam() # get a fresh copy
         question = MultipleChoiceQuestion.objects.get(exam=exam)
         options = question.multiplechoiceoption_set.all()
         
-        # check initial data
+        # Check initial data
         response = self.client.get(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}))
         initial = response.context['form'].initial
         self.assertEqual(initial['question'],question.question)
@@ -164,13 +165,11 @@ class DevFormsTest(SimpleTestCase):
         # In views_test we test that the list of 3-tuples is correctly constructed, which mostly
         # covers initial data
         
-        
-        # basic updates
+        # Basic updates
         #   - change question text
         #   - change option text
         #   - change correct option
         #   - delete an option (by leaving it blank)
-        # save question
         post_dict = {'question':'new question',
                      'correct':options[1].id,
                      'choice_1':'A',
@@ -180,7 +179,7 @@ class DevFormsTest(SimpleTestCase):
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
         question = MultipleChoiceQuestion.objects.get(id=question.id)
-        objects = question.multiplechoiceoption_set.all()
+        options = question.multiplechoiceoption_set.all()
         self.assertEqual(question.question,'new question')
         self.assertEqual(options[0].text,'A')
         self.assertEqual(options[0].index,1)
@@ -188,16 +187,70 @@ class DevFormsTest(SimpleTestCase):
         self.assertEqual(options[1].text,'B')
         self.assertEqual(options[1].index,2)
         self.assertTrue(options[1].is_correct)
+        self.assertEqual(len(options),2) #before, there were 3
         
+        # Change option order
+        post_dict['index_1']=2
+        post_dict['index_2']=1
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        options = MultipleChoiceQuestion.objects.get(id=question.id).multiplechoiceoption_set.all()
+        self.assertEqual(len(options),2)
+        self.assertEqual(options[0].text,'B')
+        self.assertEqual(options[1].text,'A')
         
-        # blank fields
-        #response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
-        #                            {})
+        # Add an option
+        post_dict['choice_new']='C'
+        post_dict['index_new']=3
+        post_dict['correct']=-1
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        options = MultipleChoiceQuestion.objects.get(id=question.id).multiplechoiceoption_set.all()
+        self.assertEqual(len(options),3)
+        self.assertEqual(options[2].text,'C')
+        self.assertTrue(options[2].is_correct)
         
-        # duplicate question
+        # Blank fields
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    {})
+        error = _("This field is required.")
+        self.assertFormError(response, 'form', 'question', error, "" )
+        self.assertFormError(response, 'form', 'correct', error, "")
+        error = _("You must provide at least %d choice." % REQUIRED_CHOICES)
+        self.assertFormError(response, 'form', None, error, "" )
+        
+        # Bad correct value
+        post_dict['correct']=99999
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        self.assertFormError(response, 'form', 'correct', None, "" )
+        
+        # Duplicate option
+        post_dict['choice_1']='same'
+        post_dict['choice_2']='same'
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        error = _("You have two identical choices.")
+        self.assertFormError(response, 'form', None, error, "" )
         
         # indices not successive / don't start at 1
-        
+        post_dict = {'question':'new question',
+                     'correct':options[0].id,
+                     'choice_1':'A',
+                     'choice_2':'B',
+                     'choice_3':'C',
+                     'index_1':1,
+                     'index_2':2,
+                     'index_3':3}
+
+################################################################################
+###
+###
+###     you are here
+###
+###
+######
+
         # question and index don't match up
         
         # marked wrong field correct

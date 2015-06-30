@@ -83,8 +83,6 @@ class AddMultipleChoiceForm(forms.ModelForm):
         widgets = {
             'question': forms.TextInput(attrs={'size': '60'})}
     
-
-    
     def choices(self):
         l = [('','---')]
         for i in range(1,MAX_CHOICES+1):
@@ -188,8 +186,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
         if(i <= MAX_CHOICES):
             self.fields["choice_new"] = forms.CharField(label=_("Add A Choice:"), required=False)
             self.fields["index_new"] = forms.IntegerField(label=_("Order"), required=False)
-            
-  
+        
     def clean(self):
         cleaned_data = super(MultipleChoiceEditForm, self).clean() 
         
@@ -224,12 +221,22 @@ class MultipleChoiceEditForm(forms.ModelForm):
         for i in range(1, choice_counter+1):
             if i != indices.pop(0):
                 raise forms.ValidationError("Order must begin with 1, with no doubles or gaps")
+
+        # Check for duplicates
+        options = [option.id for option in self.instance.multiplechoiceoption_set.all()]
+        options.append("new")
+        for i in range(0,len(options)):
+            if self.cleaned_data.get('choice_%s' % options[i]):
+                for j in range(i+1,len(options)):
+                    if (self.cleaned_data.get("choice_%s" % options[i])==
+                        self.cleaned_data.get("choice_%s" % options[j])):
+                            raise forms.ValidationError("You have two identical choices.")
         
         # Make sure the designated correct choice is not blank
         if not self.cleaned_data.get("choice_%s" % self.cleaned_data.get("correct")):
             if not (self.cleaned_data.get("choice_new") and self.cleaned_data.get("correct")=='-1'):
                 raise forms.ValidationError("The choice you marked correct is blank")
-        
+
         return cleaned_data
 
     @transaction.atomic()
