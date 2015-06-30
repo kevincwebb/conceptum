@@ -22,7 +22,38 @@ class IndexView(LoginRequiredMixin,
     Lists all interviews in the database, click on an interview to go to its DetailView
     """
     template_name = 'interviews/index.html'
+    interview_list = []
+    # for intv in Interview.objects.all():
+    #     excerpts = intv.excerpt_set.all()
+    #     interview = [intv]
+    #     interview.extend(excerpts)
+    #     interview_list.append(interview)
+    
     context_object_name = 'interview_list'
+    
+    
+    def get_context_data(self, **kwargs):
+        """
+        The hyperlink to the edit page should only be visible if this user is allowed
+        to edit, i.e., this user is the original uploader or has staff privileges.
+        The template should use the boolean user_can_edit to do this check
+        """
+        
+        context = super(IndexView, self).get_context_data(**kwargs)
+        interview_list = []
+        for intv in Interview.objects.all():
+            excerpts_obj = intv.excerpt_set.all()
+            excerpts = []
+            for exc in excerpts_obj:
+                excerpts.append(exc.content_object.name)
+                
+            excerpts = ", ".join(excerpts)
+            excerpts = "Concepts: " + excerpts
+            interview = [intv]
+            interview.append([excerpts, "Questions: " + len(excerpts_obj).__str__()])
+            interview_list.append(interview)
+        context['interview_list'] = interview_list
+        return context
 
     def get_queryset(self):
         return Interview.objects.all()

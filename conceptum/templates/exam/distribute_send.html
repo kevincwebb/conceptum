@@ -29,7 +29,7 @@
   <ul>
   {% if submitted_exams %}
     {% for response in submitted_exams %}
-      {{ response.respondent }}<br>
+      <li><a href = "{% url 'exam:response_detail' response.response_set.exam.id response.response_set.id response.key %}"> {{ response.respondent }}</a></li>
     {% endfor %}
   {% else %}
     None

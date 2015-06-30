@@ -50,6 +50,8 @@ class Interview(models.Model):
     
     def get_absolute_url(self):
         return reverse('interview_detail', kwargs={'pk': self.pk})
+
+    
     
 
 class Excerpt(models.Model):

@@ -21,10 +21,11 @@
 <ul class = "collapsible_overview"> 
 {% for exam, stats in exams %}
        
-    <li class = "table"><span class="over_tab"><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a></span>
+    <li class = "table"><span class="over_tab"><span class = "tab-button"><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a></span>
+        <a href = {% url 'exam:detail' exam.id %} class="dist_button"> Edit</a></span>
     
-    <a href = {% url 'exam:detail' exam.id %} class="dist_button"> Edit</a>
-    <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> <div class = "minus"> - </div> </div></label>
+    
+    <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div id = "plus" class = "plus"> + </div> <div id = "minus" class = "minus"> - </div> </div></label>
     <input type = "checkbox" id = "toplist_node{{exam.id}}" onclick = "PlusMinus(this)">
 
 <div class = "overview">
@@ -54,23 +55,16 @@
 
  
   <div class="horizontal-heading">
-    <h2>{{ current_app|capfirst }} Development Home</h2>
+    <h3>You're at the {{ current_app }} development home</h3>
   </div>
-  <h4>Existing {{ current_app }}s in development</h4>
+  Existing {{ current_app }}s in development:
   {% for exam in exams %}
-    <li><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a> - {{ exam.description }}</li>
+    <li><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a></li>
   {% endfor %}
   </br>
   {% if user.is_staff %}
     <a href="{% url 'exam:create' %}">Create New Exam</a>
   {% endif %}
-
-  <h4> Finished exams </h4>
-  These are no longer editable.
-  {% for exam in finished_exams %}
-          <li> {{ exam }} - {{ exam.description }} </li>
-  {% endfor %}
-
 
 </div> <!-- container -->
 

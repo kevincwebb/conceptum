@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Exam Responses" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+<h1> Response Set for class "{{response_set.course}}" </h1>
+<h3> Responses to: "{{response_set.exam}}" (id {{exam_id}})</h3>
+<h3> Created on {{response_set.created}}</h3>
+
+    
+
+<hr>
+    
+<!--[numQuestions, numCorrect, medianScore, maxScore, lowScore]-->
+
+<ul class = "collapsible_list">
+    <li><h3><span class="tab">Statistics </span>
+    
+        <label for="stats_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "stats_node">
+    
+  <ul class = "inner_list">
+    {% if stats %}
+        <li> Average Score: {{stats.2}}%</li>
+        <li> Number of questions: {{stats.0}}</li>
+        <li> Number of correct answers: {{stats.1}}</li>
+        <li> Highest Score: {{stats.3}}%</li>
+        <li> Lowest Score: {{stats.4}}%</li>
+        {% if response_set.pre_test %}
+            <li> Pre-Test created on {{response_set.created}}</li>
+        {% else %}
+            <li>Post-Test created on {{response_set.created}}</li>
+        {% endif %}
+    {% else %}
+    <li> none </li>
+    {% endif %}
+</ul>
+    </li>
+    
+</ul>
+    
+    
+    
+    
+<!-- need the response set to be passed in -->
+<ul class = "collapsible_list">
+    <li><h3><span class="tab">Submitted Responses to {{response_set}} </span>
+    
+        <label for="responses_node"><div class = "ind_button "> + </div></label></h3>
+    <input type = "checkbox" id = "responses_node" checked>
+    
+    
+    
+  <ul class = "inner_list">
+  {% if responses %}
+    {% for response in responses %}
+      <li><a href = "
+          {% url 'exam:response_detail' response.response_set.exam.id response.response_set.id response.key %}">
+          
+{{ response.respondent }}</a></li> 
+    {% endfor %}
+  {% else %}
+    None
+  {% endif %}
+  </ul>
+    <br>
+    <a href="{% url 'exam:response_sets' exam_id%}">Other Response Sets for Exam {{exam_id}}</a><br>
+    </li>
+    
+
+
+
+<br>
+<hr>
+
+    <!-- maybe make this a footer -->
+    
+<h3> Discuss this Exam </h3>
+<!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a>-->
+
+
+<a href="{% url 'exam:discuss' exam_id %}">Discuss</a><br>
+<a href="{% url 'exam:distribute_new' exam_id %}">Distribute</a>
+    
+
+</div> <!-- container -->
+
+{% endblock %}

@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block head_title %}{% trans "Take Test" %}{% endblock %}
+{% block head_title %}{% trans "Exam Responses" %}{% endblock %}
 
 {% block extra_headers %}
 
@@ -20,7 +20,7 @@
     <h3>Take the test here</h3>
   </div>
   
-  <form class="form-horizontal" role="form"  action="{% url 'exam_response' object.key %}" method="post">{% csrf_token %}
+  <form class="form-horizontal" role="form"  action="{% url 'exam:take_test' object.key %}" method="post">{% csrf_token %}
   
   {{ form.non_field_errors }}
 

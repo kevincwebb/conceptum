@@ -1,3 +1,21 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Exam Index" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
 <h1>Pruning Stage for Node {{ node.id }}</h1>
 
 {{ node.content }}
@@ -32,5 +50,9 @@
 
 <a href="{% url 'landing' %}">Back to Landing Page</a>
 <p>
-<a href="{% url 'final merge' node.id %}">Final Submission</a>
+<span class = "tab"><a href="{% url 'final merge' node.id %}">Final Submission</a></span>
 <font color="red">After clicking, you will not be able to edit or add concepts!</font>
+    
+    </p>
+</div>
+{% endblock %}

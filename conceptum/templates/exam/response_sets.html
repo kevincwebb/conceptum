@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Response Sets" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+<!--
+<ul class = "collapsible_list">
+<li> 
+    {% load staticfiles %}
+    <label for="toplist_node1"><h2 class = "list">Statistics <div class = "plus"> + </div> </h2></label>
+    <input type = "checkbox" id = "toplist_node1">
+
+<ul class = "inner_list">
+-->
+
+<h3> Response Sets of Exam {{ exam_id }} </h3>
+    
+<p>
+Click on set for details and responses of each set. Click on "distribute" to send {{exam}} to new students, and add them to the set.
+</p>
+    
+<!-- need the response set to be passed in -->
+<ul class = "collapsible_overview">    
+{% for set in responses %}     <!-- maybe do some collapsible statistics on each response set -->
+    <li class = "table"><span class="over_tab"><span class = "tab-button"><a href = "{% url 'exam:responses' set.exam.id set.id%}">{{ set }}</a></span>
+        
+        <a href = {% url 'exam:distribute_send' set.id %} class="dist_button">Distribute</a>
+        </span>
+    
+    <label for="toplist_node{{set.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> </div></label>
+    <input type = "checkbox" id = "toplist_node{{set.id}}">
+<div class = "overview">
+<ul class = "overview_inner_list">
+    <li> • Course: {{set.course}}</li>
+    <li> • Instructor: {{set.instructor}}</li>
+    <li> • Date Created: {{set.created}}</li>
+    <li> • Number of Questions: ##</li>
+    <li> • Number of Responses: ##</li>
+    <li> • Average Score: ##</li>
+        
+</ul>
+    
+</div>
+    
+    </li>
+{% endfor %}
+</ul>
+
+        
+    
+
+
+ 
+<a href = "{% url 'exam:distribute_new' exam_id %}" class = "btn btn-warning">New Response Set</a> <br>
+    <br>
+    
+<a href = "{% url 'exam:distribute_detail' exam_id %}" class = "btn btn-primary">Back to Exam {{exam_id}}</a> 
+<a href="{% url 'exam:distribute_index' %}" class = "btn btn-primary">Back to Exam Index</a>
+<a href="{% url 'exam:discuss' exam_id %}" class = "btn btn-primary">Discuss this Exam</a><br><br>
+
+
+    
+
+</div> <!-- container -->
+
+{% endblock %}

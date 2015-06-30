@@ -17,15 +17,29 @@
 <div class="container">
     
 <div class="form-horizontal-heading">
-  <h2>Interviews</h2>
+  <h2>Interview Index</h2>
 </div>
   
 {% if interview_list %}
-    <ul>
-    {% for interview in interview_list %}
-        <li><a href="{% url 'interview_detail' interview.id %}">{{ interview }}</a></li>
+<ul class = "collapsible_overview"> 
+{% for interview, stats in interview_list %}
+       
+    <li class = "table"><span class="over_tab"><a href="{% url 'interview_detail' interview.id %}">{{ interview }}</a></span>
+    
+    <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> </div></label>
+    <input type = "checkbox" id = "toplist_node{{exam.id}}">
+<div class = "overview">
+<ul class = "overview_inner_list">
+    {% for item in stats %}
+    <li> • {{item}}</li>
     {% endfor %}
-    </ul>
+        
+</ul>
+
+</div>
+</li>
+{% endfor %}
+</ul>
 {% else %}
     <p>No interviews are available.</p>
 {% endif %}

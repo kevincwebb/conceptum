@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Exam Description" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+<h1> {{exam}} </h1>
+<ul class = "collapsible_list">
+    <li><h3><span class="tab">Description of {{ exam }}</span>
+    
+        <label for="description_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "description_node" checked>
+        <ul class = "inner_list">
+            {{ exam.description }}<br>
+            <br>
+            Exam ID: {{exam_id}}
+        </ul>
+    </li>
+    </ul>
+    
+
+<ul class = "collapsible_list">
+    <li><h3><span class="tab">Exam Questions</span>
+    
+        <label for="question_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "question_node" checked>
+     <!-- perhaps some toggleability for correct answers/statistics from response sets -->
+
+<ol class = "inner_list">    
+{% if qList %}
+<!-- qList = [ q1, q2, ...] where
+	q1 = [question, [option1, option2, ...]
+-->
+	{% for question in qList %}
+		<li><h4>{{question.0}}</h4>
+		<ol type = "a">
+		{% for item in question.1 %}
+			{% if item.id == 1 %}                    <!-- replace '1' with correct identifier -->
+				<li style = "color:green"> {{item}} </li>
+			{% else %}
+				<li> {{item}}</li>
+			{% endif %}
+		{% endfor %}
+		</ol>
+		</li>
+	{% endfor %} 
+	</li>
+{% else %}
+	 No exam questions 
+{% endif %}
+</ol>
+    </li>
+</ul>
+
+
+
+<ul class = "collapsible_list">
+    <li><h3><span class="tab"><a href="{% url 'exam:response_sets' exam_id%}" >Responses</a></span>
+    
+        <label for="responses_node"><div class = "plus_ind_button"> + </div></label></h3>
+    <input type = "checkbox" id = "responses_node">
+        
+        <ul class = "inner_list">
+            {% for set in responses %}
+            <li><a href = "{% url 'exam:responses' set.exam.id set.id%}">{{set}} distributed by {{set.instructor}}</a></li>
+            {% endfor %}
+            <li class = "etc"><a href="{% url 'exam:response_sets' exam_id%}" >All responses ...</a></li>
+        
+</ul>
+    </li>
+</ul>
+
+<h3> Discuss this Exam </h3>
+<!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a> -->
+
+
+<a href="{% url 'exam:discuss' exam_id %}">Discuss</a><br>
+<a href="{% url 'exam:distribute_new' exam_id %}">Distribute</a>
+    
+      
+</div> <!-- container -->
+
+{% endblock %}

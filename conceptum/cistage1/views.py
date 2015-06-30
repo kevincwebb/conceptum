@@ -62,25 +62,28 @@ def get_setup(request):
             
             return redirect('stage1 dispatch')
         else:
-            return HttpReponse("some error handling here")
+            return HttpResponse("some error handling here")
             #do some error handling
 
             
 
 
 def landing(request):
-
+    
     root = CITreeInfo.get_master_tree_root()
-    master_tree_set = root.get_descendants(include_self=True)
-
-    for node in master_tree_set:
-        if node.is_stage_finished():
-            node.transition_node_state()
-
-    user = request.user
-
-    template = loader.get_template('cistage1/landing.html')
-    context = RequestContext(request,
-                             {'master_tree_set': master_tree_set,
-                              'user': request.user})
-    return HttpResponse(template.render(context))
+    if (root):
+        master_tree_set = root.get_descendants(include_self=True)
+    
+        for node in master_tree_set:
+            if node.is_stage_finished():
+                node.transition_node_state()
+    
+        user = request.user
+    
+        template = loader.get_template('cistage1/landing.html')
+        context = RequestContext(request,
+                                 {'master_tree_set': master_tree_set,
+                                  'user': request.user})
+        return HttpResponse(template.render(context))
+    else:
+        return HttpResponse("No Stage 1 process has been started.")

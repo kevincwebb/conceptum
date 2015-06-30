@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+
+{% block head_title %}{% trans "Exam Index" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+
+
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    
+<h3> Exam Distribution Index </h3>
+<ul class = "collapsible_overview"> 
+{% for exam, stats in exams %}
+       
+    <li class = "table"><span class="over_tab"><span class = "tab-button"><a href="{% url 'exam:distribute_detail' exam.id %}">{{ exam.name }}</a></span>
+        <a href = {% url 'exam:response_sets' exam.id %} class="dist_button"> Distribute </a>
+        </span>
+    
+        
+         <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div id = "plus" class = "plus"> + </div> <div id = "minus" class = "minus"> - </div> </div></label>
+    <input type = "checkbox" id = "toplist_node{{exam.id}}" onclick = "PlusMinus(this)">
+
+<div class = "overview">
+    {{exam.description}}
+    <hr>
+
+<ul class = "overview_inner_list">
+    {% for item in stats %}
+        <li>• {{item}}</li>
+    {% endfor %}
+        
+</ul>
+</div>
+</li>
+{% endfor %}
+        
+</ul>
+    
+</div> <!-- container -->
+
+{% endblock %}
+
+ 
+  <div class="horizontal-heading">
+    <h3>You're at the {{ current_app }} development home</h3>
+  </div>
+  Existing {{ current_app }}s in development:
+  {% for exam in exams %}
+    <li><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a></li>
+  {% endfor %}
+  </br>
+  {% if user.is_staff %}
+    <a href="{% url 'exam:create' %}">Create New Exam</a>
+  {% endif %}
+
+</div> <!-- container -->
+
+
+

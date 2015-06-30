@@ -49,11 +49,12 @@
     {% endif %}
     
     <h3>Distribute Survey/Exam</h3>
-    <a href = {% url 'exam_index' %} class='btn btn-primary'>New Distribution</a>
+    <a href = {% url 'CI_exam:index' %} class='btn btn-primary'>New Distribution</a>
     <h4>Your distributed exams</h4>
+
     {% for response_set in user.profile.responseset_set.all %}
-      <a href = {% url 'distribute_send' response_set.id %}> {{ response_set }} </a>
-      <a href = {% url 'distribute_delete' response_set.id %} class='btn btn-sm btn-danger'> Delete </a>
+      <span class="tab"><a href = {% url 'exam:distribute_send' response_set.id %}> {{ response_set }} for {{response_set.exam}}</a> </span>
+          <a href = {% url 'exam:distribute_delete' response_set.id %} class='btn btn-sm btn-danger'> Delete </a>
       
       <br>
     {% endfor %}
