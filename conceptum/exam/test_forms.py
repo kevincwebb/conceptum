@@ -11,23 +11,6 @@ from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, Multiple
                     ExamKind, QUESTION_LENGTH, REQUIRED_CHOICES
 from .forms import MultipleChoiceEditForm
 
-#class DummyConcept(models.Model):
-#    """
-#    Since Questions are related to Concept by generic foreign key, we can use
-#    this simple model instead of importing.
-#    """
-#    name = models.CharField(max_length=31, unique=True)
-#    
-#    def __str__(self):
-#        return self.name
-#
-#def create_concepts():
-#    """
-#    Creates 4 concepts for use in testing.
-#    Does not return anything, queryset accessible via objects.all()
-#    """
-#    for x in ['A','B','C','D']:
-#        DummyConcept.objects.get_or_create(name="Concept %s" % x)
 
 def get_or_create_exam():
     """
@@ -54,6 +37,7 @@ def get_or_create_exam():
         MultipleChoiceOption.objects.create(question=mcq, text="choice 2", index=2);
         MultipleChoiceOption.objects.create(question=mcq, text="choice 3", index=3);
     return exam
+
 
 class DevFormsTest(SimpleTestCase):
     def setUp(self):
@@ -95,14 +79,13 @@ class DevFormsTest(SimpleTestCase):
     
     def test_add_multiple_choice_form(self):
         exam = get_or_create_exam()
-        concept = DummyConcept.objects.get(name = "Concept A")
+        concept = Concept.objects.get(name = "Concept A")
         question_text = 'Is this a new multiplce choice question?'
         
         # Make sure new question is saved
         response = self.client.post(reverse('exam:question_create',
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'mc'}),
             {'question':question_text, 'choice_1':'yes', 'choice_2':'no', 'correct':'1'})
-        self.assertEqual(response.status_code, 200)
         q = MultipleChoiceQuestion.objects.filter(question=question_text).first()
         self.assertTrue(q)
         c1 = MultipleChoiceOption.objects.filter(question=q,text='yes').first()
@@ -167,23 +150,49 @@ class DevFormsTest(SimpleTestCase):
         self.assertEqual(c2.index, 2)
         q.delete()
     
-    #def test_multiple_choice_edit_form(self):
-    #    exam = get_or_create_exam()
-    #    question = MultipleChoiceQuestion.objects.get(exam=exam)
-    #    
-    #    # check initial data
-    #    response = self.client.get(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}))
-    #    self.assertEqual(response.context['form'].initial['question'],question.question)
-    #    
-    #    # basic updates
-    #    #   - text
-    #    #   - order
-    #    #   - correct question
-    #    # save question
-    #    
-    #    # blank fields
-    #    response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
-    #                                {})
+    def test_multiple_choice_edit_form(self):
+        exam = get_or_create_exam()
+        question = MultipleChoiceQuestion.objects.get(exam=exam)
+        options = question.multiplechoiceoption_set.all()
+        
+        # check initial data
+        response = self.client.get(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}))
+        initial = response.context['form'].initial
+        self.assertEqual(initial['question'],question.question)
+        self.assertEqual(initial['image'],question.image)
+        # Unfortunately, initial[] does not have entries for the fields added in the form's init method
+        # In views_test we test that the list of 3-tuples is correctly constructed, which mostly
+        # covers initial data
+        
+        
+        # basic updates
+        #   - change question text
+        #   - change option text
+        #   - change correct option
+        #   - delete an option (by leaving it blank)
+        # save question
+        post_dict = {'question':'new question',
+                     'correct':options[1].id,
+                     'choice_1':'A',
+                     'index_1':1,
+                     'choice_2':'B',
+                     'index_2':2}
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        question = MultipleChoiceQuestion.objects.get(id=question.id)
+        objects = question.multiplechoiceoption_set.all()
+        self.assertEqual(question.question,'new question')
+        self.assertEqual(options[0].text,'A')
+        self.assertEqual(options[0].index,1)
+        self.assertFalse(options[0].is_correct)
+        self.assertEqual(options[1].text,'B')
+        self.assertEqual(options[1].index,2)
+        self.assertTrue(options[1].is_correct)
+        
+        
+        # blank fields
+        #response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+        #                            {})
         
         # duplicate question
         
@@ -194,3 +203,5 @@ class DevFormsTest(SimpleTestCase):
         # marked wrong field correct
         
         # non-consecutive fields filled out
+        
+        # delete blank question

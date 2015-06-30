@@ -268,11 +268,28 @@ class DevViewsTest(SimpleTestCase):
         self.assertEqual(response.status_code, 404)
         
         # Check that the list of 3-tuples, 'choice_fields', is correctly constructed
+        # with a single option
         response = self.client.get(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}))
         choice_1_tuple = response.context['choice_fields'][0]
         self.assertIn("choice_1",choice_1_tuple[0].label_tag())
         self.assertEqual("choice 1",choice_1_tuple[1].choice_label)
         self.assertIn("index_1",choice_1_tuple[2].label_tag())
+        
+        # Check for all options. Should be in order. Check initial data
+        i=0
+        for option in question.multiplechoiceoption_set.all():
+            choice_tuple = response.context['choice_fields'][i]
+            self.assertIn(option.text,str(choice_tuple[0]))
+            self.assertEqual(str(option.index),choice_tuple[1].choice_value)
+            self.assertIn(str(option.index),str(choice_tuple[2]))
+            i+=1
+        
+        # Check for new choice
+        choice_tuple = response.context['choice_fields'][i]
+        self.assertIn("choice_new",str(choice_tuple[0]))
+        self.assertEqual('-1',choice_tuple[1].choice_value)
+        self.assertTrue(choice_tuple[2])
+        
         
         # Check that submit redirects us
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
