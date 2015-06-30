@@ -116,13 +116,8 @@ class AddMultipleChoiceForm(forms.ModelForm):
                 self.cleaned_data["choice_%d" % x] = None
                 choice_counter += 1
                 self.cleaned_data["choice_%d" % choice_counter] = choice
-                
-##############################
-# fix this
-##############################
-
-                #if int(self.cleaned_data.get("correct")) == x:
-                #    self.cleaned_data["correct"] = choice_counter
+                if self.cleaned_data.get("correct") == str(x):
+                    self.cleaned_data["correct"] = choice_counter
         
         # Require at least REQUIRED_CHOICES choices
         if choice_counter < REQUIRED_CHOICES:
@@ -135,9 +130,9 @@ class AddMultipleChoiceForm(forms.ModelForm):
                 if (self.cleaned_data["choice_%d" % i]==self.cleaned_data["choice_%d" % j]):
                     raise forms.ValidationError("You have two identical choices.")
         
-        # Make sure a valid choice is designated as correct
+        # Make sure the designated correct choice is not blank
         if not self.cleaned_data.get("choice_%s" % self.cleaned_data.get("correct")):
-            raise forms.ValidationError("The choice you marked correct is blank")
+            raise forms.ValidationError("The choice you marked correct is blank.")
         
         return cleaned_data
 
@@ -148,7 +143,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
     there is an extra field to add a new choice. If a choice's text is deleted and the form
     is submitted, that choice will be deleted.
     
-    The view expects that the 3rd field is the ChoicField for marking a correct answer,
+    The view expects that the 3rd field is the forms.ChoiceField for marking a correct answer,
     followed by alternating choice and index fields.
     """
     class Meta:
@@ -158,9 +153,10 @@ class MultipleChoiceEditForm(forms.ModelForm):
             'question': forms.TextInput(attrs={'size': '60'})}
     
     def choices(self):
-        l = [('','---')]
-        for i in range(1,MAX_CHOICES+1):
-            l.append((i,i))
+        l = []
+        for option in self.instance.multiplechoiceoption_set.all():
+            l.append((option.id,option.text))
+        l.append((-1,"New choice"))
         return l
         
     def __init__(self, *args, **kwargs):
@@ -171,16 +167,9 @@ class MultipleChoiceEditForm(forms.ModelForm):
         """    
         super(MultipleChoiceEditForm, self).__init__(*args, **kwargs)
         
-        
-##################################################################
-# modify choices method to use MCO.id
-# get initial
-#################################################################
-        
-        
         self.fields["correct"] = forms.ChoiceField(label=_("Correct Choice"),
                                                    choices=self.choices(),
-                                                   initial=1,
+                                                   initial=self.instance.correct_option.id,
                                                    widget=forms.RadioSelect)
         # Create fields for choices and indices
         # choice_1, index_1, choice_2, index_2, ...
@@ -236,6 +225,11 @@ class MultipleChoiceEditForm(forms.ModelForm):
             if i != indices.pop(0):
                 raise forms.ValidationError("Order must begin with 1, with no doubles or gaps")
         
+        # Make sure the designated correct choice is not blank
+        if not self.cleaned_data.get("choice_%s" % self.cleaned_data.get("correct")):
+            if not (self.cleaned_data.get("choice_new") and self.cleaned_data.get("correct")=='-1'):
+                raise forms.ValidationError("The choice you marked correct is blank")
+        
         return cleaned_data
 
     @transaction.atomic()
@@ -250,11 +244,15 @@ class MultipleChoiceEditForm(forms.ModelForm):
         so that they are included in the revision.
         """
         self.instance.question = self.cleaned_data.get('question')
+        self.instance.image = self.cleaned_data.get('image')
         self.instance.save()
         
         for choice in self.instance.multiplechoiceoption_set.all():
             text = self.cleaned_data.get("choice_%d" % choice.id)
             if text:
+                choice.is_correct = False
+                if int(self.cleaned_data.get("correct")) == choice.id:
+                    choice.is_correct = True
                 choice.text = text
                 choice.index = self.cleaned_data.get("index_%d" % choice.id)
                 choice.save()
@@ -265,9 +263,13 @@ class MultipleChoiceEditForm(forms.ModelForm):
         # create a new option, if provided
         new_text = self.cleaned_data.get("choice_new")
         if (new_text):
+            correct = False
+            if int(self.cleaned_data.get("correct")) == -1:
+                correct = True
             MultipleChoiceOption.objects.create(question=self.instance,
                                                 text=new_text,
-                                                index=self.cleaned_data.get("index_new"))
+                                                index=self.cleaned_data.get("index_new"),
+                                                is_correct=correct)
             
         return self.instance
 

@@ -38,19 +38,21 @@ def get_or_create_exam():
         concept = DummyConcept.objects.get(name = "Concept A")
         FreeResponseQuestion.objects.create(exam=exam,
                                             question="What is the answer to this FR question?",
+                                            number=1,
                                             content_type=concept_type,
                                             object_id=concept.id)
         concept = DummyConcept.objects.get(name = "Concept B")
         mcq = MultipleChoiceQuestion.objects.create(exam=exam,
                                                     question="What is the answer to this MC question?",
+                                                    number=2,
                                                     content_type=concept_type,
                                                     object_id=concept.id)
-        MultipleChoiceOption.objects.create(question=mcq, text="choice 1");
-        MultipleChoiceOption.objects.create(question=mcq, text="choice 2");
-        MultipleChoiceOption.objects.create(question=mcq, text="choice 3");
+        MultipleChoiceOption.objects.create(question=mcq, text="choice 1", index=1, is_correct=True);
+        MultipleChoiceOption.objects.create(question=mcq, text="choice 2", index=2);
+        MultipleChoiceOption.objects.create(question=mcq, text="choice 3", index=3);
     return exam
 
-class ViewsTest(SimpleTestCase):
+class DevViewsTest(SimpleTestCase):
     def setUp(self):
         create_concepts()
         self.user = set_up_user()
@@ -184,6 +186,10 @@ class ViewsTest(SimpleTestCase):
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'fr'}))
         
     def test_question_create_view(self):
+        """        
+        possible tests to add:
+            Check interview and excerpt data
+        """
         exam = get_or_create_exam()
         concept = DummyConcept.objects.get(name = "Concept A")
         
@@ -225,12 +231,53 @@ class ViewsTest(SimpleTestCase):
         self.assertEqual(response.status_code, 404)
         
         # Check that submit redirects us
-        response = self.client.get(reverse('exam:detail',
-            kwargs ={'exam_id':exam.id,}))
+        response = self.client.post(reverse('exam:question_create',
+            kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'mc'}),
+            {'question':'question', 'choice_1':'yes', 'choice_2':'no', 'correct':'1'})
+        self.assertRedirects(response, reverse('exam:detail', kwargs ={'exam_id':exam.id,}))
+        
+    # def test_free_response_edit_view(self):
+    #    There isn't any functionality in FreeResponseEditView that isn't also used by
+    #    MultipleChoiceEditView, since they both subclass QuestionEditView. Consider
+    #    test_multiple_choice_edit_view to cover FreeResponseEditView.
+
+    def test_multiple_choice_edit_view(self):
+        """        
+        """
+        exam = get_or_create_exam()
+        question = MultipleChoiceQuestion.objects.get(exam=exam)
+        
+        # User not logged in, redirected
+        response = self.client.get(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}))
+        self.assertRedirects(response,
+                             '/accounts/login/?next=/exams/CI/dev/mc/%s/edit/'%question.id)
+        
+        # User logged in, not contrib
+        self.client.login(email=self.user.email, password='password')
+        response = self.client.get(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}))
+        self.assertEqual(response.status_code, 403)
+        
+        # User is contrib
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
+        response = self.client.get(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}))
         self.assertEqual(response.status_code, 200)
         
-        # possible other tests...
-        #   Check interview and excerpt data
-        #   Check that fields are visible
-        #   Don't need to check form stuff
+        # question_id does not exist
+        response = self.client.get(reverse('CI_exam:mc_edit',kwargs ={'question_id':99}))
+        self.assertEqual(response.status_code, 404)
+        
+        # Check that the list of 3-tuples, 'choice_fields', is correctly constructed
+        response = self.client.get(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}))
+        choice_1_tuple = response.context['choice_fields'][0]
+        self.assertIn("choice_1",choice_1_tuple[0].label_tag())
+        self.assertEqual("choice 1",choice_1_tuple[1].choice_label)
+        self.assertIn("index_1",choice_1_tuple[2].label_tag())
+        
+        # Check that submit redirects us
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+            {'question':'question', 'choice_1':'yes', 'index_1':'1',
+             'choice_2':'no', 'index_2':'2', 'correct':'1'})
+        self.assertRedirects(response, reverse('exam:detail', kwargs ={'exam_id':exam.id,}))
+
         

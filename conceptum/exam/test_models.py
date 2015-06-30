@@ -46,6 +46,7 @@ class ModelsTest(SimpleTestCase):
         with reversion.create_revision():
             question = FreeResponseQuestion.objects.create(exam=exam,
                                                            question="Version 1 ?",
+                                                           number=1,
                                                            content_type=concept_type,
                                                            object_id=concept.id)
         self.assertEqual(len(question.get_unique_versions()),1)
@@ -97,11 +98,14 @@ class ModelsTest(SimpleTestCase):
         with reversion.create_revision():
             question = MultipleChoiceQuestion.objects.create(exam=exam,
                                                              question="Version 1 ?",
+                                                             number=1,
                                                              content_type=concept_type,
                                                              object_id=concept.id)
             option_1 = MultipleChoiceOption.objects.create(question=question,
+                                                           index=1,
                                                            text="A v1")
             option_2 = MultipleChoiceOption.objects.create(question=question,
+                                                           index=2,
                                                            text="B v1")
         self.assertEqual(len(question.get_unique_versions()),1)
         self.assertEqual(question.get_unique_versions()[0], reversion.get_for_object(question)[0])
@@ -116,6 +120,7 @@ class ModelsTest(SimpleTestCase):
         # Add an option, should make a new unique version
         with reversion.create_revision():
             option_3 = MultipleChoiceOption.objects.create(question=question,
+                                                           index=3,
                                                            text="C v1")
             option_3.save()
             question.save()
@@ -176,3 +181,12 @@ class ModelsTest(SimpleTestCase):
             option_3.save()
             question.save()
         self.assertEqual(len(question.get_unique_versions()),5)
+        
+        # Swap option order
+        with reversion.create_revision():
+            option_2.index = 2
+            option_3.index = 1
+            option_2.save()
+            option_3.save()
+            question.save()
+        self.assertEqual(len(question.get_unique_versions()),6)
