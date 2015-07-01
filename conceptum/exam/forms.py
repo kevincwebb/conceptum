@@ -201,7 +201,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
                 choice_counter += 1
             else:
                 if self.cleaned_data.get("index_%d" % choice.id):
-                    raise forms.ValidationError("Make sure all blank choices do not have an order")
+                    raise forms.ValidationError("Make sure all blank choices do not have an order.")
         if self.cleaned_data.get("choice_new"):
             if not self.cleaned_data.get("index_new"):
                 raise forms.ValidationError("Make sure all non-blank choices have an order.")
@@ -209,7 +209,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
             choice_counter += 1
         else:
             if self.cleaned_data.get("index_new"):
-                raise forms.ValidationError("Make sure all blank choices do not have an order")
+                raise forms.ValidationError("Make sure all blank choices do not have an order.")
             
         # Require at least REQUIRED_CHOICES choices
         if choice_counter < REQUIRED_CHOICES:
@@ -235,7 +235,7 @@ class MultipleChoiceEditForm(forms.ModelForm):
         # Make sure the designated correct choice is not blank
         if not self.cleaned_data.get("choice_%s" % self.cleaned_data.get("correct")):
             if not (self.cleaned_data.get("choice_new") and self.cleaned_data.get("correct")=='-1'):
-                raise forms.ValidationError("The choice you marked correct is blank")
+                raise forms.ValidationError("The choice you marked correct is blank.")
 
         return cleaned_data
 

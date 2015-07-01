@@ -232,29 +232,58 @@ class DevFormsTest(SimpleTestCase):
                                     post_dict)
         error = _("You have two identical choices.")
         self.assertFormError(response, 'form', None, error, "" )
+        post_dict['choice_new']='same'
+        post_dict['choice_2']='B'
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        self.assertFormError(response, 'form', None, error, "" )
         
         # indices not successive / don't start at 1
         post_dict = {'question':'new question',
                      'correct':options[0].id,
                      'choice_1':'A',
                      'choice_2':'B',
-                     'choice_3':'C',
-                     'index_1':1,
-                     'index_2':2,
-                     'index_3':3}
-
-################################################################################
-###
-###
-###     you are here
-###
-###
-######
+                     'choice_new':'C',
+                     'index_1':2,
+                     'index_2':3,
+                     'index_new':4}
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        error = _("Order must begin with 1, with no doubles or gaps")
+        self.assertFormError(response, 'form', None, error, "" )
+        post_dict['index_2']=1 #we have 1, 2, 4
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        self.assertFormError(response, 'form', None, error, "" )
+        post_dict['index_new']=2 #we have 1, 2, 2
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        self.assertFormError
 
         # question and index don't match up
-        
+        post_dict = {'question':'new question',
+                     'correct':options[0].id,
+                     'choice_1':'A'}
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        error = _("Make sure all non-blank choices have an order.")
+        self.assertFormError(response, 'form', None, error, "" )
+        post_dict = {'question':'new question',
+                     'correct':options[0].id,
+                     'index_1':'1'}
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        error = _("Make sure all blank choices do not have an order.")
+        self.assertFormError(response, 'form', None, error, "" )
+
         # marked wrong field correct
-        
-        # non-consecutive fields filled out
-        
-        # delete blank question
+        post_dict = {'question':'new question',
+                     'correct':-1,
+                     'choice_1':'A',
+                     'choice_2':'C',
+                     'index_1':1,
+                     'index_2':2}
+        response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
+                                    post_dict)
+        error = _("The choice you marked correct is blank.")
+        self.assertFormError(response, 'form', None, error, "" )

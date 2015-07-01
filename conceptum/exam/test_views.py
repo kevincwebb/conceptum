@@ -296,5 +296,30 @@ class DevViewsTest(SimpleTestCase):
             {'question':'question', 'choice_1':'yes', 'index_1':'1',
              'choice_2':'no', 'index_2':'2', 'correct':'1'})
         self.assertRedirects(response, reverse('exam:detail', kwargs ={'exam_id':exam.id,}))
-
+    
+    def test_multiple_choice_version_view(self):
+        """        
+        """
+        exam = get_or_create_exam()
+        question = MultipleChoiceQuestion.objects.get(exam=exam)
+        
+        # User not logged in, redirected
+        response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':question.id}))
+        self.assertRedirects(response,
+                             '/accounts/login/?next=/exams/CI/dev/mc/%s/versions/'%question.id)
+        
+        # User logged in, not contrib
+        self.client.login(email=self.user.email, password='password')
+        response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':question.id}))
+        self.assertEqual(response.status_code, 403)
+        
+        # User is contrib
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
+        response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':question.id}))
+        self.assertEqual(response.status_code, 200)
+        
+        # question_id does not exist
+        response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':99}))
+        self.assertEqual(response.status_code, 404)
         
