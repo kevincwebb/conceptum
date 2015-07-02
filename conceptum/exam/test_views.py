@@ -290,7 +290,6 @@ class DevViewsTest(SimpleTestCase):
         self.assertEqual('-1',choice_tuple[1].choice_value)
         self.assertTrue(choice_tuple[2])
         
-        
         # Check that submit redirects us
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
             {'question':'question', 'choice_1':'yes', 'index_1':'1',
@@ -300,8 +299,11 @@ class DevViewsTest(SimpleTestCase):
     def test_multiple_choice_version_view(self):
         """        
         """
-        exam = get_or_create_exam()
+        get_or_create_exam().delete()
+        exam = get_or_create_exam() # get a fresh exam
+        concept = DummyConcept.objects.get(name = "Concept A")
         question = MultipleChoiceQuestion.objects.get(exam=exam)
+
         
         # User not logged in, redirected
         response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':question.id}))
@@ -322,4 +324,3 @@ class DevViewsTest(SimpleTestCase):
         # question_id does not exist
         response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':99}))
         self.assertEqual(response.status_code, 404)
-        

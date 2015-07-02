@@ -4,8 +4,6 @@ from django.shortcuts import get_object_or_404
 from .models import Exam, ExamKind
 
 
-
-
 class DevelopmentMixin(object):
     """
     If you use this mixin in a view you must also use CurrentAppMixin.

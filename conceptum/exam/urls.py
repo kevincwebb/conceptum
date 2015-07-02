@@ -22,8 +22,8 @@ exam_patterns = patterns('',
         url(r'^(?P<exam_id>\d+)/$', views.ExamDetailView.as_view(), name='detail'),
         url(r'^(?P<exam_id>\d+)/select/$', views.SelectConceptView.as_view(), name='select_concept'),
         url(r'^(?P<exam_id>\d+)/(?P<concept_id>\d+)/(?P<question_type>\w{2})/$',
-        
             views.QuestionCreateView.as_view(), name='question_create'),
+        
         url(r'^(?P<exam_id>\d+)/discuss/$',views.discuss, name='discuss'),
         
         url(r'^fr/(?P<question_id>\d+)/', include(patterns('',
@@ -80,6 +80,8 @@ exam_patterns = patterns('',
         template_name='exam/response_complete.html'), name='response_complete'),
     url(r'^unavailable/$', TemplateView.as_view(
         template_name='exam/exam_unavailable.html'), name='unavailable'),
+    
+    (r'^comments/', include('django_comments.urls')),
 )
 
 urlpatterns = patterns('',

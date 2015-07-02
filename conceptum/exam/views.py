@@ -181,9 +181,6 @@ class ExamDetailView(LoginRequiredMixin,
         context['exam'] = self.object
         return context
     
-    
-    
-
 
 class SelectConceptView(LoginRequiredMixin,
                         ContribRequiredMixin,
@@ -299,10 +296,12 @@ class QuestionEditView(LoginRequiredMixin,
     def get_success_url(self):
         return reverse('exam:detail', args=[self.object.exam.id], current_app=self.current_app)
 
+
 class FreeResponseEditView(QuestionEditView):
     model = FreeResponseQuestion
     fields = ['question','image']
     template_name = 'exam/frquestion_update_form.html'
+   
     
 class MultipleChoiceEditView(QuestionEditView):
     model = MultipleChoiceQuestion
@@ -508,9 +507,6 @@ class ExamDistIndexView(LoginRequiredMixin,
         return context
 
 
-
-
-
 @login_required
 def description(request, exam_id):
     
@@ -537,7 +533,6 @@ def description(request, exam_id):
                                'option_list': MultipleChoiceOption.objects.all(),
                                'responses':responses},)
     return HttpResponse(template.render(context))
-
 
 
 class NewResponseSetView(LoginRequiredMixin,
