@@ -8,7 +8,7 @@ from django.db import models, transaction
 
 from interviews.models import get_concept_list, DummyConcept as Concept #TEMPORARY: DummyConcept
 from .models import ExamResponse, FreeResponseQuestion, MultipleChoiceQuestion, \
-                    MultipleChoiceOption, ResponseSet, \
+                    MultipleChoiceOption, ResponseSet, Exam, \
                     MAX_CHOICES, REQUIRED_CHOICES
 import reversion
 
@@ -337,6 +337,44 @@ class MultipleChoiceVersionForm(QuestionVersionForm):
         version_list[index].revision.revert(delete=True)
         return self.instance
 
+
+class FinalizeSelectForm(forms.ModelForm):
+    class Meta:
+        model = Exam
+        fields = []
+    
+    def __init__(self, *args, **kwargs):
+        """
+        """
+        super(FinalizeSelectForm, self).__init__(*args, **kwargs)
+        self.fields['select_fr']=forms.ModelMultipleChoiceField(
+            queryset=self.instance.freeresponsequestion_set.all(),
+            required=False,
+            widget=forms.CheckboxSelectMultiple)
+        self.fields['select_mc']=forms.ModelMultipleChoiceField(
+            queryset=self.instance.multiplechoicequestion_set.all(),
+            required=False,
+            widget=forms.CheckboxSelectMultiple)
+
+
+class FinalizeOrderForm(forms.Form):
+    class Meta:
+        fields=[]
+        
+    
+    def __init__(self, *args, **kwargs):
+        """
+        There is one field, a list of tuples
+        """
+        self.selected = kwargs.pop('selected', None)
+        super(FinalizeOrderForm, self).__init__(*args, **kwargs)
+        print self.selected
+
+
+class FinalizeConfirmForm(forms.Form):
+    pass
+
+
 class NewResponseSetForm(forms.ModelForm):
     """
     Form in which a distributor provides course info and selects modules
@@ -350,6 +388,7 @@ class NewResponseSetForm(forms.ModelForm):
         #widgets = {
         #    'modules': forms.CheckboxSelectMultiple(),
         #}
+
 
 class DistributeForm(forms.Form):
     """

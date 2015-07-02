@@ -290,7 +290,6 @@ class DevViewsTest(SimpleTestCase):
         self.assertEqual('-1',choice_tuple[1].choice_value)
         self.assertTrue(choice_tuple[2])
         
-        
         # Check that submit redirects us
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
             {'question':'question', 'choice_1':'yes', 'index_1':'1',
