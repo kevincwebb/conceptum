@@ -26,7 +26,7 @@ class MultipleChoiceOptionInLine(admin.TabularInline):
 
 
 class ExamAdmin(admin.ModelAdmin):
-    fields = ('name','description')
+    fields = ('name','description','kind','stage')
 
 
 class FreeResponseQuestionAdmin(reversion.VersionAdmin):

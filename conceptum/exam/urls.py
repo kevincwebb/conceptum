@@ -41,6 +41,8 @@ exam_patterns = patterns('',
 
     # FINALIZING
     url(r'^finalize/(?P<exam_id>\d+)/$', views.FinalizeView.as_view(), name = 'finalize_view'),
+    #url(r'^finalize/(?P<exam_id>\d+)/confirm/$', views.FinalizeConfirmView.as_view(),
+    #    name = 'finalize_view'),
     
     # DISTRIBUTION
     url(r'^dist/', include(patterns('',

@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse, reverse_lazy
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.formtools.wizard.views import SessionWizardView
 from django.db import transaction
 
 import reversion
@@ -21,7 +22,8 @@ from .models import Exam, ResponseSet, ExamResponse, QuestionResponse, FreeRespo
                     MultipleChoiceResponse, ExamKind, ExamStage
 from .forms import SelectConceptForm, AddFreeResponseForm, AddMultipleChoiceForm, \
                    NewResponseSetForm, DistributeForm, ExamResponseForm, BlankForm, \
-                   MultipleChoiceEditForm, FreeResponseVersionForm, MultipleChoiceVersionForm
+                   MultipleChoiceEditForm, FreeResponseVersionForm, MultipleChoiceVersionForm, \
+                   FinalizeSelectForm, FinalizeOrderForm, FinalizeConfirmForm
 from .mixins import DevelopmentMixin, DistributionMixin, CurrentAppMixin
 
 
@@ -416,24 +418,70 @@ class FinalizeView(LoginRequiredMixin,
                    StaffRequiredMixin,
                    DevelopmentMixin,
                    CurrentAppMixin,
-                   generic.TemplateView):
+                   SessionWizardView):
     template_name = 'exam/finalize.html'
-    #model = Exam
-    #pk_url_kwarg = 'exam_id'
+    form_list = [FinalizeSelectForm, FinalizeOrderForm, FinalizeConfirmForm]
+    model = Exam
+    pk_url_kwarg = 'exam_id'    
+
+    def done(self, form_list, **kwargs):
+        for question in self.exam.freeresponsequestion_set.all():
+            if question not in form_list[0].cleaned_data.get('select_fr'):
+                question.delete()
+        for question in self.exam.multiplechoicequestion_set.all():
+            if question not in form_list[0].cleaned_data.get('select_mc'):
+                question.delete()
+        # set numbers
+        return HttpResponseRedirect(reverse('exam:index', current_app=self.current_app))
+    
+    def get_form_instance(self, step):
+        return self.exam
+    
+    def get_form_kwargs(self,step):
+        kwargs = super(FinalizeView, self).get_form_kwargs(step)
+        if step == '1':
+            form = self.get_form(step='0')
+            #form = self.get_form(step='0',
+            #    data=self.storage.get_step_data('0'),
+            #    files=self.storage.get_step_files('0'))
+            print form
+            print form.is_valid()
+            data = self.get_cleaned_data_for_step('0')
+            print data
+            fr_list = data['select_fr']
+            print fr_list
+            kwargs['selected']=fr_list
+        return kwargs
+            
     
     def get_context_data(self, **kwargs):
         context = super(FinalizeView, self).get_context_data(**kwargs)
         context['exam'] = self.exam
         return context
-    
-    def post(self, request, *args, **kwargs):
-        self.exam.stage = ExamStage.DIST
-        self.exam.save()
-        return HttpResponseRedirect(self.get_success_url())
 
-    # in the future, this should maybe return to the distribute index
-    def get_success_url(self):
-        return reverse('exam:index', current_app=self.current_app)
+
+#class FinalizeComfirmView(LoginRequiredMixin,
+#                   StaffRequiredMixin,
+#                   DevelopmentMixin,
+#                   CurrentAppMixin,
+#                   generic.TemplateView):
+#    template_name = 'exam/finalize.html'
+#    #model = Exam
+#    #pk_url_kwarg = 'exam_id'
+#    
+#    def get_context_data(self, **kwargs):
+#        context = super(FinalizeConfimView, self).get_context_data(**kwargs)
+#        context['exam'] = self.exam
+#        return context
+#    
+#    def post(self, request, *args, **kwargs):
+#        self.exam.stage = ExamStage.DIST
+#        self.exam.save()
+#        return HttpResponseRedirect(self.get_success_url())
+#
+#    # in the future, this should maybe return to the distribute index
+#    def get_success_url(self):
+#        return reverse('exam:index', current_app=self.current_app)
 
 
 ################# DISTRIBUTION #############################
