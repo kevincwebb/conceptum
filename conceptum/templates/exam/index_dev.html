@@ -36,12 +36,6 @@
     {% for item in stats %}
         <li>• {{item}}</li>
     {% endfor %}
-    <!--<li> • Questions: ##</li>
-    <li> • Responses: ##</li>
-    <li> • Date Created: ##</li>
-    <li> • Times Distrubuted: ##</li>
-    <li> • Average Score: ##</li>
-    <li> • Concepts: xxx, xxx, xxx, xxxx</li>-->
         
 </ul>
 </div>
@@ -49,24 +43,12 @@
 {% endfor %}
         
     </ul>
+    
+<a href = {% url 'exam:create' %} class="btn btn-warning"> Create New</a>
 </div> <!-- container -->
 
 {% endblock %}
 
- 
-  <div class="horizontal-heading">
-    <h3>You're at the {{ current_app }} development home</h3>
-  </div>
-  Existing {{ current_app }}s in development:
-  {% for exam in exams %}
-    <li><a href="{% url 'exam:detail' exam.id %}">{{ exam.name }}</a></li>
-  {% endfor %}
-  </br>
-  {% if user.is_staff %}
-    <a href="{% url 'exam:create' %}">Create New Exam</a>
-  {% endif %}
-
-</div> <!-- container -->
 
 
 

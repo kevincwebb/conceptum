@@ -61,24 +61,24 @@ qList is a 2d list of the following format:
 <ul class = "collapsible_list">
 <li> 
     
-    <label for="toplist_node2"><h2 class = "list">Exam Questions <div class = "plus"> + </div>  </h2></label>
+    <label for="toplist_node2"><h2 class = "list">Question Responses <div class = "plus"> + </div>  </h2></label>
     <input type = "checkbox" id = "toplist_node2">
     
     
 <ol>    
-{% if qList %}
+{% if mc_list %}
 <!-- qList = [ q1, q2, ...] where
 	q1 = [question, [option1, option2, ...]
--->
-	{% for question, options in qList %}
+--><h3>Multiple Choice</h3>
+	{% for question, chosen, options in mc_list %}
 		<li><h4>{{question}}</h4>
 		<ol type = "a">
 		{% for item in options %}
-			{% if item.id == 1 and 1 == question.1 %}        <!-- eventually replace 1 with whatever identifies the correct answer -->
+			{% if item.is_correct and item.id = chosen %}        <!-- eventually replace 1 with whatever identifies the correct answer -->
 				<li style="color:green"> <b>{{item}} </b> </li>
-			{% elif item.id == question.1 %}
+			{% elif item.id == chosen %}
 				<li style ="color:red"> <b> {{item}} </b> </li>
-			{% elif item.id == 1 %}
+			{% elif item.is_correct %}
 				<li style = "color:green"> {{item}} </li>
 			{% else %}
 				<li> {{item}}</li>
@@ -89,26 +89,26 @@ qList is a 2d list of the following format:
 	{% endfor %} 
 	</li>
 {% else %}
-	<li> No submitted answers from {{response.respondent}} </li>
+	<li> No submitted multiple choice answers from {{response.respondent}} </li>
+{% endif %}
+<br>
+{% if fr_list %}
+    <h3>Free Response</h3>
+	{% for question, answer in fr_list %}
+		<li><h4>{{question}}</h4>
+            <ul> {{answer}}</ul>
+        </li>   
+    {% endfor %}
 {% endif %}
 </ol>
     </ul>
+
+<a href = {% url 'exam:responses' exam.id  response.response_set.id %} class="btn btn-primary"> Back to Response Set</a>
+<a href = {% url 'exam:distribute_detail' exam.id %} class="btn btn-primary"> Back to Exam "{{exam}}"</a>
+
+
+
 </div>
 
-</body>
-<!-- {% for question in responses %}
-	<li>{{ question.question }}<br>
-		<ul>
-		{%for answer in question.question.multiplechoiceoption_set %}
-			{ % if answer.id == question.option_id % }
-				<li> {{answer.text}} <-- </li>
-			{ % else % }
-				<li> {{answer.text}} </li>
-			{ % endif %}
-		{% endfor %}
-		</ul>
-{% endfor %}
-
--->
 
 {% endblock %}

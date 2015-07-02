@@ -34,6 +34,7 @@
   {%if user.is_staff%}
   <a href = {% url 'exam:finalize_view' object.id %} class="btn btn-warning"> Select Questions for Final Survey</a>
 {%endif%}
+    
   <br>
     <br>
 </div>
@@ -76,7 +77,7 @@
             <td bgcolor = "#B2B2B2">{{concept}} </td>
         {%if questions %}
             <td class = "data">
-            {% for q in questions %}
+            {% for q, options in questions %}
               {%with forloop.counter as index%}
                 {% if index == 1 %}
                 {% if object.stage == 1 %}
@@ -86,10 +87,12 @@
                 {% endif %}
             <div class = "overview_inner_list">
               <ol type = "a">
-                {%for option in option_list %}
-                    {% if option.question.id == q.id%}
-                    <li>{{option.text}}</li>
-                    {%endif%}
+                {%for option in options %}
+                    {% if option.is_correct%}
+                  <li><b class = "correct">{{option.text}}</b></li>
+                    {% else %}
+                  <li>{{option.text}}</li>
+                  {%endif%}
                 {%endfor%}
                 </ol>
               </div>
@@ -107,10 +110,12 @@
               
               <div class = "overview_inner_list">
               <ol type = "a">
-                {%for option in option_list %}
-                    {% if option.question.id == q.id%}
-                    <li>{{option.text}}</li>
-                    {%endif%}
+                {%for option in options %}
+                    {% if option.is_correct%}
+                  <li><b class = "correct">{{option.text}}</b></li>
+                    {% else %}
+                  <li>{{option.text}}</li>
+                  {%endif%}
                 {%endfor%}
                 </ol>
               </div>
@@ -176,10 +181,19 @@
               <td>{% for q in questions %}
               {%with forloop.counter as index%}
                 {% if index == 1 %}
-                 <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> </td>
+                 {% if object.stage == 1 %}
+                 <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> 
+                {% else %}
+                    <b>{{q}}</b>
+                {% endif %} </td>
                   {%else%}
          <tr> <td bgcolor = "#CECECE"></td> 
-              <td> <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> </td></tr>
+              <td>
+                  {% if object.stage == 1 %}
+                 <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> 
+                {% else %}
+                    <b>{{q}}</b>
+                {% endif %}</td></tr>
             {%endif%}
             {%endwith%}
           {%endfor%}
@@ -206,6 +220,8 @@
 </ul>
 
 </div>
+
+
 
 
 
