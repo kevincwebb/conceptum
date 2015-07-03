@@ -19,10 +19,12 @@
 <div class="form-horizontal-heading">
   <h2><b>Finalize {{current_app|capfirst}} Questions</b></h2>
 </div>
-
+<p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
   <form action="" method="post">{% csrf_token %}
   {{ wizard.management_form }}
-  {{ wizard.form }}
+  {% block form_content %}
+    {{ wizard.form }}
+  {% endblock form_content %}
   
   {% if wizard.steps.prev %}
   <button name="wizard_goto_step" class='btn btn-primary' type="submit" value="{{ wizard.steps.prev }}">{% trans "Back" %}</button>
@@ -30,15 +32,9 @@
     <a href = {% url 'exam:detail' exam.id %} class='btn btn-primary'> Cancel </a>
   {% endif %}
   {% if wizard.steps.next %}
-  <button name="wizard_goto_step" class='btn btn-primary' type="submit" value="{{ wizard.steps.next }}">{% trans "Next" %}</button>
+    <button class='btn btn-primary' type="submit" value="{{ wizard.steps.next }}">{% trans "Next" %}</button>
   {% else %}
-      <p>Are you sure you want to finalize the exam: {{ exam }}?</br>
-      You will not be able to edit the exam, including all questions and their
-      order, once the exam is finalized.</p>
-      <div class="submit">
-        <button class="btn btn-danger" type="submit">Finalize</button>
-        
-      </div>
+    <button class="btn btn-danger" type="submit">Finalize</button>
   {% endif %}
   </form>
 

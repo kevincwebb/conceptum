@@ -349,26 +349,36 @@ class FinalizeSelectForm(forms.ModelForm):
         super(FinalizeSelectForm, self).__init__(*args, **kwargs)
         self.fields['select_fr']=forms.ModelMultipleChoiceField(
             queryset=self.instance.freeresponsequestion_set.all(),
+            label='Free response questions',
             required=False,
             widget=forms.CheckboxSelectMultiple)
         self.fields['select_mc']=forms.ModelMultipleChoiceField(
             queryset=self.instance.multiplechoicequestion_set.all(),
+            label='Multiple choice questions',
             required=False,
             widget=forms.CheckboxSelectMultiple)
 
 
 class FinalizeOrderForm(forms.Form):
+    """
+    CHANGE TO MODELFORMSET
+    """
     class Meta:
         fields=[]
-        
     
     def __init__(self, *args, **kwargs):
         """
         There is one field, a list of tuples
         """
-        self.selected = kwargs.pop('selected', None)
+        fr_questions = kwargs.pop('selected_fr', None)
+        mc_questions = kwargs.pop('selected_mc', None)
         super(FinalizeOrderForm, self).__init__(*args, **kwargs)
-        print self.selected
+        for question in fr_questions:
+            self.fields['fr%d'%question.id] = forms.IntegerField(label=question,
+                                                                 widget=forms.TextInput(attrs={'size':'3'}))
+        for question in mc_questions:
+            self.fields['mc%d'%question.id] = forms.IntegerField(label=question,
+                                                                 widget=forms.TextInput(attrs={'size':'3'}))
 
 
 class FinalizeConfirmForm(forms.Form):

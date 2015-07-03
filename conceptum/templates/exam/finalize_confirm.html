@@ -1,34 +1,14 @@
-{% extends "base.html" %}
+{% extends "exam/finalize.html" %}
 
-{% load url from future %}
-{% load i18n %}
-{% load static %}
+{% block form_content %}
+<i>On this page, the admin will see their selected questions and order displayed (nicely),
+before confirming that they indeed want to finalize the survey.</i>
+</br></br>
+{{ all_data }}
+</br></br>
 
-{% block head_title %}{% trans "Interview Detail" %}{% endblock %}
-
-{% block extra_headers %}
-
-<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
-
-{% endblock %}
-
-{% block content %}
-
-<div class="container">
-    
-<div class="form-horizontal-heading">
-  <h2><b>Finalize {{current_app|capfirst}} Questions</b></h2>
-</div>
-
-  <form action="" method="post">{% csrf_token %}
-  
-      <p>Are you sure you want to finalize the exam: {{ exam }}?</br>
+<p>Are you sure you want to finalize the exam: {{ exam }}?</br>
       You will not be able to edit the exam, including all questions and their
       order, once the exam is finalized.</p>
-      <div class="submit">
-        <button class="btn btn-danger" type="submit">Finalize</button>
-        <a href = {% url 'exam:detail' exam.id %} class='btn btn-primary'> Cancel </a>
-      </div>
-  </form>
 
-{% endblock %}
+{% endblock form_content %}

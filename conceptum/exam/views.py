@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.db import transaction
+from django.forms.models import modelformset_factory
 
 import reversion
 from braces.views import LoginRequiredMixin, UserPassesTestMixin, StaffuserRequiredMixin
@@ -419,10 +420,38 @@ class FinalizeView(LoginRequiredMixin,
                    DevelopmentMixin,
                    CurrentAppMixin,
                    SessionWizardView):
-    template_name = 'exam/finalize.html'
-    form_list = [FinalizeSelectForm, FinalizeOrderForm, FinalizeConfirmForm]
-    model = Exam
-    pk_url_kwarg = 'exam_id'    
+    #template_name = 'exam/finalize.html'
+    form_list = [FinalizeSelectForm,
+                 FinalizeOrderForm,
+                 FinalizeConfirmForm]
+    template_list = ['exam/finalize_select.html',
+                     'exam/finalize_order.html',
+                     'exam/finalize_confirm.html']
+
+    def get_template_names(self):
+        return [self.template_list[int(self.steps.current)]]
+    
+    def get_form_instance(self, step):
+        if step == '0':
+            return self.exam
+        
+    def get_form_kwargs(self, step):
+        kwargs = super(FinalizeView, self).get_form_kwargs(step)
+        if step == '1':
+            data = self.get_cleaned_data_for_step('0')
+            kwargs['selected_fr'] = data.get('select_fr')
+            kwargs['selected_mc'] = data.get('select_mc')
+        return kwargs
+    
+    def get_context_data(self, **kwargs):
+        context = super(FinalizeView, self).get_context_data(**kwargs)
+        context['exam'] = self.exam
+        if self.steps.current =='0':
+            form = self.get_form()
+            context['mc_choices_and_objects'] = zip(form['select_mc'], form['select_mc'].field.queryset)
+        if self.steps.current == '2':
+            context['all_data'] = self.get_all_cleaned_data()
+        return context
 
     def done(self, form_list, **kwargs):
         for question in self.exam.freeresponsequestion_set.all():
@@ -431,57 +460,10 @@ class FinalizeView(LoginRequiredMixin,
         for question in self.exam.multiplechoicequestion_set.all():
             if question not in form_list[0].cleaned_data.get('select_mc'):
                 question.delete()
-        # set numbers
+        # TODO: Set question numbers
+        self.exam.stage = ExamStage.DIST
+        self.exam.save()
         return HttpResponseRedirect(reverse('exam:index', current_app=self.current_app))
-    
-    def get_form_instance(self, step):
-        return self.exam
-    
-    def get_form_kwargs(self,step):
-        kwargs = super(FinalizeView, self).get_form_kwargs(step)
-        if step == '1':
-            form = self.get_form(step='0')
-            #form = self.get_form(step='0',
-            #    data=self.storage.get_step_data('0'),
-            #    files=self.storage.get_step_files('0'))
-            print form
-            print form.is_valid()
-            data = self.get_cleaned_data_for_step('0')
-            print data
-            fr_list = data['select_fr']
-            print fr_list
-            kwargs['selected']=fr_list
-        return kwargs
-            
-    
-    def get_context_data(self, **kwargs):
-        context = super(FinalizeView, self).get_context_data(**kwargs)
-        context['exam'] = self.exam
-        return context
-
-
-#class FinalizeComfirmView(LoginRequiredMixin,
-#                   StaffRequiredMixin,
-#                   DevelopmentMixin,
-#                   CurrentAppMixin,
-#                   generic.TemplateView):
-#    template_name = 'exam/finalize.html'
-#    #model = Exam
-#    #pk_url_kwarg = 'exam_id'
-#    
-#    def get_context_data(self, **kwargs):
-#        context = super(FinalizeConfimView, self).get_context_data(**kwargs)
-#        context['exam'] = self.exam
-#        return context
-#    
-#    def post(self, request, *args, **kwargs):
-#        self.exam.stage = ExamStage.DIST
-#        self.exam.save()
-#        return HttpResponseRedirect(self.get_success_url())
-#
-#    # in the future, this should maybe return to the distribute index
-#    def get_success_url(self):
-#        return reverse('exam:index', current_app=self.current_app)
 
 
 ################# DISTRIBUTION #############################
