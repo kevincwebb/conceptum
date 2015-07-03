@@ -26,7 +26,7 @@
 
 {% block buttons %}
 <div>
-  <a href = {% url 'exam:index' %} class="btn btn-primary"> Statistics </a>
+  <a href = {% url 'exam:index' %} class="btn btn-primary"> Statistics (coming soon)</a>
     <a href = {% url 'exam:distribute_discuss' exam.id %} class = "btn btn-primary"> Discuss </a>
   {%if user.is_staff%}
   <a href = {% url 'exam:response_sets' exam.id %} class="btn btn-primary"> Responses and Distribution </a>

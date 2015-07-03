@@ -19,7 +19,7 @@ exam_patterns = patterns('',
         url(r'^$', views.ExamDevIndexView.as_view(), name='index'),
         url(r'^create/$', views.ExamCreateView.as_view(), name='create'),
         #url(r'^copy/(?P<exam_id>\d+)/$', views.ExamCopyView.as_view(), name='copy'),
-        url(r'^(?P<exam_id>\d+)/$', views.ExamDetailView.as_view(), name='detail'),
+        url(r'^(?P<exam_id>\d+)/$', views.DevDetailView.as_view(), name='detail'),
         url(r'^(?P<exam_id>\d+)/select/$', views.SelectConceptView.as_view(), name='select_concept'),
         url(r'^(?P<exam_id>\d+)/(?P<concept_id>\d+)/(?P<question_type>\w{2})/$',
             views.QuestionCreateView.as_view(), name='question_create'),
@@ -55,16 +55,16 @@ exam_patterns = patterns('',
         url(r'^(?P<pk>\d+)/delete/$', views.DeleteView.as_view(), name='distribute_delete'),
         
         #detail view of distribution page
-        url(r'^(?P<exam_id>\d+)/$', views.description, name='distribute_detail'),
+        url(r'^(?P<exam_id>\d+)/$', views.DistDetailView.as_view(), name='distribute_detail'),
         
         #1/discuss
         url(r'^(?P<exam_id>\d+)/discuss/$',views.discuss, name='distribute_discuss'),
         
         # exams/1/responses/
-        url(r'^(?P<exam_id>\d+)/responses/$', views.response_sets, name = 'response_sets'),
+        url(r'^(?P<exam_id>\d+)/responses/$', views.ResponseSetIndexView, name = 'response_sets'),
 
          #exams/1/responses/1/       (exam 1, response set 1)
-        url(r'^(?P<exam_id>\d+)/responses/(?P<rsid>\d+)/$', views.responses, name = 'responses'),
+        url(r'^(?P<exam_id>\d+)/responses/(?P<rsid>\d+)/$', views.ResponseSetDetailView, name = 'responses'),
 
          #exams/1/responses/1/1234567...        (exam 1, response set 1, key 1234567...)
         url(r'^(?P<exam_id>\d+)/responses/(?P<rsid>\d+)/(?P<key>\w+)/$', views.ExamResponseDetail, name = 'response_detail'),
@@ -74,9 +74,9 @@ exam_patterns = patterns('',
     #url(r'^/', DistributeIndexView.as_view()), #just a default, something we might want
     
     # TAKE TEST
-    url(r'^taketest/(?P<pk>\w+)/$', views.ExamResponseIRB,
+    url(r'^taketest/(?P<pk>\w+)/$', views.TakeTestIRBView,
         name='take_test_IRB'), 
-    url(r'^taketest/(?P<pk>\w+)/form/$', views.ExamResponseView.as_view(),
+    url(r'^taketest/(?P<pk>\w+)/form/$', views.TakeTestView.as_view(),
         name='take_test'), #formerly exam_response
     url(r'^response_complete/$', TemplateView.as_view(
         template_name='exam/response_complete.html'), name='response_complete'),

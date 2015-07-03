@@ -79,8 +79,11 @@ footer{
 .overview_inner_list{
 
     columns: 2;
+    list-style:circle;
     -webkit-columns: 2;
+    -moz-columns:2;
     -webkit-list-style:circle;
+    -moz-list-style:circle;
 
 }
 
@@ -104,22 +107,6 @@ footer{
     border-style: solid;
 }
 
-.overview-button:onclick{
-    -webkit-animation-name: overview-move;
-    -webkit-animation-duration:1s;
-}
-
-<!--.click:onclick .overview{
-    background-color:pink;
-    border-style:dashed;
-    border-width:thick;
-    animation-name: overview-hover;
-    animation-duration: 1s;
-    
-    -webkit-animation-name: overview-hover;
-    -webkit-animation-duration: 1s;
-} -->
-
 .overview-button:hover > .plus{
     color:#254e6d;
 }
@@ -130,10 +117,6 @@ footer{
 .overview-button:hover{
     background-color:#c4c4c4;
 }
-
-
-
-
 
 
 .list{
@@ -163,7 +146,7 @@ footer{
 
 
 .ind_button{
-        align-content:center;
+    align-content:center;
     text-align:center;
     display:inline-block;
     width:30px;
@@ -341,7 +324,6 @@ nav ul li {
     background-color: #cccccc;
     border-radius:10px;
     border-width:1px;
-    #border-color: #aaaaaa;
     border-color:#758ead;
     border-style:solid;
 }
@@ -382,6 +364,7 @@ hr{
     border-color:#285e8e;
     color:white;
     text-decoration: none;
+    -moz-text-decoration:none;
     
 }
 
@@ -403,4 +386,10 @@ td{
 
 ol .alpha{
     list-style-type:lower-roman;
+}
+
+
+
+.correct{
+    color:#1a3;
 }

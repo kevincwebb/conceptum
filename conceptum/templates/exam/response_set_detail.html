@@ -17,17 +17,24 @@
 <div class="container">
 
 <h1> Response Set for class "{{response_set.course}}" </h1>
-<h3> Responses to: "{{response_set.exam}}" (id {{exam_id}})</h3>
+<h3> Responses to: "{{response_set.exam}}" (ID {{exam_id}})</h3>
 <h3> Created on {{response_set.created}}</h3>
 
     
-
-<hr>
+<div>
+    <a href = {% url 'exam:distribute_discuss' exam_id %} class = "btn btn-primary"> Discuss </a>
+  {%if user.is_staff%}
+  <a href = {% url 'exam:distribute_send' response_set.id %} class="btn btn-primary"> Distribute From This Set </a>
+    <a href = {% url 'exam:distribute_new'  exam_id %} class="btn btn-primary"> New Response Set</a>
+{%endif%}
+  <br>
+    <br>
+</div>
     
 <!--[numQuestions, numCorrect, medianScore, maxScore, lowScore]-->
 
 <ul class = "collapsible_list">
-    <li><h3><span class="tab">Statistics </span>
+    <li><h3><span class="tab">Statistics (Coming Soon)</span>
     
         <label for="stats_node"><div class = "plus_ind_button"> + </div></label></h3>
     <input type = "checkbox" id = "stats_node">
@@ -64,10 +71,10 @@
     
     
     
-  <ul class = "inner_list">
+  <ul class = "collapsible_overview">
   {% if responses %}
     {% for response in responses %}
-      <li><a href = "
+      <li class = "table"><a href = "
           {% url 'exam:response_detail' response.response_set.exam.id response.response_set.id response.key %}">
           
 {{ response.respondent }}</a></li> 
@@ -77,24 +84,16 @@
   {% endif %}
   </ul>
     <br>
-    <a href="{% url 'exam:response_sets' exam_id%}">Other Response Sets for Exam {{exam_id}}</a><br>
+    <a href="{% url 'exam:response_sets' exam_id%}" class = "btn btn-primary">Other Response Sets for Exam {{exam_id}}</a><br>
     </li>
     
 
 
 
 <br>
-<hr>
-
-    <!-- maybe make this a footer -->
-    
-<h3> Discuss this Exam </h3>
-<!-- <a href="/exams/{{ exam_id }}/discuss">Discussion</a>-->
 
 
-<a href="{% url 'exam:discuss' exam_id %}">Discuss</a><br>
-<a href="{% url 'exam:distribute_new' exam_id %}">Distribute</a>
-    
+
 
 </div> <!-- container -->
 
