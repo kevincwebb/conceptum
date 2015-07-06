@@ -327,6 +327,34 @@ class MultipleChoiceVersionForm(QuestionVersionForm):
         model = MultipleChoiceQuestion
         fields = []
     
+    
+    #def revert(self, revision):
+    #    """
+    #    This is a re-write of reversion.models.Revision.revert(delete=True)
+    #    
+    #    Django-reversion is supposed to work with proxy models (see django-reversion issue #134,
+    #    when this problem was fixed). However, revision.revert() does not work with our proxy
+    #    model, but we were able to change one line in order to make it work.
+    #    
+    #    The problem was that `version.object.__class__` is Question (not registered with reversion,
+    #    caused an error). However, `version.object_version.object.__class__` is MultipleChoiceQuestion,
+    #    which is what we want
+    #    """
+    #    version_set = revision.version_set.all()
+    #    old_revision = {}
+    #    for version in version_set:
+    #    # v******** changed this line **********v 
+    #        obj = version.object_version.object
+    #    # ^*************************************^
+    #        old_revision[obj] = version
+    #    manager = reversion.revisions.RevisionManager.get_manager(revision.manager_slug)
+    #    current_revision = manager._follow_relationships(obj for obj in old_revision.keys() if obj is not None)
+    #    for item in current_revision:
+    #            if item not in old_revision:
+    #                item.delete()
+    #    reversion.models.safe_revert(version_set)
+    
+    
     def save(self):
         """
         The data saved in 'version' is an integer that is the selected version's index
@@ -334,7 +362,14 @@ class MultipleChoiceVersionForm(QuestionVersionForm):
         """
         index = int(self.cleaned_data.get('version'))
         version_list = self.instance.get_unique_versions()
-        version_list[index].revision.revert(delete=True)
+        revision = version_list[index].revision
+        
+        # We would like to just call
+        #    version_list[index].revision.revert(delete=True)
+        # but this does not work with proxy models.
+        # We call our own revert method instead.
+        self.instance.revision_revert(revision)
+
         return self.instance
 
 

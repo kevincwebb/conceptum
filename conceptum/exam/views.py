@@ -81,7 +81,7 @@ class ExamDevIndexView(LoginRequiredMixin,
         #format: [[exam, stat, list, goes, here...], [exam, stats, go, here], ...]
         exams = []
         for ex in ex_list:
-            qset = ex.multiplechoicequestion_set.all()
+            qset = ex.question_set.all()
             exam_item = [ex]
             qs = "Questions: " + len(qset).__str__()
             concepts = []

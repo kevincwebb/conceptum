@@ -14,7 +14,7 @@ from django_enumfield import enum
 import reversion
 
 from profiles.models import ContributorProfile
-from .managers import ExamResponseManager
+from .managers import FreeResponseManager, MultipleChoiceManager, ExamResponseManager
 
 # Constants
 EXAM_NAME_LENGTH = 100
@@ -114,6 +114,14 @@ class Exam(models.Model):
     kind = enum.EnumField(ExamKind, default=ExamKind.CI)
     stage = enum.EnumField(ExamStage, default=ExamStage.DEV)
     
+    @property
+    def freeresponsequestion_set(self):
+        return FreeResponseQuestion.objects
+    
+    @property
+    def multiplechoicequestion_set(self):
+        return MultipleChoiceQuestion.objects
+    
     def __unicode__(self):
         return self.name
 
@@ -144,9 +152,11 @@ def question_imageupload_to(question, filename):
 
 class Question(models.Model):
     """
-    Abstract base class that represents one question within an exam.
+    Base class that represents one question within an exam.
     """
     exam = models.ForeignKey(Exam)
+    # Distinguish between multiple choice and free response questions
+    is_multiple_choice = models.BooleanField(editable=False)
     
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
@@ -157,16 +167,14 @@ class Question(models.Model):
     image = models.ImageField(upload_to=question_imageupload_to, blank=True)
     rank = models.IntegerField(null=True, blank = True)
     optional = models.BooleanField(default=False)
-
-    class Meta:
-        abstract = True
-
+    
     def __unicode__(self):
         return self.question
     
     def get_unique_versions(self):
         """
-        This is a little more thorough than django-reversion's get_unique_for_object.
+        This is a replacement for django-reversion's get_unique_for_object. It has different
+        criteria for uniqueness.
         
         reversion.get_for_object(obj) returns a list of all versions of the given object,
         ordered by date created. reversion.get_unique_for_object(obj) calls get_for_object
@@ -192,7 +200,7 @@ class Question(models.Model):
                 if u.serialized_data != v.serialized_data:
                     continue
                 
-                if self.__class__ is MultipleChoiceQuestion:
+                if self.is_multiple_choice:
                     # check number of options
                     option_type = ContentType.objects.get_for_model(MultipleChoiceOption)
                     v_options = v.revision.version_set.filter(content_type__pk=option_type.id)
@@ -216,7 +224,6 @@ class Question(models.Model):
                 unique_versions.append(v)    
         return unique_versions
     
-    
     def save(self, *args, **kwargs):
         """
         Questions should not be editable unless exam.can_develop()
@@ -225,14 +232,19 @@ class Question(models.Model):
             raise IntegrityError('This question is not editable because '
                                  'exam.stage is not DEV')
         super(Question, self).save(*args, **kwargs)
-
+        
 
 class FreeResponseQuestion(Question):
     """
     Represents a question in which the answerer can respond with free-form
     text.
     """
-    pass
+    objects = FreeResponseManager()
+    
+    class Meta:
+        proxy = True
+
+reversion.register(FreeResponseQuestion)
 
 
 class MultipleChoiceQuestion(Question):
@@ -240,11 +252,42 @@ class MultipleChoiceQuestion(Question):
     Represents a question in which the answerer must choose between a set of
     predefined choices.
     """
-    randomize = models.BooleanField('randomize choices order', default=False)
+    objects = MultipleChoiceManager()
+    class Meta:
+        proxy = True
     
     @property
     def correct_option(self):
         return self.multiplechoiceoption_set.get(is_correct=True)
+    
+    def revision_revert(self, revision):
+        """
+        This is a re-write of reversion.models.Revision.revert(delete=True) to work with our
+        specific case of the MultipleChoiceQuestion proxy model. Using django-reversion's
+        revision.revert() method throws a RegistrationError ("<class 'exam.models.Question'>
+        has not been registered with django-reversion").
+        
+        Django-reversion is supposed to work with proxy models (see django-reversion issue #134,
+        when this problem was supposedly fixed). However, revision.revert() does not work with
+        our proxy model, but we were able to change one line to make it work.
+        
+        The problem was that `version.object.__class__` is Question (not registered with reversion,
+        caused an error). However, `version.object_version.object.__class__` is MultipleChoiceQuestion,
+        which is what we want.
+        """
+        version_set = revision.version_set.all()
+        old_revision = {}
+        for version in version_set:
+        # v******** changed this line **********v 
+            obj = version.object_version.object
+        # ^*************************************^
+            old_revision[obj] = version
+        manager = reversion.revisions.RevisionManager.get_manager(revision.manager_slug)
+        current_revision = manager._follow_relationships(obj for obj in old_revision.keys() if obj is not None)
+        for item in current_revision:
+                if item not in old_revision:
+                    item.delete()
+        reversion.models.safe_revert(version_set)
 
 
 class MultipleChoiceOption(models.Model):
@@ -279,6 +322,9 @@ class MultipleChoiceOption(models.Model):
             raise IntegrityError('This option is not editable because '
                                  'question.exam.stage is not DEV')
         super(MultipleChoiceOption, self).save(*args, **kwargs)
+        
+reversion.register(MultipleChoiceQuestion, follow=["multiplechoiceoption_set"])
+reversion.register(MultipleChoiceOption)
     
 
 class ResponseSet(models.Model):

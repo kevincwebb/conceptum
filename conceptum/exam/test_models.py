@@ -36,7 +36,6 @@ class ModelsTest(SimpleTestCase):
     def test_fr_get_unique_versions(self):
         # Reversion registration through the admin interface does not work in tests,
         # nor does ReversionMiddleware work to create revisions
-        reversion.register(FreeResponseQuestion)
         exam, created = Exam.objects.get_or_create(name='Test Exam',
                                                    description='an exam for testing')
         concept_type = ContentType.objects.get_for_model(DummyConcept)
@@ -48,7 +47,8 @@ class ModelsTest(SimpleTestCase):
                                                            question="Version 1 ?",
                                                            number=1,
                                                            content_type=concept_type,
-                                                           object_id=concept.id)
+                                                           object_id=concept.id,
+                                                           id=3478)
         self.assertEqual(len(question.get_unique_versions()),1)
         self.assertEqual(question.get_unique_versions()[0], reversion.get_for_object(question)[0])
         
@@ -86,8 +86,6 @@ class ModelsTest(SimpleTestCase):
         Because MCQ and FRQ use the same get_unique_versions function, this test does not
         repeat tests done by test_fr_get_unique_versions
         """
-        reversion.register(MultipleChoiceQuestion, follow=["multiplechoiceoption_set"])
-        reversion.register(MultipleChoiceOption)
         exam, created = Exam.objects.get_or_create(name='Test Exam',
                                                    description='an exam for testing')
         concept_type = ContentType.objects.get_for_model(DummyConcept)
@@ -100,7 +98,8 @@ class ModelsTest(SimpleTestCase):
                                                              question="Version 1 ?",
                                                              number=1,
                                                              content_type=concept_type,
-                                                             object_id=concept.id)
+                                                             object_id=concept.id,
+                                                             id=1578)
             option_1 = MultipleChoiceOption.objects.create(question=question,
                                                            index=1,
                                                            text="A v1")
@@ -140,13 +139,15 @@ class ModelsTest(SimpleTestCase):
         
         # Revert, should delete an option but not make new unique version
         with reversion.create_revision():
-            question.get_unique_versions()[1].revision.revert(delete=True)
+            revision = question.get_unique_versions()[1].revision
+            question.revision_revert(revision)
         self.assertEqual(len(question.get_unique_versions()),3)
         self.assertNotIn(option_3, MultipleChoiceOption.objects.all())
         
         # Revert back, option_3 should exist again
         with reversion.create_revision():
-            question.get_unique_versions()[1].revision.revert(delete=True)
+            revision = question.get_unique_versions()[1].revision
+            question.revision_revert(revision)
         self.assertEqual(len(question.get_unique_versions()),3)
         self.assertIn(option_3, MultipleChoiceOption.objects.all())
         
@@ -160,7 +161,8 @@ class ModelsTest(SimpleTestCase):
         # Note, we have to 'get' the object because out local variable points to
         # an object that was deleted
         with reversion.create_revision():
-            question.get_unique_versions()[1].revision.revert(delete=True)
+            revision = question.get_unique_versions()[1].revision
+            question.revision_revert(revision)
         self.assertEqual(len(question.get_unique_versions()),3)
         option_3 = MultipleChoiceOption.objects.get(text="C v1")
         self.assertIn(option_3, MultipleChoiceOption.objects.all())
