@@ -17,8 +17,13 @@
 <div class="container">
  
   <div class="horizontal-heading">
-    <h3>Provide Survey/Exam details</h3>
+    <h3>Provide {{current_app|capfirst}} Details</h3>
   </div>
+  
+  <p>Before you create an entirely new exam, consider that we probably don't need more than
+  1 in development at any time. If you would like to continue revising an exam that has
+  already been finalized, consider making a COPY of a distributed exam instead.
+  <a href = {% url 'exam:distribute_index' %} class='btn btn-primary'> distributable exams </a></p>
   
   <form class="form-horizontal" role="form"  action="{% url 'exam:create' %}" method="post">{% csrf_token %}
   

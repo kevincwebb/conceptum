@@ -8,7 +8,7 @@ from django.db import models, transaction
 
 from interviews.models import get_concept_list, DummyConcept as Concept #TEMPORARY: DummyConcept
 from .models import ExamResponse, FreeResponseQuestion, MultipleChoiceQuestion, \
-                    MultipleChoiceOption, ResponseSet, Exam, \
+                    Question, MultipleChoiceOption, ResponseSet, Exam, \
                     MAX_CHOICES, REQUIRED_CHOICES
 import reversion
 
@@ -327,34 +327,6 @@ class MultipleChoiceVersionForm(QuestionVersionForm):
         model = MultipleChoiceQuestion
         fields = []
     
-    
-    #def revert(self, revision):
-    #    """
-    #    This is a re-write of reversion.models.Revision.revert(delete=True)
-    #    
-    #    Django-reversion is supposed to work with proxy models (see django-reversion issue #134,
-    #    when this problem was fixed). However, revision.revert() does not work with our proxy
-    #    model, but we were able to change one line in order to make it work.
-    #    
-    #    The problem was that `version.object.__class__` is Question (not registered with reversion,
-    #    caused an error). However, `version.object_version.object.__class__` is MultipleChoiceQuestion,
-    #    which is what we want
-    #    """
-    #    version_set = revision.version_set.all()
-    #    old_revision = {}
-    #    for version in version_set:
-    #    # v******** changed this line **********v 
-    #        obj = version.object_version.object
-    #    # ^*************************************^
-    #        old_revision[obj] = version
-    #    manager = reversion.revisions.RevisionManager.get_manager(revision.manager_slug)
-    #    current_revision = manager._follow_relationships(obj for obj in old_revision.keys() if obj is not None)
-    #    for item in current_revision:
-    #            if item not in old_revision:
-    #                item.delete()
-    #    reversion.models.safe_revert(version_set)
-    
-    
     def save(self):
         """
         The data saved in 'version' is an integer that is the selected version's index
@@ -364,10 +336,8 @@ class MultipleChoiceVersionForm(QuestionVersionForm):
         version_list = self.instance.get_unique_versions()
         revision = version_list[index].revision
         
-        # We would like to just call
-        #    version_list[index].revision.revert(delete=True)
-        # but this does not work with proxy models.
-        # We call our own revert method instead.
+        # We would like to just call `version_list[index].revision.revert(delete=True)`
+        # but this does not work with proxy models. We call our own revert method instead.
         self.instance.revision_revert(revision)
 
         return self.instance
@@ -379,44 +349,46 @@ class FinalizeSelectForm(forms.ModelForm):
         fields = []
     
     def __init__(self, *args, **kwargs):
-        """
-        """
         super(FinalizeSelectForm, self).__init__(*args, **kwargs)
-        self.fields['select_fr']=forms.ModelMultipleChoiceField(
-            queryset=self.instance.freeresponsequestion_set.all(),
-            label='Free response questions',
-            required=False,
-            widget=forms.CheckboxSelectMultiple)
-        self.fields['select_mc']=forms.ModelMultipleChoiceField(
-            queryset=self.instance.multiplechoicequestion_set.all(),
-            label='Multiple choice questions',
-            required=False,
+        self.fields['select_questions']=forms.ModelMultipleChoiceField(
+            queryset=self.instance.question_set.all().order_by('object_id'),
             widget=forms.CheckboxSelectMultiple)
 
 
 class FinalizeOrderForm(forms.Form):
-    """
-    CHANGE TO MODELFORMSET
-    """
     class Meta:
-        fields=[]
+        #model = Exam
+        fields = []
     
     def __init__(self, *args, **kwargs):
-        """
-        There is one field, a list of tuples
-        """
-        fr_questions = kwargs.pop('selected_fr', None)
-        mc_questions = kwargs.pop('selected_mc', None)
+        self.queryset = kwargs.pop('selected_questions')
         super(FinalizeOrderForm, self).__init__(*args, **kwargs)
-        for question in fr_questions:
-            self.fields['fr%d'%question.id] = forms.IntegerField(label=question,
-                                                                 widget=forms.TextInput(attrs={'size':'3'}))
-        for question in mc_questions:
-            self.fields['mc%d'%question.id] = forms.IntegerField(label=question,
-                                                                 widget=forms.TextInput(attrs={'size':'3'}))
+        for question in self.queryset:
+            self.fields['question_%d'%question.id]=forms.IntegerField(
+                label=question,
+                validators=[MaxValueValidator(len(self.queryset)),
+                            MinValueValidator(1)],
+                widget=forms.TextInput(attrs={'size':2}))
+    
+    def clean(self):
+        cleaned_data = super(FinalizeOrderForm, self).clean()
+        used_numbers = []
+        for question in self.queryset:
+            number = self.cleaned_data.get('question_%d'%question.id)
+            if used_numbers.count(number):
+                raise ValidationError("Please assign numbers such that there are no duplicates.")
+            else:
+                # because we don't need to throw this error if there are e.g. 2 blank fields
+                if number in range(1, len(self.queryset)+1):
+                    used_numbers.append(number)
+            
+        return cleaned_data
 
 
 class FinalizeConfirmForm(forms.Form):
+    """
+    Blank form for the confirm page in our form wizard
+    """
     pass
 
 

@@ -13,13 +13,13 @@
 {% endblock %}
 
 {% block heading %}
-<h2><b> {{exam}} Detail</b></h2>
+<h2><b>{{current_app|capfirst}} Detail: {{exam}} </b></h2>
 </div>
     <hr>
 
-<h4>Exam Description</h4>
+<h4>Description:</h4>
     <p> {{exam.description}}</p>
-{{exam}} is final and can be distributed.
+
 
 {% endblock %}
 
@@ -27,10 +27,7 @@
 {% block buttons %}
 <div>
   <a href = {% url 'exam:index' %} class="btn btn-primary"> Statistics (coming soon)</a>
-    <a href = {% url 'exam:distribute_discuss' exam.id %} class = "btn btn-primary"> Discuss </a>
-  {%if user.is_staff%}
   <a href = {% url 'exam:response_sets' exam.id %} class="btn btn-primary"> Responses and Distribution </a>
-{%endif%}
   <br>
     <br>
 </div>
@@ -39,15 +36,6 @@
 
 
 <!-- TODO: add statistics drop-down, maybe response preview -->
-
-
-
-
-
-
-
-
-
 
 
 

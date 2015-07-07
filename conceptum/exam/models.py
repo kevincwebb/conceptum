@@ -171,6 +171,13 @@ class Question(models.Model):
     def __unicode__(self):
         return self.question
     
+    @property
+    def multiplechoiceoption_set(self):
+        if self.is_multiple_choice:
+            return MultipleChoiceOption.objects.filter(question=self)
+        else:
+            return None
+    
     def get_unique_versions(self):
         """
         This is a replacement for django-reversion's get_unique_for_object. It has different
@@ -258,7 +265,7 @@ class MultipleChoiceQuestion(Question):
     
     @property
     def correct_option(self):
-        return self.multiplechoiceoption_set.get(is_correct=True)
+        return self.multiplechoiceoption_set.filter(is_correct=True).first()
     
     def revision_revert(self, revision):
         """

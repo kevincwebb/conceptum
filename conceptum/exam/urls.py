@@ -18,13 +18,11 @@ exam_patterns = patterns('',
     url(r'^dev/', include(patterns('',
         url(r'^$', views.ExamDevIndexView.as_view(), name='index'),
         url(r'^create/$', views.ExamCreateView.as_view(), name='create'),
-        #url(r'^copy/(?P<exam_id>\d+)/$', views.ExamCopyView.as_view(), name='copy'),
+        url(r'^copy/(?P<exam_id>\d+)/$', views.ExamCopyView.as_view(), name='copy'),
         url(r'^(?P<exam_id>\d+)/$', views.DevDetailView.as_view(), name='detail'),
         url(r'^(?P<exam_id>\d+)/select/$', views.SelectConceptView.as_view(), name='select_concept'),
         url(r'^(?P<exam_id>\d+)/(?P<concept_id>\d+)/(?P<question_type>\w{2})/$',
             views.QuestionCreateView.as_view(), name='question_create'),
-        
-        url(r'^(?P<exam_id>\d+)/discuss/$',views.discuss, name='discuss'),
         
         url(r'^fr/(?P<question_id>\d+)/', include(patterns('',
             url(r'^edit/$', views.FreeResponseEditView.as_view(), name='fr_edit'),
@@ -41,37 +39,18 @@ exam_patterns = patterns('',
 
     # FINALIZING
     url(r'^finalize/(?P<exam_id>\d+)/$', views.FinalizeView.as_view(), name = 'finalize_view'),
-    #url(r'^finalize/(?P<exam_id>\d+)/confirm/$', views.FinalizeConfirmView.as_view(),
-    #    name = 'finalize_view'),
     
     # DISTRIBUTION
     url(r'^dist/', include(patterns('',
-        #index
         url(r'^$', views.ExamDistIndexView.as_view(), name='distribute_index'),
-        #detail
-        url(r'^(?P<exam_id>\d+)/new/$', views.NewResponseSetView.as_view(),
-            name='distribute_new'),
-        url(r'^send/(?P<set_id>\d+)/$', views.DistributeView.as_view(), name='distribute_send'),
-        url(r'^(?P<pk>\d+)/delete/$', views.DeleteView.as_view(), name='distribute_delete'),
-        
-        #detail view of distribution page
         url(r'^(?P<exam_id>\d+)/$', views.DistDetailView.as_view(), name='distribute_detail'),
-        
-        #1/discuss
-        url(r'^(?P<exam_id>\d+)/discuss/$',views.discuss, name='distribute_discuss'),
-        
-        # exams/1/responses/
-        url(r'^(?P<exam_id>\d+)/responses/$', views.ResponseSetIndexView, name = 'response_sets'),
-
-         #exams/1/responses/1/       (exam 1, response set 1)
-        url(r'^(?P<exam_id>\d+)/responses/(?P<rsid>\d+)/$', views.ResponseSetDetailView, name = 'responses'),
-
-         #exams/1/responses/1/1234567...        (exam 1, response set 1, key 1234567...)
-        url(r'^(?P<exam_id>\d+)/responses/(?P<rsid>\d+)/(?P<key>\w+)/$', views.ExamResponseDetail, name = 'response_detail'),
-
-        
+        url(r'^(?P<exam_id>\d+)/responses/$', views.ResponseSetIndexView.as_view(), name = 'response_sets'),
+        url(r'^(?P<exam_id>\d+)/new/$', views.NewResponseSetView.as_view(), name='distribute_new'),
+        url(r'^response_set/(?P<rs_id>\d+)/$', views.ResponseSetDetailView.as_view(), name = 'responses'),
+        url(r'^response_set/(?P<rs_id>\d+)/send/$', views.DistributeView.as_view(), name='distribute_send'),
+        url(r'^response_set/(?P<rs_id>\d+)/delete/$', views.DeleteView.as_view(), name='distribute_delete'),
+        url(r'^response/(?P<key>\w+)/$', views.ExamResponseDetailView.as_view(), name = 'response_detail'),
     ))),    
-    #url(r'^/', DistributeIndexView.as_view()), #just a default, something we might want
     
     # TAKE TEST
     url(r'^taketest/(?P<pk>\w+)/$', views.TakeTestIRBView,

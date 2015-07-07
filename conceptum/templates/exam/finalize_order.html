@@ -4,11 +4,23 @@
 {% block form_content %}
     
     <h3>Provide a question ordering</h3>
-    <i>(this form is not finished, nothing is actually done with the numbers yet)</i>
-    {% for field in wizard.form %}
-        {{field.errors}}
+    
+    {{ wizard.form.non_field_errors }}
+
+    {% for field in form %}
+        {{field.errors}}        
         <ul>
-        {{ field }} <b>{{ field.label }}</b>
+        {{ field }} <b>{{field.label}}</b>
+        
+            <ul>
+            {% for option in option_list.pop %}
+                <li>
+                {% if option.is_correct %} <b>{{option}}</b>
+                {% else %} {{option}}
+                {% endif %}
+                </li>
+            {% endfor %}
+            </ul>
         </ul>
     {% endfor %}
     

@@ -1,7 +1,7 @@
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.shortcuts import get_object_or_404
 
-from .models import Exam, ExamKind
+from .models import Exam, ExamKind, ResponseSet, ExamResponse
 
 
 class DevelopmentMixin(object):
@@ -62,6 +62,10 @@ class DistributionMixin(object):
         """
         if self.kwargs.get('exam_id'):
             return get_object_or_404(Exam, pk=self.kwargs['exam_id'])
+        if self.kwargs.get('rs_id'):
+            return get_object_or_404(ResponseSet, pk=self.kwargs['rs_id']).exam
+        if self.kwargs.get('key'):
+            return get_object_or_404(ExamResponse, pk=self.kwargs['key']).response_set.exam
         return ImproperlyConfigured('DistributeMixin was not provided with correct kwargs')
     
     def dispatch(self, request, *args, **kwargs):

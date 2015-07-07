@@ -20,14 +20,17 @@
 
 <div class="container">
     
-<h3> Exam Distribution Index </h3>
+<h3> {{current_app|capfirst}} Distribution Index </h3>
 <ul class = "collapsible_overview"> 
 {% for exam, stats in exams %}
        
     <li class = "table"><span class="over_tab"><span class = "tab-button"><a href="{% url 'exam:distribute_detail' exam.id %}">{{ exam.name }}</a></span>
         <a href = {% url 'exam:response_sets' exam.id %} class="dist_button"> Distribute </a>
+        {% if user.is_staff %}
+        <a href = {% url 'exam:response_sets' exam.id %} class="dist_button"> Copy for further development </a>
+        {% endif %}
         </span>
-    
+        
         
          <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div id = "plus" class = "plus"> + </div> <div id = "minus" class = "minus"> - </div> </div></label>
     <input type = "checkbox" id = "toplist_node{{exam.id}}" onclick = "PlusMinus(this)">
@@ -47,9 +50,6 @@
 {% endfor %}
         
 </ul>
-{% if user.is_staff %}
-    <a href = {% url 'exam:create' %} class="btn btn-warning"> Create New</a>    
-{% endif %}
 </div> <!-- container -->
 
 {% endblock %}

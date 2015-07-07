@@ -1,11 +1,28 @@
 {% extends "exam/finalize.html" %}
 
 {% block form_content %}
-<i>On this page, the admin will see their selected questions and order displayed (nicely),
-before confirming that they indeed want to finalize the survey.</i>
-</br></br>
-{{ all_data }}
-</br></br>
+
+</br>
+{{exam.name}}
+</br>
+{{exam.description}}
+</br>
+<ol>
+{% for question in ordered_questions %}
+    <li>{{question}}
+        <ol type="a">
+        {% for option in question.multiplechoiceoption_set.all %}
+            <li>
+            {% if option.is_correct %} <b>{{option}}</b>
+            {% else %} {{option}}
+            {% endif %}
+            </li>
+        {% endfor %}
+        </ol>
+    </li>
+{% endfor %}
+</ol>
+</br>
 
 <p>Are you sure you want to finalize the exam: {{ exam }}?</br>
       You will not be able to edit the exam, including all questions and their

@@ -22,6 +22,7 @@
 <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
   <form action="" method="post">{% csrf_token %}
   {{ wizard.management_form }}
+  
   {% block form_content %}
     {{ wizard.form }}
   {% endblock form_content %}
@@ -38,4 +39,4 @@
   {% endif %}
   </form>
 
-{% endblock %}
+{% endblock content %}

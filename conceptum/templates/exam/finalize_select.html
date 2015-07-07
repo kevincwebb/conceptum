@@ -2,26 +2,23 @@
 
   {% block form_content %}
     <h3>Select questions for final {{ current_app }}</h3>
-    {{wizard.form.errors}}
-    <b>{{ wizard.form.select_fr.label }}:</b>
-    {{wizard.form.select_fr.errors}}
-    {% for choice in wizard.form.select_fr %}
-        <ul>{{ choice }}</ul>
-    {% endfor %}
     
-    <b>{{ wizard.form.select_mc.label }}:</b>
-    {{wizard.form.select_mc.errors}}
-    {% for choice, object in mc_choices_and_objects %}
-        <ul>{{ choice }}</br>
+    {{wizard.form.non_field_errors}}
+    {{wizard.form.select_questions.errors}}
+    
+    {% for choice, object in choices_and_objects %}
+        <ul>{{ object.content_object }}</br>
+        {{ choice }}</br>
             <ul>
             {% for option in object.multiplechoiceoption_set.all %}
-                <li>{% if option.is_correct %}
-                    <b>{{option}}</b>
-                {% else %}
-                    {{option}}
-                {% endif %}</li>
+                <li>
+                {% if option.is_correct %} <b>{{option}}</b>
+                {% else %} {{option}}
+                {% endif %}
+                </li>
             {% endfor %}
             </ul>
         </ul>
     {% endfor %}
+        
   {% endblock form_content %}

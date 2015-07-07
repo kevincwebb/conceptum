@@ -1,5 +1,8 @@
 import datetime
+import operator
 
+
+from django import forms
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template import RequestContext, loader
@@ -10,7 +13,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.db import transaction
-from django.forms.models import modelformset_factory
 
 import reversion
 from braces.views import LoginRequiredMixin, UserPassesTestMixin, StaffuserRequiredMixin
@@ -20,7 +22,7 @@ from interviews.models import get_concept_list, DummyConcept as Concept #TEMPORA
 from interviews.models import Excerpt #not temporary
 from .models import Exam, ResponseSet, ExamResponse, QuestionResponse, FreeResponseQuestion,\
                     MultipleChoiceQuestion, MultipleChoiceOption, FreeResponseResponse,\
-                    MultipleChoiceResponse, ExamKind, ExamStage
+                    MultipleChoiceResponse, ExamKind, ExamStage, Question
 from .forms import SelectConceptForm, AddFreeResponseForm, AddMultipleChoiceForm, \
                    NewResponseSetForm, DistributeForm, ExamResponseForm, BlankForm, \
                    MultipleChoiceEditForm, FreeResponseVersionForm, MultipleChoiceVersionForm, \
@@ -44,15 +46,6 @@ def get_data(exam):
     return [fr, mc]
 
 
-@login_required
-def discuss(request, exam_id):
-    exam = Exam.objects.get(pk=exam_id)
-    template=loader.get_template('exam/discuss.html')
-    context = RequestContext(request,
-                             {'exam': exam,
-                              'exam_id': exam_id},)
-    return HttpResponse(template.render(context))
-
     
 ####################### DEVELOPMENT ###########################################
 
@@ -70,7 +63,7 @@ class ExamDevIndexView(LoginRequiredMixin,
     
     def get_template_names(self, *args, **kwargs):
         if (not Exam.objects.filter(kind=self.exam_kind)):
-            return 'exam/index_empty.html'
+            return 'exam/index_dev_empty.html'
         else:
             return 'exam/index_dev.html'
        
@@ -126,6 +119,13 @@ class ExamCreateView(LoginRequiredMixin,
 
     def get_success_url(self):
         return reverse('exam:index', current_app=self.current_app)
+
+
+class ExamCopyView(LoginRequiredMixin,
+                   StaffRequiredMixin,
+                   CurrentAppMixin,
+                   generic.CreateView):
+    pass
 
 
 class ExamDetailView(LoginRequiredMixin,
@@ -420,15 +420,14 @@ class FinalizeView(LoginRequiredMixin,
         return [self.template_list[int(self.steps.current)]]
     
     def get_form_instance(self, step):
-        if step == '0':
-            return self.exam
-        
+        return self.exam
+    
     def get_form_kwargs(self, step):
         kwargs = super(FinalizeView, self).get_form_kwargs(step)
+        if step is None:
+            step = self.steps.current
         if step == '1':
-            data = self.get_cleaned_data_for_step('0')
-            kwargs['selected_fr'] = data.get('select_fr')
-            kwargs['selected_mc'] = data.get('select_mc')
+            kwargs['selected_questions']=self.get_cleaned_data_for_step('0').get('select_questions')
         return kwargs
     
     def get_context_data(self, **kwargs):
@@ -436,19 +435,35 @@ class FinalizeView(LoginRequiredMixin,
         context['exam'] = self.exam
         if self.steps.current =='0':
             form = self.get_form()
-            context['mc_choices_and_objects'] = zip(form['select_mc'], form['select_mc'].field.queryset)
+            context['choices_and_objects'] = zip(form['select_questions'], form['select_questions'].field.queryset)
+        if self.steps.current == '1':
+            form = self.get_form()
+            option_list = []
+            for question in reversed(form.queryset):
+                if question.is_multiple_choice:
+                    option_list.append(question.multiplechoiceoption_set.all())
+                else:
+                    option_list.append([])
+            context['option_list'] = option_list
         if self.steps.current == '2':
-            context['all_data'] = self.get_all_cleaned_data()
+            data = self.get_all_cleaned_data()
+            questions = {}
+            for question in data.get('select_questions'):
+                questions[data.get('question_%d'%question.id)] = question
+            print questions
+            ordered_questions = sorted(questions.items(), key=operator.itemgetter(0))
+            print ordered_questions
+            context['ordered_questions'] = zip(*ordered_questions)[1]
         return context
 
     def done(self, form_list, **kwargs):
-        for question in self.exam.freeresponsequestion_set.all():
-            if question not in form_list[0].cleaned_data.get('select_fr'):
+        data = self.get_all_cleaned_data()
+        for question in self.exam.question_set.all():
+            if question in data.get('select_questions'):
+                question.number = data.get('question_%d'%question.id)
+                question.save()
+            else:
                 question.delete()
-        for question in self.exam.multiplechoicequestion_set.all():
-            if question not in form_list[0].cleaned_data.get('select_mc'):
-                question.delete()
-        # TODO: Set question numbers
         self.exam.stage = ExamStage.DIST
         self.exam.save()
         return HttpResponseRedirect(reverse('exam:index', current_app=self.current_app))
@@ -461,29 +476,19 @@ class ExamDistIndexView(LoginRequiredMixin,
                         CurrentAppMixin,
                         generic.ListView):
     """
-    Landing page for exam development. This page will list all surveys or CI exams that
-    are in the Development stage.
-    
-    Only staff users have the ability to create new Surveys and Exams.
-    
-    TODO:
-        - Development should only be available to contributors
-        - Control what exams are available for development and deployment.
-          Only finished versions should be available for deployment, and these should
-          not be available for development.
+    Landing page for exam distribution. This page will list all surveys or CI exams that
+    are in the Distribution stage.
     """
     model = Exam
     
     def get_template_names(self, *args, **kwargs):
         if (not Exam.objects.filter(kind=self.exam_kind)):
-            return 'exam/index_empty.html'
+            return 'exam/index_dist_empty.html'
         else:
             return 'exam/index_dist.html'
        
     def get_context_data(self,**kwargs):
         context = super(ExamDistIndexView, self).get_context_data(**kwargs)
-        
-        
         ex_list = Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DIST)
         #format: [[exam, stat, list, goes, here...], [exam, stats, go, here], ...]
         exams = []
@@ -511,13 +516,8 @@ class ExamDistIndexView(LoginRequiredMixin,
                 numResponses += len(rset.examresponse_set.all())
                 
             responses = "Responses: " + numResponses.__str__()
-            
             timesDistributed = "Times Distributed: " + len(rsets).__str__()
-            
             exid = "Exam Id: " + ex.id.__str__()
-            
-            
-            
             exam_item = [ex, [qs, responses, exid, avgscore, timesDistributed, concepts]]
             exams.append(exam_item)
             
@@ -561,7 +561,7 @@ class NewResponseSetView(LoginRequiredMixin,
         return context
 
     def get_success_url(self):
-        return reverse('exam:distribute_send', args=(self.object.id,))
+        return reverse('exam:distribute_send', args=(self.object.id,), current_app=self.current_app)
     
     def form_valid(self, form):
         """
@@ -584,6 +584,7 @@ class NewResponseSetView(LoginRequiredMixin,
 class DistributeView(LoginRequiredMixin,
                      UserPassesTestMixin,
                      CurrentAppMixin,
+                     DistributionMixin,
                      generic.FormView):
     """
     View for sending ExamResponses. After a ResponseSet is created, this is
@@ -597,7 +598,6 @@ class DistributeView(LoginRequiredMixin,
     """
     template_name = 'exam/distribute_send.html'
     form_class = DistributeForm
-    success_url = reverse_lazy('profile')
     
     raise_exception = True
     redirect_unauthenticated_users = True
@@ -607,14 +607,14 @@ class DistributeView(LoginRequiredMixin,
         This function is used by the UserPassesTestMixin.
         Make sure that the user is staff or the original distributor.
         """
-        response_set = get_object_or_404(ResponseSet, pk=self.kwargs['set_id'])
+        response_set = get_object_or_404(ResponseSet, pk=self.kwargs['rs_id'])
         return (user.is_staff or user.profile==response_set.instructor)
     
     def dispatch(self, *args, **kwargs):
         """
         Get the ResponseSet id from the url
         """
-        self.object = get_object_or_404(ResponseSet, pk=self.kwargs['set_id'])
+        self.object = get_object_or_404(ResponseSet, pk=self.kwargs['rs_id'])
         return super(DistributeView, self).dispatch(*args, **kwargs)
     
     def get_context_data(self, **kwargs):
@@ -625,6 +625,9 @@ class DistributeView(LoginRequiredMixin,
         context['object'] = self.object
         context['submitted_exams'] = self.object.examresponse_set.filter(submitted__isnull=False)
         return context
+    
+    def get_success_url(self):
+        return reverse('exam:responses',kwargs={'rs_id':self.object.id},current_app=self.current_app)
     
     def get_form_kwargs(self):
         """
@@ -677,6 +680,7 @@ class DistributeView(LoginRequiredMixin,
 class DeleteView(LoginRequiredMixin,
                  UserPassesTestMixin,
                  CurrentAppMixin,
+                 DistributionMixin,
                  generic.DeleteView):
     """
     Confirm that an instructor would like to delete a ResponseSet. This exists in
@@ -687,8 +691,8 @@ class DeleteView(LoginRequiredMixin,
     A ResponseSet can only be deleted by its associated instructor or a staff user.
     """
     model = ResponseSet
+    pk_url_kwarg = 'rs_id'
     template_name = 'exam/delete_responses.html'
-    success_url = reverse_lazy('profile')
     
     raise_exception = True
     redirect_unauthenticated_users = True
@@ -698,9 +702,11 @@ class DeleteView(LoginRequiredMixin,
         This function is required by the UserPassesTestMixin.
         Requires that the user is staff or the original uploader
         """
-        response_set = get_object_or_404(ResponseSet, pk=self.kwargs['pk'])
+        response_set = get_object_or_404(ResponseSet, pk=self.kwargs['rs_id'])
         return (user.is_staff or user.profile==response_set.instructor)
 
+    def get_success_url(self):
+        return reverse('exam:response_sets',kwargs={'exam_id':self.object.exam.id},current_app=self.current_app)
 
 class CleanupView(LoginRequiredMixin,
                   StaffuserRequiredMixin,
@@ -735,6 +741,9 @@ class CleanupView(LoginRequiredMixin,
 
 
 def TakeTestIRBView(request, pk):
+    """
+    TODO: make CBV, check that the exam is available (as in TakeTestView)
+    """
     template = loader.get_template('exam/take_test_IRB.html')
     context = RequestContext(request,
                              { 'pk':pk},)
@@ -752,7 +761,6 @@ class TakeTestView(CurrentAppMixin,
     model = ExamResponse
     template_name='exam/take_test.html'
     form_class = ExamResponseForm
-    success_url = reverse_lazy('exam:response_complete')
     
     def dispatch(self, *args, **kwargs):
         """
@@ -763,7 +771,7 @@ class TakeTestView(CurrentAppMixin,
                 return super(TakeTestView, self).dispatch(*args, **kwargs)
         except Http404:
             pass
-        return HttpResponseRedirect(reverse('exam:exam_unavailable'))
+        return HttpResponseRedirect(reverse('exam:exam_unavailable', current_app=self.current_app))
         
     def form_valid(self, form):
         """
@@ -775,92 +783,91 @@ class TakeTestView(CurrentAppMixin,
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
 
+    def get_success_url(self):
+        return reverse('exam:response_complete', current_app=self.current_app)
 
-#detail view of the a specific exam response
-@login_required
-def ExamResponseDetail(request, exam_id, rsid, key):
 
-        template = loader.get_template('exam/exam_response_detail.html')
-    
-        response_set = ResponseSet.objects.get(pk=rsid)       #response set to connect exam and exam response key (?)
-        exam = response_set.exam            #exam
-        response = response_set.examresponse_set.get(pk=key)      #exam response
-        mcresponses = response.multiplechoiceresponse_set.all()
-        frresponses = response.freeresponseresponse_set.all()
-        stats = qstats(mcresponses)
+class ExamResponseDetailView(LoginRequiredMixin,
+                             CurrentAppMixin,
+                             DistributionMixin,
+                             generic.DetailView):
+    template_name = 'exam/exam_response_detail.html'
+    model = ExamResponse
+    pk_url_kwarg = 'key'
+
+    def get_context_data(self, **kwargs):
+        context = super(ExamResponseDetailView, self).get_context_data(**kwargs)
+        
         mc_list = []
         q = []
-        for question in mcresponses:
+        for question in self.object.multiplechoiceresponse_set.all():
             q = [question.question, question.option_id]     #name of question, answer chosen
             qOptions = []
             qOptions.extend(question.question.multiplechoiceoption_set.all())
             q.append(qOptions)
             mc_list.append(q)
-            
         fr_list = []
-        for question in frresponses:
+        for question in self.object.freeresponseresponse_set.all():
             q = [question.question, question.response]
-            fr_list.append(q)
-        context = RequestContext(request,
-                                 {'mc_list':mc_list,
-                                  'fr_list':fr_list,
-                                  'response':response,
-                                  'stats': stats,
-                                  'exam': exam},)
-        return HttpResponse(template.render(context))
-        #return render(request, 'exam/response_detail.html', {'response': response, 'exam': exam})
-    
-    
-# page with all response sets for a given exam
-@login_required
-def ResponseSetIndexView(request, exam_id):
-    
-    exam = Exam.objects.get(pk=exam_id)
-    responses = exam.responseset_set.all()
-
-    """
-    eventually do statistical analysis here to pass to template
-    """
-    
-    template = loader.get_template('exam/response_set_index.html')
-    context = RequestContext(request,
-                             { 'responses': responses,
-                              'exam':exam,
-                               'exam_id': exam_id},)
-    return HttpResponse(template.render(context))
-
-
-"""
-page with all exam responses for a given exam and response set id (rsid)
-"""
-@login_required
-def ResponseSetDetailView(request, exam_id, rsid):
-    response_set = ResponseSet.objects.get(pk=rsid)
-    exam = Exam.objects.get(pk=exam_id)
-    responses = response_set.examresponse_set.order_by('respondent').all()
-
-    """
-    eventually do statistical analysis here to pass to template
-    """
-    
-    stats = []
-    if not exam.is_survey():
+            fr_list.append(q)        
         
-        for mcrs in responses:
-            stats.append(qstats(mcrs.multiplechoiceresponse_set.all()))
-        set_stats = respSetStats(stats)
-    else:
-        set_stats = []
-        for frset in responses:
-            stats.append(frset.freeresponseresponse_set.all())
-    template = loader.get_template('exam/response_set_detail.html')
-    context = RequestContext(request,
-                             { 'responses': responses,
-                                'response_set': response_set,
-                               'exam_id': exam_id,
-                                'stats': set_stats},
-                                )
-    return HttpResponse(template.render(context))
+        context['exam'] = self.exam
+        context['response'] = self.object
+        context['stats'] = qstats(self.object.multiplechoiceresponse_set.all())
+        context['mc_list'] = mc_list
+        context['fr_list'] = fr_list
+        return context
+    
+
+class ResponseSetIndexView(LoginRequiredMixin,
+                           CurrentAppMixin,
+                           DistributionMixin,
+                           generic.TemplateView):
+    """
+    View to display all ResponseSets for a given exam
+    """
+    template_name = 'exam/response_set_index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ResponseSetIndexView, self).get_context_data(**kwargs)
+        context['exam'] = self.exam
+        context['responses'] = self.exam.responseset_set.all()
+        return context
+
+
+class ResponseSetDetailView(LoginRequiredMixin,
+                            CurrentAppMixin,
+                            DistributionMixin,
+                            generic.DetailView):
+    """
+    Detail page for a ResponseSet.
+    Displays results from submitted exams.
+    """
+    template_name = 'exam/response_set_detail.html'
+    pk_url_kwarg = 'rs_id'
+    model = ResponseSet
+    
+    def set_stats(self):
+        responses = self.object.examresponse_set.all().order_by('respondent')
+        stats = []
+        if not self.exam.is_survey():
+            for mcrs in responses:
+                stats.append(qstats(mcrs.multiplechoiceresponse_set.all()))
+            set_stats = respSetStats(stats)
+        else:
+            set_stats = []
+            for frset in responses:
+                stats.append(frset.freeresponseresponse_set.all())
+        return set_stats
+    
+    def get_context_data(self, **kwargs):
+        context = super(ResponseSetDetailView, self).get_context_data(**kwargs)
+        context['exam'] = self.exam
+        context['response_set'] = self.object
+        context['responses'] = self.object.examresponse_set.all().order_by('respondent')
+        context['stats'] = self.set_stats()
+        return context
+
 
 
 """

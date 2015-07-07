@@ -29,7 +29,7 @@
   <ul>
   {% if submitted_exams %}
     {% for response in submitted_exams %}
-      <li><a href = "{% url 'exam:response_detail' response.response_set.exam.id response.response_set.id response.key %}"> {{ response.respondent }}</a></li>
+      <li><a href = "{% url 'exam:response_detail' response.key %}"> {{ response.respondent }}</a></li>
     {% endfor %}
   {% else %}
     None
@@ -60,7 +60,7 @@
   
     <div class="submit">
       <button class="btn btn-primary" type="submit">Send Test</button>
-      <a href = {% url 'profile' %} class='btn btn-primary'> Cancel </a>
+      <a href = {% url 'exam:responses' object.id %} class='btn btn-primary'> Cancel </a>
     </div>
   </form>
 

@@ -29,7 +29,7 @@
 
       <div class="submit">
         <button class="btn btn-danger" type="submit">Confirm Delete</button>
-        <a href = {% url 'profile' %} class='btn btn-primary'> Cancel </a>
+        <a href = {% url 'exam:responses' object.id %} class='btn btn-primary'> Cancel </a>
       </div>
   </form>
 
