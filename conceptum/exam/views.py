@@ -108,10 +108,10 @@ class ExamCreateView(LoginRequiredMixin,
         - the same process would go for exams, once that stage is activated
     """
     model = Exam
-    fields = ['name',
-              'description',
-              'randomize']
     template_name = 'exam/new_exam.html'
+    form_class =  forms.models.modelform_factory(Exam,
+                                                 fields=('name','description','randomize'),
+                                                 widgets={"description": forms.Textarea })
 
     def form_valid(self, form):
         form.instance.kind = self.exam_kind
@@ -124,8 +124,41 @@ class ExamCreateView(LoginRequiredMixin,
 class ExamCopyView(LoginRequiredMixin,
                    StaffRequiredMixin,
                    CurrentAppMixin,
-                   generic.CreateView):
-    pass
+                   generic.UpdateView):
+    template_name = 'exam/copy_exam.html'
+    model = Exam
+    pk_url_kwarg = 'exam_id'
+    form_class =  forms.models.modelform_factory(Exam,
+                                                 fields=('name','description','randomize'),
+                                                 widgets={"description": forms.Textarea })
+    
+    def get_initial(self):
+        return {'name':'%s (copy)' % self.object.name,
+                'description':'%s\n\n[copied from %s]' % (self.object.description, self.object.name)}
+
+    def form_valid(self, form):
+        new_exam = Exam.objects.create(name = form.cleaned_data.get('name'),
+                                       description = form.cleaned_data.get('description'),
+                                       randomize = form.cleaned_data.get('randomize'),
+                                       kind = self.exam_kind)
+        for question in self.object.freeresponsequestion_set.all():
+            question.pk = None
+            question.exam = new_exam
+            question.save()
+        for question in self.object.multiplechoicequestion_set.all():
+            old_pk = question.pk
+            question.pk = None
+            question.exam = new_exam
+            question.save()
+            old_question = MultipleChoiceQuestion.objects.get(pk=old_pk)
+            for option in old_question.multiplechoiceoption_set.all():
+                option.pk = None
+                option.question = question
+                option.save()
+        return HttpResponseRedirect(self.get_success_url())
+    
+    def get_success_url(self):
+        return reverse('exam:index', current_app=self.current_app)
 
 
 class ExamDetailView(LoginRequiredMixin,
@@ -356,6 +389,9 @@ class MultipleChoiceVersionView(QuestionVersionView):
         option_type = ContentType.objects.get_for_model(MultipleChoiceOption)
         for version in reversed(self.object.get_unique_versions()):
             option_versions = version.revision.version_set.filter(content_type__pk=option_type.id)
+            #print version
+            #print version.revision
+            #print version.revision.version_set
             options = list(version.object_version.object for version in option_versions)
             options.sort(cmp=lambda x,y: cmp(x.index, y.index))
             l.append(options)

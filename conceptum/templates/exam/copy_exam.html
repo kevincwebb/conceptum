@@ -17,18 +17,15 @@
 <div class="container">
  
   <div class="horizontal-heading">
-    <h3>Provide {{current_app|capfirst}} Details</h3>
+    <h3>Make a new {{current_app|capfirst}} version</h3>
   </div>
   
-  <p>If you would like to continue revising a {{current_app}} that has
-  already been finalized, consider making a COPY of a 
-  <a href = {% url 'exam:distribute_index' %}> distributed {{current_app}} </a> instead of
-  creating an entirely new {{current_app}}.</br>
-  </br>
-  Before creating a new {{current_app}}, keep in mind that we probably don't want more than a
-  couple--if more than 1--{{current_app}}s in development at any time.</p>
+  <p> Before creating a new {{current_app}}, keep in mind that we probably don't want more than a
+  couple--if more than 1--{{current_app}}s in development at any time. Make sure that a version
+  of this exam isn't already in development</p>
+  <p> This will copy all questions from the old exam.</p>
   
-  <form class="form-horizontal" role="form"  action="{% url 'exam:create' %}" method="post">{% csrf_token %}
+  <form class="form-horizontal" role="form"  action="" method="post">{% csrf_token %}
   
   {{ form.non_field_errors }}
 

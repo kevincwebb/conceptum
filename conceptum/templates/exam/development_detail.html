@@ -30,7 +30,6 @@
 {% block buttons %}
 <div>
   <a href = {% url 'exam:select_concept' object.id %} class="btn btn-primary"> Add Questions </a>
-    <a href = {% url 'exam:discuss' object.id %} class = "btn btn-primary"> Discuss </a>
   {%if user.is_staff%}
   <a href = {% url 'exam:finalize_view' object.id %} class="btn btn-warning">Finalize {{current_app|capfirst}}</a>
 {%endif%}

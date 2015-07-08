@@ -28,6 +28,9 @@
 <div>
   <a href = {% url 'exam:index' %} class="btn btn-primary"> Statistics (coming soon)</a>
   <a href = {% url 'exam:response_sets' exam.id %} class="btn btn-primary"> Responses and Distribution </a>
+    {% if user.is_staff %}
+    <a href = {% url 'exam:copy' exam.id %} class="btn btn-warning"> Make a copy for further development </a>
+    {% endif %}
   <br>
     <br>
 </div>

@@ -116,11 +116,11 @@ class Exam(models.Model):
     
     @property
     def freeresponsequestion_set(self):
-        return FreeResponseQuestion.objects
+        return FreeResponseQuestion.objects.filter(exam=self)
     
     @property
     def multiplechoicequestion_set(self):
-        return MultipleChoiceQuestion.objects
+        return MultipleChoiceQuestion.objects.filter(exam=self)
     
     def __unicode__(self):
         return self.name
