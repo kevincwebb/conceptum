@@ -196,6 +196,7 @@ class Question(models.Model):
         This is neither a subset nor superset of the list returned by get_unique_for_object.
         """
         versions = reversion.get_for_object(self)
+        print versions
         unique_versions = []
         for v in versions:
             if not unique_versions:

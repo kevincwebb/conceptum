@@ -1,7 +1,6 @@
 import datetime
 import operator
 
-
 from django import forms
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -47,7 +46,7 @@ def get_data(exam):
 
 
     
-####################### DEVELOPMENT ###########################################
+####################### Index and Detail Pages ###########################################
 
 class ExamDevIndexView(LoginRequiredMixin,
                        ContribRequiredMixin,
@@ -62,10 +61,18 @@ class ExamDevIndexView(LoginRequiredMixin,
     model = Exam
     
     def get_template_names(self, *args, **kwargs):
-        if (not Exam.objects.filter(kind=self.exam_kind)):
+        if (not Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DEV)):
             return 'exam/index_dev_empty.html'
         else:
             return 'exam/index_dev.html'
+    
+    def can_create_new(self):
+        if self.request.user.is_staff:
+            if self.exam_kind == ExamKind.SURVEY:
+                return True
+            if not Exam.objects.filter(kind=ExamKind.CI).exclude(stage=ExamStage.CLOSED):
+                return True
+        return False
        
     def get_context_data(self,**kwargs):
         context = super(ExamDevIndexView, self).get_context_data(**kwargs)
@@ -91,74 +98,63 @@ class ExamDevIndexView(LoginRequiredMixin,
             exams.append(exam_item)
             
         context['exams'] = exams
+        context['can_create_new'] = self.can_create_new()
         return context
-    
 
-class ExamCreateView(LoginRequiredMixin,
-                     StaffRequiredMixin,
-                     CurrentAppMixin,
-                     generic.CreateView):
+
+class ExamDistIndexView(LoginRequiredMixin,
+                        CurrentAppMixin,
+                        generic.ListView):
     """
-    CreateView to create a survey/exam.
-    
-    We may want to make this happen automatically as follows:
-        - working survey is created automatically
-        - once approved by staff user, frozen version can be sent out
-        - working survey could continue to be improved, and new frozen versions made
-        - the same process would go for exams, once that stage is activated
+    Landing page for exam distribution. This page will list all surveys or CI exams that
+    are in the Distribution stage.
     """
     model = Exam
-    template_name = 'exam/new_exam.html'
-    form_class =  forms.models.modelform_factory(Exam,
-                                                 fields=('name','description','randomize'),
-                                                 widgets={"description": forms.Textarea })
-
-    def form_valid(self, form):
-        form.instance.kind = self.exam_kind
-        return super(ExamCreateView,self).form_valid(form)
-
-    def get_success_url(self):
-        return reverse('exam:index', current_app=self.current_app)
-
-
-class ExamCopyView(LoginRequiredMixin,
-                   StaffRequiredMixin,
-                   CurrentAppMixin,
-                   generic.UpdateView):
-    template_name = 'exam/copy_exam.html'
-    model = Exam
-    pk_url_kwarg = 'exam_id'
-    form_class =  forms.models.modelform_factory(Exam,
-                                                 fields=('name','description','randomize'),
-                                                 widgets={"description": forms.Textarea })
+    template_name = 'exam/index_dist.html'
     
-    def get_initial(self):
-        return {'name':'%s (copy)' % self.object.name,
-                'description':'%s\n\n[copied from %s]' % (self.object.description, self.object.name)}
-
-    def form_valid(self, form):
-        new_exam = Exam.objects.create(name = form.cleaned_data.get('name'),
-                                       description = form.cleaned_data.get('description'),
-                                       randomize = form.cleaned_data.get('randomize'),
-                                       kind = self.exam_kind)
-        for question in self.object.freeresponsequestion_set.all():
-            question.pk = None
-            question.exam = new_exam
-            question.save()
-        for question in self.object.multiplechoicequestion_set.all():
-            old_pk = question.pk
-            question.pk = None
-            question.exam = new_exam
-            question.save()
-            old_question = MultipleChoiceQuestion.objects.get(pk=old_pk)
-            for option in old_question.multiplechoiceoption_set.all():
-                option.pk = None
-                option.question = question
-                option.save()
-        return HttpResponseRedirect(self.get_success_url())
-    
-    def get_success_url(self):
-        return reverse('exam:index', current_app=self.current_app)
+    def make_exam_list(self, ex_list):
+        """
+        format: [[exam, stat, list, goes, here...], [exam, stats, go, here], ...]
+        """
+        exams = []
+        for ex in ex_list:
+            qset = ex.multiplechoicequestion_set.all()
+            exam_item = [ex]
+            qs = "Questions: " + len(qset).__str__()
+            concepts = []
+            for q in qset:
+                concept = q.content_object.name
+                if ( len(concepts) <= 5 and concept not in concepts):
+                    concepts.append(q.content_object.name)
+                elif(len(concepts) == 5):
+                    concepts.append("...")
+                    break;
+            concepts = ", ".join(concepts)
+            concepts = "Concepts: " + concepts
+            
+            rsets = ex.responseset_set.all()
+            ##TODO##
+            avgscore = "Average Score: ##"
+            ####
+            numResponses = 0
+            for rset in rsets:
+                numResponses += len(rset.examresponse_set.all())
+                
+            responses = "Responses: " + numResponses.__str__()
+            timesDistributed = "Times Distributed: " + len(rsets).__str__()
+            exid = "Exam Id: " + ex.id.__str__()
+            exam_item = [ex, [qs, responses, exid, avgscore, timesDistributed, concepts]]
+            exams.append(exam_item)
+        return exams
+       
+    def get_context_data(self,**kwargs):
+        context = super(ExamDistIndexView, self).get_context_data(**kwargs)
+        ex_list = Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DIST)   
+        context['distributable'] = self.make_exam_list(
+            Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DIST))
+        context['closed'] = self.make_exam_list(
+            Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.CLOSED))
+        return context
 
 
 class ExamDetailView(LoginRequiredMixin,
@@ -206,6 +202,174 @@ class DevDetailView(DevelopmentMixin,
                     ExamDetailView):
     template_name = 'exam/development_detail.html'
     
+    
+class DistDetailView(DistributionMixin,
+                     ExamDetailView):
+    template_name = 'exam/distribute_detail.html'
+    
+
+
+######################### Create, Copy, Delete, etc. Exams ##############################
+
+class ExamCreateView(LoginRequiredMixin,
+                     StaffRequiredMixin,
+                     CurrentAppMixin,
+                     generic.CreateView):
+    """
+    CreateView to create a survey/exam.
+    
+    We may want to make this happen automatically as follows:
+        - working survey is created automatically
+        - once approved by staff user, frozen version can be sent out
+        - working survey could continue to be improved, and new frozen versions made
+        - the same process would go for exams, once that stage is activated
+    """
+    model = Exam
+    template_name = 'exam/new_exam.html'
+    form_class =  forms.models.modelform_factory(Exam,
+                                                 fields=('name','description','randomize'),
+                                                 widgets={"description": forms.Textarea })
+
+    def form_valid(self, form):
+        form.instance.kind = self.exam_kind
+        return super(ExamCreateView,self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse('exam:index', current_app=self.current_app)
+
+
+class ExamCopyView(LoginRequiredMixin,
+                   StaffRequiredMixin,
+                   CurrentAppMixin,
+                   generic.UpdateView):
+    """
+    Make a new exam that looks like this one. Original exam must be in the distribution
+    or closed stage.
+    
+    Copies all questions and options. Because they are new objects, they begin with clean
+    version histories (versions only point to old objects, and are not copied).
+    
+    With surveys, any distributable survey may be copied at any time. With CIs, we try to keep
+    only 1 CI in development at any time, so copying is only allowed if there are no CIs in
+    development.
+    """
+    template_name = 'exam/copy_exam.html'
+    model = Exam
+    pk_url_kwarg = 'exam_id'
+    form_class =  forms.models.modelform_factory(Exam,
+                                                 fields=('name','description','randomize'),
+                                                 widgets={"description": forms.Textarea })
+    
+    def dispatch(self, request, *args, **kwargs):
+        """
+        PermissionDenied if exam.kind does not match current app, or if the app
+        isn't in the Distribute or Closed stage.
+        
+        Redirect if we are looking at a CI and there is already another CI in the
+        Development stage.
+        """
+        self.set_current_app(request)
+        exam = get_object_or_404(Exam, pk=self.kwargs['exam_id'])
+        if (exam.kind != self.exam_kind
+            or exam.can_develop()):
+                raise PermissionDenied
+######### you are here #####
+        if (exam.kind == ExamKind.CI
+            and Exam.objects.filter(kind=ExamKind.CI, stage=ExamStage.DEV)):
+                return HttpResponseRedirect(
+                    reverse('copy_denied', args=[exam.id], current_app='CI_exam'))
+        return super(ExamCopyView, self).dispatch(request, *args, **kwargs)
+    
+    def get_initial(self):
+        return {'name':'%s (copy)' % self.object.name,
+                'description':'%s\n\n[copied from %s]' % (self.object.description, self.object.name)}
+
+    def form_valid(self, form):
+        new_exam = Exam.objects.create(name = form.cleaned_data.get('name'),
+                                       description = form.cleaned_data.get('description'),
+                                       randomize = form.cleaned_data.get('randomize'),
+                                       kind = self.exam_kind)
+        for question in self.object.freeresponsequestion_set.all():
+            with transaction.atomic(), reversion.create_revision():
+                question.pk = None
+                question.exam = new_exam
+                question.save()
+        for question in self.object.multiplechoicequestion_set.all():
+            with transaction.atomic(), reversion.create_revision():
+                old_pk = question.pk
+                question.pk = None
+                question.exam = new_exam
+                question.save()
+                old_question = MultipleChoiceQuestion.objects.get(pk=old_pk)
+                for option in old_question.multiplechoiceoption_set.all():
+                    option.pk = None
+                    option.question = question
+                    option.save()
+        return HttpResponseRedirect(self.get_success_url())
+    
+    def get_success_url(self):
+        return reverse('exam:index', current_app=self.current_app)
+
+
+class CopyDeniedView(LoginRequiredMixin,
+                     StaffRequiredMixin,
+                     generic.DetailView):
+    model = Exam
+    pk_url_kwarg = 'exam_id'
+    template_name = 'exam/copy_denied.html'
+
+
+class ExamDeleteView(LoginRequiredMixin,
+                     StaffRequiredMixin,
+                     DevelopmentMixin,
+                     CurrentAppMixin,
+                     generic.DeleteView):
+    """    
+    Deletes an Exam, all Questions, and also deletes all related revisions
+    (deleted question can't be recovered).
+    """
+    model = Exam
+    pk_url_kwarg = 'exam_id'
+    template_name = 'exam/delete_exam.html'
+    
+    def delete(self, request, *args, **kwargs):
+        for question in self.get_object().question_set.all():
+            versions = reversion.get_for_object(question)
+            for version in versions:
+                version.revision.delete()
+        self.get_object().delete()
+        return HttpResponseRedirect(self.get_success_url())
+    
+    def get_success_url(self):
+        return reverse('exam:index', current_app=self.current_app)
+    
+
+class ExamCloseView(LoginRequiredMixin,
+                    StaffRequiredMixin,
+                    DistributionMixin,
+                    CurrentAppMixin,
+                    generic.DeleteView):
+    """    
+    Closes an Exam so that it cannot be distributed.
+    
+    Using DeleteView was convenient, but this view does not actually delete an objects.
+    """
+    model = Exam
+    pk_url_kwarg = 'exam_id'
+    template_name = 'exam/close_exam.html'
+    
+    def delete(self, request, *args, **kwargs):
+        exam = self.get_object()
+        exam.stage = ExamStage.CLOSED
+        exam.save()
+        return HttpResponseRedirect(self.get_success_url())
+    
+    def get_success_url(self):
+        return reverse('exam:distribute_index', current_app=self.current_app)
+
+
+
+############################# DEVELOPMENT ############################################
 
 class SelectConceptView(LoginRequiredMixin,
                         ContribRequiredMixin,
@@ -327,6 +491,11 @@ class FreeResponseEditView(QuestionEditView):
     fields = ['question','image']
     template_name = 'exam/fr_edit.html'
     
+    @transaction.atomic()
+    @reversion.create_revision()
+    def form_valid(self,form):
+        return super(FreeResponseEditView,self).form_valid(form)
+    
 class MultipleChoiceEditView(QuestionEditView):
     model = MultipleChoiceQuestion
     form_class = MultipleChoiceEditForm
@@ -352,9 +521,6 @@ class QuestionVersionView(LoginRequiredMixin,
                           DevelopmentMixin,
                           CurrentAppMixin,
                           generic.UpdateView):
-    """
-    
-    """
     pk_url_kwarg = 'question_id'
     template_name = 'exam/versions.html'
     
@@ -389,9 +555,6 @@ class MultipleChoiceVersionView(QuestionVersionView):
         option_type = ContentType.objects.get_for_model(MultipleChoiceOption)
         for version in reversed(self.object.get_unique_versions()):
             option_versions = version.revision.version_set.filter(content_type__pk=option_type.id)
-            #print version
-            #print version.revision
-            #print version.revision.version_set
             options = list(version.object_version.object for version in option_versions)
             options.sort(cmp=lambda x,y: cmp(x.index, y.index))
             l.append(options)
@@ -420,7 +583,7 @@ class QuestionDeleteView(LoginRequiredMixin,
     revisions from the deleted question.
     """
     pk_url_kwarg = 'question_id'
-    template_name = 'exam/confirm_delete.html'
+    template_name = 'exam/delete_question.html'
     
     def delete(self, request, *args, **kwargs):
         versions = reversion.get_for_object(self.get_object())
@@ -486,9 +649,7 @@ class FinalizeView(LoginRequiredMixin,
             questions = {}
             for question in data.get('select_questions'):
                 questions[data.get('question_%d'%question.id)] = question
-            print questions
             ordered_questions = sorted(questions.items(), key=operator.itemgetter(0))
-            print ordered_questions
             context['ordered_questions'] = zip(*ordered_questions)[1]
         return context
 
@@ -505,66 +666,8 @@ class FinalizeView(LoginRequiredMixin,
         return HttpResponseRedirect(reverse('exam:index', current_app=self.current_app))
 
 
-################# DISTRIBUTION #############################
 
-
-class ExamDistIndexView(LoginRequiredMixin,
-                        CurrentAppMixin,
-                        generic.ListView):
-    """
-    Landing page for exam distribution. This page will list all surveys or CI exams that
-    are in the Distribution stage.
-    """
-    model = Exam
-    
-    def get_template_names(self, *args, **kwargs):
-        if (not Exam.objects.filter(kind=self.exam_kind)):
-            return 'exam/index_dist_empty.html'
-        else:
-            return 'exam/index_dist.html'
-       
-    def get_context_data(self,**kwargs):
-        context = super(ExamDistIndexView, self).get_context_data(**kwargs)
-        ex_list = Exam.objects.filter(kind=self.exam_kind, stage=ExamStage.DIST)
-        #format: [[exam, stat, list, goes, here...], [exam, stats, go, here], ...]
-        exams = []
-        for ex in ex_list:
-            qset = ex.multiplechoicequestion_set.all()
-            exam_item = [ex]
-            qs = "Questions: " + len(qset).__str__()
-            concepts = []
-            for q in qset:
-                concept = q.content_object.name
-                if ( len(concepts) <= 5 and concept not in concepts):
-                    concepts.append(q.content_object.name)
-                elif(len(concepts) == 5):
-                    concepts.append("...")
-                    break;
-            concepts = ", ".join(concepts)
-            concepts = "Concepts: " + concepts
-            
-            rsets = ex.responseset_set.all()
-            ##TODO##
-            avgscore = "Average Score: ##"
-            ####
-            numResponses = 0
-            for rset in rsets:
-                numResponses += len(rset.examresponse_set.all())
-                
-            responses = "Responses: " + numResponses.__str__()
-            timesDistributed = "Times Distributed: " + len(rsets).__str__()
-            exid = "Exam Id: " + ex.id.__str__()
-            exam_item = [ex, [qs, responses, exid, avgscore, timesDistributed, concepts]]
-            exams.append(exam_item)
-            
-        context['exams'] = exams
-        return context
-
-
-class DistDetailView(DistributionMixin,
-                     ExamDetailView):
-    template_name = 'exam/distribute_detail.html'
-
+################################ DISTRIBUTION and RESULTS ##################################
 
 class NewResponseSetView(LoginRequiredMixin,
                          DistributionMixin,
@@ -744,6 +847,7 @@ class DeleteView(LoginRequiredMixin,
     def get_success_url(self):
         return reverse('exam:response_sets',kwargs={'exam_id':self.object.exam.id},current_app=self.current_app)
 
+
 class CleanupView(LoginRequiredMixin,
                   StaffuserRequiredMixin,
                   generic.FormView):
@@ -776,51 +880,50 @@ class CleanupView(LoginRequiredMixin,
         return HttpResponseRedirect(self.get_success_url())
 
 
-def TakeTestIRBView(request, pk):
+def respSetStats(qStats):
     """
-    TODO: make CBV, check that the exam is available (as in TakeTestView)
+    returns list of stats for a response set by putting together a list of stats from each question (qstats)
+    list format is:
+    ["Questions: ##", "Correct Answers:  ##", "Average Score: ##", "Highest Score: ##", "Lowest Score: ##"]
     """
-    template = loader.get_template('exam/take_test_IRB.html')
-    context = RequestContext(request,
-                             { 'pk':pk},)
-    return HttpResponse(template.render(context))
+    if (qStats):
+        numQuestions = qStats[0][0]
+        numCorrect = 0
+        maxScore = 0
+        lowScore = 100
+        medianScore = 0
+        for stats in qStats:
+            if(stats):
+                numCorrect+=stats[1]
+                if (numQuestions < stats[0]):
+                    numQuestions = stats[0]
+                if (maxScore < stats[2]):
+                    maxScore = stats[2]
+                if (lowScore > stats[2]):
+                    lowScore = stats[2]
+        medianScore = numCorrect / float(numQuestions * len(qStats))
+        medianScore = medianScore *10000 //1 /100
+        return ["Questions: " + numQuestions.__str__(), "Correct answers: " + numCorrect.__str__(), "Average Score: " + medianScore.__str__(), "Highest Score: " + maxScore.__str__(), "Lowest Score: " + lowScore.__str__()]
+    else:
+        return [0,0,0,0,0]
+    
 
-    
-class TakeTestView(CurrentAppMixin,
-                       generic.UpdateView):
+def qstats(mcRespSet):
     """
-    This is where students take the Exam. A student will get a URL that ends with the
-    key to a specific ExamResponse. If that ER has expired or already been submitted, or
-    if there is no exam with the given key, then the student will be redirected to an
-    "Exam Unavailable" page.
+    processes a multiplechoiceresponse_set for an exam and
+    returns a list with [numquestions, numcorrect, percent correct]
     """
-    model = ExamResponse
-    template_name='exam/take_test.html'
-    form_class = ExamResponseForm
-    
-    def dispatch(self, *args, **kwargs):
-        """
-        Check that the ER is available.
-        """
-        try:
-            if self.get_object().is_available():
-                return super(TakeTestView, self).dispatch(*args, **kwargs)
-        except Http404:
-            pass
-        return HttpResponseRedirect(reverse('exam:exam_unavailable', current_app=self.current_app))
+    numQuestions = 0
+    numCorrect = 0
+    for question in mcRespSet:
         
-    def form_valid(self, form):
-        """
-        Mark the time the exam has been submitted, and call the form's save() method,
-        which saves the responses.
-        """
-        form.save()
-        self.object.submitted = timezone.now()
-        self.object.save()
-        return HttpResponseRedirect(self.get_success_url())
-
-    def get_success_url(self):
-        return reverse('exam:response_complete', current_app=self.current_app)
+        numQuestions+=1
+        if question.option_id == question.question.correct_option.id:     #later if option_id == correct_id
+            numCorrect+=1
+    if (numQuestions != 0):
+        percCorrect = numCorrect/float(numQuestions)
+        percFormatted = percCorrect * 10000 //1 /100
+        return [numQuestions, numCorrect, percFormatted]
 
 
 class ExamResponseDetailView(LoginRequiredMixin,
@@ -906,45 +1009,50 @@ class ResponseSetDetailView(LoginRequiredMixin,
 
 
 
-"""
- returns list of stats for a response set by putting together a list of stats from each question (qstats)
- list format is:
- ["Questions: ##", "Correct Answers:  ##", "Average Score: ##", "Highest Score: ##", "Lowest Score: ##"]
-"""
-def respSetStats(qStats):
-    if (qStats):
-        numQuestions = qStats[0][0]
-        numCorrect = 0
-        maxScore = 0
-        lowScore = 100
-        medianScore = 0
-        for stats in qStats:
-            if(stats):
-                numCorrect+=stats[1]
-                if (numQuestions < stats[0]):
-                    numQuestions = stats[0]
-                if (maxScore < stats[2]):
-                    maxScore = stats[2]
-                if (lowScore > stats[2]):
-                    lowScore = stats[2]
-        medianScore = numCorrect / float(numQuestions * len(qStats))
-        medianScore = medianScore *10000 //1 /100
-        return ["Questions: " + numQuestions.__str__(), "Correct answers: " + numCorrect.__str__(), "Average Score: " + medianScore.__str__(), "Highest Score: " + maxScore.__str__(), "Lowest Score: " + lowScore.__str__()]
-    else:
-        return [0,0,0,0,0]
+############################# TAKE TEST ##################################################
+
+def TakeTestIRBView(request, pk):
+    """
+    TODO: make CBV, check that the exam is available (as in TakeTestView)
+    """
+    template = loader.get_template('exam/take_test_IRB.html')
+    context = RequestContext(request,
+                             { 'pk':pk},)
+    return HttpResponse(template.render(context))
 
     
-# processes a multiplechoiceresponse_set for an exam and
-# returns a list with [numquestions, numcorrect, percent correct]
-def qstats(mcRespSet):
-    numQuestions = 0
-    numCorrect = 0
-    for question in mcRespSet:
+class TakeTestView(CurrentAppMixin,
+                       generic.UpdateView):
+    """
+    This is where students take the Exam. A student will get a URL that ends with the
+    key to a specific ExamResponse. If that ER has expired or already been submitted, or
+    if there is no exam with the given key, then the student will be redirected to an
+    "Exam Unavailable" page.
+    """
+    model = ExamResponse
+    template_name='exam/take_test.html'
+    form_class = ExamResponseForm
+    
+    def dispatch(self, *args, **kwargs):
+        """
+        Check that the ER is available.
+        """
+        try:
+            if self.get_object().is_available():
+                return super(TakeTestView, self).dispatch(*args, **kwargs)
+        except Http404:
+            pass
+        return HttpResponseRedirect(reverse('exam:exam_unavailable', current_app=self.current_app))
         
-        numQuestions+=1
-        if question.option_id == question.question.correct_option.id:     #later if option_id == correct_id
-            numCorrect+=1
-    if (numQuestions != 0):
-        percCorrect = numCorrect/float(numQuestions)
-        percFormatted = percCorrect * 10000 //1 /100
-        return [numQuestions, numCorrect, percFormatted]
+    def form_valid(self, form):
+        """
+        Mark the time the exam has been submitted, and call the form's save() method,
+        which saves the responses.
+        """
+        form.save()
+        self.object.submitted = timezone.now()
+        self.object.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('exam:response_complete', current_app=self.current_app)

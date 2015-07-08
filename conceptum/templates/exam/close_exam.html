@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Close Exam?" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  
+  <div class="form-horizontal-heading">
+    <h2>Close Exam?</h2>
+  </div>
+  
+  <form action="" method="post">{% csrf_token %}
+      <p>Are you sure you want to close "{{ object }}"?</br>
+      You can still view this {{current_app}} and all submitted responses, but it
+      will no longer be distributable.</p>
+      <div class="submit">
+        <button class="btn btn-danger" type="submit">Confirm Close</button>
+        <a href = {% url 'exam:distribute_detail' object.id %} class='btn btn-primary'> Cancel </a>
+      </div>
+  </form>
+
+<br>
+
+</div> <!-- container -->
+
+{% endblock %}

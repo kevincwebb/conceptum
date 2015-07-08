@@ -43,8 +43,9 @@
 {% endfor %}
         
     </ul>
-    
+{% if can_create_new %}
 <a href = {% url 'exam:create' %} class="btn btn-warning"> Create New</a>
+{% endif %}
 </div> <!-- container -->
 
 {% endblock %}

@@ -52,8 +52,9 @@ class DistributionMixin(object):
     Raises PermissionDenied if the exam's kind does not match the current app.
     Raises PermissionDenied if the exam is not in the distribution stage (ExamKind=DIST).
 
-    To use with a view, you must pass 'exam_id' to the view as a keyword argument,
-    or override the get_exam_for_mixin() function to return an exam object another way.
+    To use with a view, you must pass 'exam_id', 'rs_id', or 'key' to the view as a
+    keyword argument, or override the get_exam_for_mixin() function to return an exam
+    object another way.
     """
     def get_exam_for_mixin(self):
         """

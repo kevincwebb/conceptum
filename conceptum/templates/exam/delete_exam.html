@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Delete Exam?" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  
+  <div class="form-horizontal-heading">
+    <h2>Delete Exam?</h2>
+  </div>
+  
+  <form action="" method="post">{% csrf_token %}
+      <p>Are you sure you want to delete "{{ object }}"?</br>
+      This will also delete its version history, so you will not be
+      able to recover it.</p>
+      <div class="submit">
+        <button class="btn btn-danger" type="submit">Confirm Delete</button>
+        <a href = {% url 'exam:detail' object.id %} class='btn btn-primary'> Cancel </a>
+      </div>
+  </form>
+
+<br>
+
+</div> <!-- container -->
+
+{% endblock %}

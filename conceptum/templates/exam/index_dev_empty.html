@@ -21,10 +21,10 @@
   </div>
 
   There are no {{ current_app }}s available for development.
-  An administrator will need to create or unlock one.</br>
-  {% if user.is_staff %}
-    You are an administrator, so you can do that
-    <a href="{% url 'exam:create' %}">HERE</a>.
+  An administrator will need to create one.</br>
+  {% if can_create_new %}
+    You are an administrator, so you can do that:</br>
+    <a href = {% url 'exam:create' %} class="btn btn-warning"> Create New</a>
   {% endif %}
 
 

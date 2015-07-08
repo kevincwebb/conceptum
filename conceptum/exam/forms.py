@@ -305,6 +305,8 @@ class QuestionVersionForm(forms.ModelForm):
         self.fields['version']=forms.ChoiceField(choices=self.get_version_choices(),
                                                  widget=forms.RadioSelect())
     
+    @transaction.atomic()
+    @reversion.create_revision()
     def save(self):
         """
         The data saved in 'version' is an integer that is the selected version's index
@@ -327,6 +329,8 @@ class MultipleChoiceVersionForm(QuestionVersionForm):
         model = MultipleChoiceQuestion
         fields = []
     
+    @transaction.atomic()
+    @reversion.create_revision()
     def save(self):
         """
         The data saved in 'version' is an integer that is the selected version's index

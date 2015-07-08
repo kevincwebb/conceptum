@@ -20,33 +20,76 @@
 
 <div class="container">
     
-<h3> {{current_app|capfirst}} Distribution Index </h3>
-<ul class = "collapsible_overview"> 
-{% for exam, stats in exams %}
-       
-    <li class = "table"><span class="over_tab"><span class = "tab-button"><a href="{% url 'exam:distribute_detail' exam.id %}">{{ exam.name }}</a></span>
-        <a href = {% url 'exam:response_sets' exam.id %} class="dist_button"> Distribute </a>
-        </span>
-        
-        
-         <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div id = "plus" class = "plus"> + </div> <div id = "minus" class = "minus"> - </div> </div></label>
-    <input type = "checkbox" id = "toplist_node{{exam.id}}" onclick = "PlusMinus(this)">
+<h2> {{current_app|capfirst}} Distribution Index </h2>
 
-<div class = "overview">
-    {{exam.description}}
-    <hr>
+<h3>{{current_app|capfirst}}s for Distribution</h3>
 
-<ul class = "overview_inner_list">
-    {% for item in stats %}
-        <li>• {{item}}</li>
-    {% endfor %}
-        
-</ul>
-</div>
-</li>
-{% endfor %}
-        
-</ul>
+{% if not distributable %}
+    There are no {{ current_app }}s available for distribution.</br>
+    When the development stage of a {{current_app}} is finished, an
+    administrator can finalize it and make it available for distribution.
+  </br>
+  
+{% else %}
+    <ul class = "collapsible_overview"> 
+    {% for exam, stats in distributable %}
+           
+        <li class = "table"><span class="over_tab"><span class = "tab-button"><a href="{% url 'exam:distribute_detail' exam.id %}">{{ exam.name }}</a></span>
+            <a href = {% url 'exam:response_sets' exam.id %} class="dist_button"> Distribute </a>
+            </span>
+            
+            
+             <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div id = "plus" class = "plus"> + </div> <div id = "minus" class = "minus"> - </div> </div></label>
+        <input type = "checkbox" id = "toplist_node{{exam.id}}" onclick = "PlusMinus(this)">
+    
+    <div class = "overview">
+        {{exam.description}}
+        <hr>
+    
+    <ul class = "overview_inner_list">
+        {% for item in stats %}
+            <li>• {{item}}</li>
+        {% endfor %}
+            
+    </ul>
+    </div>
+    </li>
+    {% endfor %}    
+    </ul>
+{% endif %}
+
+<h3>Closed {{current_app|capfirst}}s</h3>
+
+{% if not closed %}
+    There are no closed {{ current_app }}s.</br>
+  </br>
+  
+{% else %}
+    <ul class = "collapsible_overview"> 
+    {% for exam, stats in closed %}
+           
+        <li class = "table"><span class="over_tab"><span class = "tab-button"><a href="{% url 'exam:distribute_detail' exam.id %}">{{ exam.name }}</a></span>
+        </span>    
+        <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div id = "plus" class = "plus"> + </div> <div id = "minus" class = "minus"> - </div> </div></label>
+        <input type = "checkbox" id = "toplist_node{{exam.id}}" onclick = "PlusMinus(this)">
+    
+    <div class = "overview">
+        {{exam.description}}
+        <hr>
+    
+    <ul class = "overview_inner_list">
+        {% for item in stats %}
+            <li>• {{item}}</li>
+        {% endfor %}
+            
+    </ul>
+    </div>
+    </li>
+    {% endfor %}    
+    </ul>
+{%endif%}
+
+
 </div> <!-- container -->
 
 {% endblock %}
