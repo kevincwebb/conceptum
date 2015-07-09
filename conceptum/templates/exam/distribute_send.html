@@ -15,33 +15,36 @@
 {% block content %}
 
 <div class="container">
-  <h1>CI Distribution</h1>
-  Exam: {{ object.exam.name }} </br>
-  Description: {{ object.exam.description }}
+  <h1>Send the test to your class</h1>
+  
   <ul>
-  <b>{{ object.course }}</b><br>
-  <b>{{ object.instructor }}</b><br>
-  <b>{{ object.created.date }}</b>
+    <li><b>Exam:</b> {{ object.exam.name }} </li>
+    <li><b>Description:</b> {{ object.exam.description }}</li>
+    <li><b>Course:</b> {{ object.course }}</li>
+    <li><b>Created:</b> {{ object.created }}</li>
+    <li><b>Instructor:</b> {{ object.instructor }}</li>
+    <li><b>Institution:</b> {{ object.instructor.institution }}</li>
   </ul>
   
   
-  <h2>Submitted Responses</h2>
-  <ul>
   {% if submitted_exams %}
+  </br>
+  <h4>These students have already submitted tests.</h4>
+  <ul>
     {% for response in submitted_exams %}
-      <li><a href = "{% url 'exam:response_detail' response.key %}"> {{ response.respondent }}</a></li>
+      <li>{{response}}: {{ response.respondent }}</li>
     {% endfor %}
-  {% else %}
-    None
-  {% endif %}
   </ul>
+  </br>
+  {% endif %}
+  
   
   
   
   <div class="form-horizontal-heading">
-    <h2>Send Tests</h2>
-    Please enter list of recipents' email addresses.  To resend a test to an address,
-    check the "resend" box.
+    Please enter list of recipents' email addresses.<br>
+    Tests you have already sent out will appear in the "Resend" field if they have not been
+    submitted yet. To resend a test to an address, check its box.
   </div>
   
   <form class="form-horizontal" role="form"  action="{% url 'exam:distribute_send' object.id%}" method="post">{% csrf_token %}

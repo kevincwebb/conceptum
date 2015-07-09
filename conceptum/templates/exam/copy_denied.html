@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Copy Denied" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+ 
+  <div class="horizontal-heading">
+    <h3>You can't make a copy right now.</h3>
+  </div>
+  
+  <p>There is already a CI in development. Only one CI can be in development at a time.
+  Finalize that CI before copying this one.</p>
+  
+  
+  <a href = {% url 'exam:distribute_detail' object.id %} class='btn btn-primary'> Back </a>
+  
+</div> <!-- container -->
+
+{% endblock %}

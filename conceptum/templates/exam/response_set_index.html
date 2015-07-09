@@ -28,32 +28,29 @@
 <h3> Response Sets of {{current_app|capfirst}} "{{exam}}" (ID {{exam.id}})</h3>
     
 <p>
-Click on set for details and exam responses. Click on "distribute" to send {{exam}} to new students, and add them to the response set.
+Click on set for details and exam responses. Click on Your Distributions to see the tests that you have
+send out, resend any tests, or send new tests.
 </p>
     
 <!-- need the response set to be passed in -->
 <ul class = "collapsible_overview">    
 {% for set in responses %}     <!-- maybe do some collapsible statistics on each response set -->
-    <li class = "table"><span class="over_tab"><span class = "tab-button"><a href = "{% url 'exam:responses' set.id%}">{{ set }}</a></span>
-        
-        <a href = {% url 'exam:distribute_send' set.id %} class="dist_button">Distribute</a>
-        </span>
-    
+    <li class = "table">
+    <span class="over_tab">
+        <span class = "tab-button"><a href = "{% url 'exam:responses' set.id%}">{{ set }}</a></span>
+    </span>
     <label for="toplist_node{{set.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> </div></label>
     <input type = "checkbox" id = "toplist_node{{set.id}}">
-<div class = "overview">
-<ul class = "overview_inner_list">
-    <li> • Course: {{set.course}}</li>
-    <li> • Instructor: {{set.instructor}}</li>
-    <li> • Date Created: {{set.created}}</li>
-    <li> • Number of Questions: ##</li>
-    <li> • Number of Responses: ##</li>
-    <li> • Average Score: ##</li>
-        
-</ul>
-    
-</div>
-    
+    <div class = "overview">
+    <ul class = "overview_inner_list">
+        <li> • Course: {{set.course}}</li>
+        <li> • Instructor: {{set.instructor}}</li>
+        <li> • Date Created: {{set.created}}</li>
+        <li> • Number of Questions: ##</li>
+        <li> • Number of Responses: ##</li>
+        <li> • Average Score: ##</li>    
+    </ul>    
+    </div>
     </li>
 {% endfor %}
 </ul>
@@ -63,11 +60,10 @@ Click on set for details and exam responses. Click on "distribute" to send {{exa
 
 
  
-<a href = "{% url 'exam:distribute_new' exam.id %}" class = "btn btn-warning">New Response Set</a> <br>
+<a href = "{% url 'exam:distribute_new' exam.id %}" class = "btn btn-warning">Your Distributions</a> <br>
     <br>
     
-<a href = "{% url 'exam:distribute_detail' exam.id %}" class = "btn btn-primary">{{current_app|capfirst}} Details</a> 
-<a href="{% url 'exam:distribute_index' %}" class = "btn btn-primary">All {{current_app|capfirst}}s</a></br>
+<a href = "{% url 'exam:distribute_detail' exam.id %}" class = "btn btn-primary">Back</a>
 
 
     

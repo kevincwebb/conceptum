@@ -30,13 +30,16 @@
 {% block buttons %}
 <div>
   <a href = {% url 'exam:select_concept' object.id %} class="btn btn-primary"> Add Questions </a>
-  {%if user.is_staff%}
-  <a href = {% url 'exam:finalize_view' object.id %} class="btn btn-warning">Finalize {{current_app|capfirst}}</a>
-  <a href = {% url 'exam:delete_exam' object.id %} class="btn btn-danger">Delete {{current_app|capfirst}}</a>
-{%endif%}
-    
+  
+  {% if user.is_staff %}
+    </br></br>
+    <h4>Staff Controls:</h4>
+    <a href = {% url 'exam:edit' object.id %} class="btn btn-primary">Edit {{current_app|capfirst}}</a>
+    <a href = {% url 'exam:finalize_view' object.id %} class="btn btn-warning">Finalize {{current_app|capfirst}}</a>
+    <a href = {% url 'exam:delete_exam' object.id %} class="btn btn-danger">Delete {{current_app|capfirst}}</a>
+  {%endif%}
   <br>
-    <br>
+  <br>
 </div>
 <h5>Click on a question to edit it </h5>
 <div align="left">
@@ -221,10 +224,12 @@
 
 </div>
 
-
-
-
+{% block footer %}
+  <a href = {% url 'exam:index' %} class='btn btn-primary'> Back </a>
+{% endblock footer %}
 
 </div> <!-- container -->
+
+
 
 {% endblock %}

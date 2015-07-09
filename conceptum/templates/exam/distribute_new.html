@@ -17,16 +17,48 @@
 <div class="container">
  
   <div class="horizontal-heading">
-      <h3>New response set for {{exam}} </h3>
-      
-    <h4>Provide test details</h4>
+      <h2>Distribute Exam: {{exam.name}}</h2>
   </div>
 
-  Exam: {{ exam.name }} </br>
-  Description: {{ exam.description }}
-
-  <form class="form-horizontal" role="form"  action="{% url 'exam:distribute_new' exam.id %}" method="post">{% csrf_token %}
+  <h3>Your distributed courses:</h3>
+  Click to view details or resend tests in this course.
+  {% if responses %}
+    <ul class = "collapsible_overview">
+    {% for set in responses %}     <!-- maybe do some collapsible statistics on each response set -->
+        <li class = "table">
+        <span class="over_tab">
+            <span class = "tab-button"><a href = "{% url 'exam:responses' set.id%}">{{ set }}</a></span>
+        </span>
+        <label for="toplist_node{{set.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> </div></label>
+        <input type = "checkbox" id = "toplist_node{{set.id}}">
+        <div class = "overview">
+        <ul class = "overview_inner_list">
+            <li> Course: {{set.course}}</li>
+            <li> Instructor: {{set.instructor}}</li>
+            <li> Date Created: {{set.created}}</li>
+            <li> Number of Questions: ##</li>
+            <li> Number of Responses: ##</li>
+            <li> Average Score: ##</li>    
+        </ul>    
+        </div>
+        </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    You have not distributed this exam.
+  {% endif %}
   
+  <a href = {% url 'exam:response_sets' exam.id %} class='btn btn-primary'> Back </a>
+  
+  </br></br>
+  
+  <h3>Create a new course distribution</h3>
+  
+  <form class="form-horizontal" role="form"  action="{% url 'exam:distribute_new' exam.id %}" method="post">{% csrf_token %}
+  <ul>
+    <li><b>Instructor:</b> {{ user }}</li>
+    <li><b>Institution:</b> {{ user.profile.institution}}</li>
+  </ul>
   {{ form.non_field_errors }}
 
   {% for field in form %}
@@ -38,10 +70,8 @@
      </div>
     </div>
   {% endfor %}
-  
       <div class="submit">
         <button class="btn btn-primary" type="submit">Create</button>
-        <a href = {% url 'exam:distribute_index' %} class='btn btn-primary'> Cancel </a>
       </div>
   </form>
   

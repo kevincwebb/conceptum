@@ -29,88 +29,94 @@ qList is a 2d list of the following format:
 ["title of question", opt1, opt2, opt3...], ["title of question 2", opt1, opt2,...], ...]
  -->
 <div class = "container">
-	<h1>{{ exam.name }}</h1>
-	<h4>{{ exam.description}}</h3>
+<h1>Test {{response}}</h1>
+
+<h4>For Exam: {{ exam.name}}</h3>
+    <ul>
+    <li><b>Description:</b> {{ exam.description }} </li>
+    </ul>
+<h4>Part of Response Set ID={{object.response_set.id}}</h4>
+    <ul>
+    <li><b>Course:</b> {{ object.response_set.course }}</li>
+	<li><b>Created:</b> {{ object.response_set.created }}</li>
+    <li><b>Instructor:</b> {{ object.response_set.instructor }}</li>
+    <li><b>Institution:</b> {{ object.response_set.instructor.institution }}</li>
+    </ul>
 
 {% if not response.submitted %}
-    <h3>{{response.respondent}} has not submitted their test yet.</h3>
-{%else %}
+    <h3>Test {{response}} has not been submitted yet.</h3>
 	
-	<h3>{{ response.respondent }} submitted on {{response.submitted}}</h2>
+{%else %}
+	<h3>Test {{ response }} submitted on {{response.submitted}}</h2>
 	
 	<ul class = "collapsible_list">
 	<li> 
 	    {% load staticfiles %}
 	    <label for="toplist_node1"><h2 class = "list">Statistics <div class = "plus"> + </div> </h2></label>
 	    <input type = "checkbox" id = "toplist_node1">
-	
-	<ul class = "inner_list">
-	    {% if stats %}
-		{% if response.response_set.pre_test %}
-		    <li> 
-			Pre-Test given on {{response.sent}}</li>
-		{% else %}
-		    <li>Post-Test given on {{response.sent}}</li>
-		{% endif %}
-	       <li> Number of multiple choice questions: {{stats.0}}</li>
-		<li> Number of correct answers: {{stats.1}}</li>
-	    <li> Percent correct: {{stats.2}}%</li>
-	    {% else %}
-	    <li> none </li>
-	    {% endif %}
-	</ul>
+		<ul class = "inner_list">
+			{% if stats %}
+			{% if response.response_set.pre_test %}
+				<li>Pre-Test given on {{response.sent}}</li>
+			{% else %}
+				<li>Post-Test given on {{response.sent}}</li>
+			{% endif %}
+				<li> Number of multiple choice questions: {{stats.0}}</li>
+			<li> Number of correct answers: {{stats.1}}</li>
+			<li> Percent correct: {{stats.2}}%</li>
+			{% else %}
+			<li> none </li>
+			{% endif %}
+		</ul>
 	</li>
 	</ul>
 	
 	<ul class = "collapsible_list">
 	<li> 
-	    
 	    <label for="toplist_node2"><h2 class = "list">Question Responses <div class = "plus"> + </div>  </h2></label>
 	    <input type = "checkbox" id = "toplist_node2">
-	    
-	    
-	<ol>    
-	{% if mc_list %}
-	<!-- qList = [ q1, q2, ...] where
-		q1 = [question, [option1, option2, ...]
-	--><h3>Multiple Choice</h3>
-		{% for question, chosen, options in mc_list %}
-			<li><h4>{{question}}</h4>
-			<ol type = "a">
-			{% for item in options %}
-				{% if item.is_correct and item.id = chosen %}        <!-- eventually replace 1 with whatever identifies the correct answer -->
-					<li style="color:green"> <b>{{item}} </b> </li>
-				{% elif item.id == chosen %}
-					<li style ="color:red"> <b> {{item}} </b> </li>
-				{% elif item.is_correct %}
-					<li style = "color:green"> {{item}} </li>
-				{% else %}
-					<li> {{item}}</li>
-				{% endif %}
+		<ol>    
+		{% if mc_list %}
+		<!-- qList = [ q1, q2, ...] where
+			q1 = [question, [option1, option2, ...]
+		--><h3>Multiple Choice</h3>
+			{% for question, chosen, options in mc_list %}
+				<li><h4>{{question}}</h4>
+				<ol type = "a">
+				{% for item in options %}
+					{% if item.is_correct and item.id = chosen %}        <!-- eventually replace 1 with whatever identifies the correct answer -->
+						<li style="color:green"> <b>{{item}} </b> </li>
+					{% elif item.id == chosen %}
+						<li style ="color:red"> <b> {{item}} </b> </li>
+					{% elif item.is_correct %}
+						<li style = "color:green"> {{item}} </li>
+					{% else %}
+						<li> {{item}}</li>
+					{% endif %}
+				{% endfor %}
+				</ol>
+				</li>
+			{% endfor %} 
+		{% else %}
+			<li> No submitted multiple choice answers from {{response}} </li>
+		{% endif %}
+		<br>
+			
+		{% if fr_list %}
+			<h3>Free Response</h3>
+			{% for question, answer in fr_list %}
+				<li><h4>{{question}}</h4>
+				<ul> {{answer}}</ul>
+				</li>   
 			{% endfor %}
-			</ol>
-			</li>
-		{% endfor %} 
-		</li>
-	{% else %}
-		<li> No submitted multiple choice answers from {{response.respondent}} </li>
-	{% endif %}
-	<br>
-	{% if fr_list %}
-	    <h3>Free Response</h3>
-		{% for question, answer in fr_list %}
-			<li><h4>{{question}}</h4>
-		    <ul> {{answer}}</ul>
-		</li>   
-	    {% endfor %}
-	{% endif %}
-	</ol>
-	    </ul>
+		{% endif %}
+		</ol>
+	</li>
+	</ul>
 
 {%endif%}
     
-<a href = {% url 'exam:responses' response.response_set.id %} class="btn btn-primary"> Back to Response Set</a>
-<a href = {% url 'exam:distribute_detail' exam.id %} class="btn btn-primary"> Back to Exam "{{exam}}"</a>
+<a href = {% url 'exam:responses' response.response_set.id %} class="btn btn-primary"> Back</a>
 
 
 

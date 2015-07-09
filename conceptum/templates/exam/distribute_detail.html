@@ -27,17 +27,23 @@
 {% block buttons %}
 <div>
   <a href = {% url 'exam:index' %} class="btn btn-primary"> Statistics (coming soon)</a>
-  <a href = {% url 'exam:response_sets' exam.id %} class="btn btn-primary"> Responses and Distribution </a>
-    {% if user.is_staff %}
+  <a href = {% url 'exam:response_sets' exam.id %} class="btn btn-primary"> View all responses </a>
+  <a href = {% url 'exam:distribute_new' exam.id %} class="btn btn-primary"> Distribute </a>
+
+  {% if user.is_staff %}
+    </br></br>
+    <h4>Staff Controls:</h4>
     <a href = {% url 'exam:copy' exam.id %} class="btn btn-warning"> Make a copy for further development </a>
-	<a href = {% url 'exam:close' exam.id %} class="btn btn-danger"> Close {{current_app|capfirst}} Distribution </a>
-    {% endif %}
+    <a href = {% url 'exam:close' exam.id %} class="btn btn-danger"> Close {{current_app|capfirst}} Distribution </a>
+  {% endif %}
   <br>
-    <br>
+  <br>
 </div>
 {% endblock %}
 
-
+{% block footer %}
+  <a href = {% url 'exam:distribute_index' %} class='btn btn-primary'> Back </a>
+{% endblock footer %}
 
 <!-- TODO: add statistics drop-down, maybe response preview -->
 

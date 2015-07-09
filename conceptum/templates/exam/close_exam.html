@@ -21,7 +21,7 @@
   </div>
   
   <form action="" method="post">{% csrf_token %}
-      <p>Are you sure you want to close "{{ object }}"?</br>
+      <p>Are you sure you want to close "{{ object }}"? You cannot undo this action.</br>
       You can still view this {{current_app}} and all submitted responses, but it
       will no longer be distributable.</p>
       <div class="submit">

@@ -21,7 +21,7 @@
   </div>
   
   <form action="" method="post">{% csrf_token %}
-      <p>Are you sure you want to delete "{{ object }}"?</br>
+      <p>Are you sure you want to delete "{{ object }}"? You cannot undo this action</br>
       This will also delete its version history, so you will not be
       able to recover it.</p>
       <div class="submit">

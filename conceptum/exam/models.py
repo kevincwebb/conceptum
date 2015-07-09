@@ -444,7 +444,7 @@ class ExamResponse(models.Model):
 
     def __unicode__(self):
         # "00000000: email@email.com"
-        return "{0}: {1}".format(self.key[-8:], self.respondent)
+        return self.key[-8:]
 
 
 class QuestionResponse(models.Model):

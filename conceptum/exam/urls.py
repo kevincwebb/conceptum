@@ -18,9 +18,9 @@ exam_patterns = patterns('',
     url(r'^dev/', include(patterns('',
         url(r'^$', views.ExamDevIndexView.as_view(), name='index'),
         url(r'^create/$', views.ExamCreateView.as_view(), name='create'),
-
-        url(r'^(?P<exam_id>\d+)/delete/$', views.ExamDeleteView.as_view(), name='delete_exam'),
         url(r'^(?P<exam_id>\d+)/$', views.DevDetailView.as_view(), name='detail'),
+        url(r'^(?P<exam_id>\d+)/edit/$', views.ExamEditView.as_view(), name='edit'),
+        url(r'^(?P<exam_id>\d+)/delete/$', views.ExamDeleteView.as_view(), name='delete_exam'),
         url(r'^(?P<exam_id>\d+)/select/$', views.SelectConceptView.as_view(), name='select_concept'),
         url(r'^(?P<exam_id>\d+)/(?P<concept_id>\d+)/(?P<question_type>\w{2})/$',
             views.QuestionCreateView.as_view(), name='question_create'),
@@ -66,7 +66,7 @@ exam_patterns = patterns('',
     url(r'^unavailable/$', TemplateView.as_view(
         template_name='exam/exam_unavailable.html'), name='unavailable'),
     
-    (r'^comments/', include('django_comments.urls')),
+    #(r'^comments/', include('django_comments.urls')),
 )
 
 urlpatterns = patterns('',
