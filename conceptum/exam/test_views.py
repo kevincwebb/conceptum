@@ -324,3 +324,32 @@ class DevViewsTest(SimpleTestCase):
         # question_id does not exist
         response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':99}))
         self.assertEqual(response.status_code, 404)
+        
+class FinalizeViewTest(SimpleTestCase):
+    def setUp(self):
+        create_concepts()
+        self.user = set_up_user()
+        
+    def test_permissions(self):
+        exam = get_or_create_exam()
+        
+        # User not logged in, redirected
+        response = self.client.get(reverse('CI_exam:finalize',kwargs ={'exam_id':exam.id}))
+        self.assertRedirects(response,
+                             '/accounts/login/?next=/exams/CI/dev/finalize/%s/'%exam.id)
+        
+        # User logged in, not staff
+        self.client.login(email=self.user.email, password='password')
+        response = self.client.get(reverse('CI_exam:finalize',kwargs ={'exam_id':exam.id}))
+        self.assertEqual(response.status_code, 403)
+        
+        # User is staff
+        self.user.is_staff = True
+        self.user.profile.save()
+        response = self.client.get(reverse('CI_exam:finalize',kwargs ={'exam_id':exam.id}))
+        self.assertEqual(response.status_code, 200)
+        
+        # exam_id does not exist
+        response = self.client.get(reverse('CI_exam:finalize',kwargs ={'exam_id':99}))
+    
+

@@ -39,7 +39,7 @@ exam_patterns = patterns('',
     ))),
 
     # FINALIZING
-    url(r'^finalize/(?P<exam_id>\d+)/$', views.FinalizeView.as_view(), name = 'finalize_view'),
+    url(r'^finalize/(?P<exam_id>\d+)/$', views.FinalizeView.as_view(), name = 'finalize'),
     
     # DISTRIBUTION
     url(r'^dist/', include(patterns('',
