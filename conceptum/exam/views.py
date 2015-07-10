@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.formtools.wizard.views import SessionWizardView
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 
 import reversion
@@ -23,7 +24,7 @@ from .models import Exam, ResponseSet, ExamResponse, QuestionResponse, FreeRespo
                     MultipleChoiceQuestion, MultipleChoiceOption, FreeResponseResponse,\
                     MultipleChoiceResponse, ExamKind, ExamStage, Question
 from .forms import SelectConceptForm, AddFreeResponseForm, AddMultipleChoiceForm, \
-                   NewResponseSetForm, DistributeForm, ExamResponseForm, BlankForm, \
+                   NewResponseSetForm, DistributeForm, ExamResponseForm, CleanupForm, \
                    MultipleChoiceEditForm, FreeResponseVersionForm, MultipleChoiceVersionForm, \
                    FinalizeSelectForm, FinalizeOrderForm, FinalizeConfirmForm
 from .mixins import DevelopmentMixin, DistributionMixin, CurrentAppMixin
@@ -1009,7 +1010,7 @@ class CleanupView(LoginRequiredMixin,
     in case automatic cleanup is desired.  http://stackoverflow.com/a/11789141
     """
     template_name = 'exam/cleanup.html'
-    form_class = BlankForm
+    form_class = CleanupForm
     success_url = reverse_lazy('distribute_cleanup')
     
     def get_context_data(self, **kwargs):
