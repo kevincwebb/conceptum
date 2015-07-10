@@ -1,60 +1,47 @@
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
-from django.db import models
+from django.db import models, transaction
 from django.test import SimpleTestCase
 
+import reversion
+
 from profiles.tests import set_up_user
+from interviews.models import get_concept_list, DummyConcept as Concept
 from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, MultipleChoiceOption,\
-                    ExamKind
+                    ExamKind, ExamStage
 
-
-class DummyConcept(models.Model):
-    """
-    Since Questions are related to Concept by generic foreign key, we can use
-    this simple model instead of importing.
-    """
-    name = models.CharField(max_length=31, unique=True)
-    
-    def __str__(self):
-        return self.name
-
-def create_concepts():
-    """
-    Creates 4 concepts for use in testing.
-    Does not return anything, queryset accessible via objects.all()
-    """
-    for x in ['A','B','C','D']:
-        DummyConcept.objects.get_or_create(name="Concept %s" % x)
-
-def get_or_create_exam():
+def get_or_create_exam(suffix=''):
     """
     gets or creates an exam and some questions
     """
-    exam, created = Exam.objects.get_or_create(name='Test Exam',
+    exam, created = Exam.objects.get_or_create(name='Test Exam%s' % suffix,
                                                kind=ExamKind.CI,
+                                               stage=ExamStage.DEV,
                                                description='an exam for testing')
     if created:
-        concept_type = ContentType.objects.get_for_model(DummyConcept)
-        concept = DummyConcept.objects.get(name = "Concept A")
-        FreeResponseQuestion.objects.create(exam=exam,
-                                            question="What is the answer to this FR question?",
-                                            number=1,
-                                            content_type=concept_type,
-                                            object_id=concept.id)
-        concept = DummyConcept.objects.get(name = "Concept B")
-        mcq = MultipleChoiceQuestion.objects.create(exam=exam,
-                                                    question="What is the answer to this MC question?",
-                                                    number=2,
-                                                    content_type=concept_type,
-                                                    object_id=concept.id)
-        MultipleChoiceOption.objects.create(question=mcq, text="choice 1", index=1, is_correct=True);
-        MultipleChoiceOption.objects.create(question=mcq, text="choice 2", index=2);
-        MultipleChoiceOption.objects.create(question=mcq, text="choice 3", index=3);
+        concept_type = ContentType.objects.get_for_model(Concept)
+        concept = Concept.objects.get(name = "Concept A")
+        with transaction.atomic(), reversion.create_revision():
+            FreeResponseQuestion.objects.create(exam=exam,
+                                    question="What is the answer to this FR question?%s" % suffix,
+                                    number=1,
+                                    content_type=concept_type,
+                                    object_id=concept.id)
+        concept = Concept.objects.get(name = "Concept B")
+        with transaction.atomic(), reversion.create_revision():
+            mcq = MultipleChoiceQuestion.objects.create(exam=exam,
+                                    question="What is the answer to this MC question?%s" % suffix,
+                                    number=2,
+                                    content_type=concept_type,
+                                    object_id=concept.id)
+            MultipleChoiceOption.objects.create(question=mcq, text="choice 1", index=1, is_correct=True);
+            MultipleChoiceOption.objects.create(question=mcq, text="choice 2", index=2);
+            MultipleChoiceOption.objects.create(question=mcq, text="choice 3", index=3);
     return exam
 
 class DevViewsTest(SimpleTestCase):
     def setUp(self):
-        create_concepts()
+        get_concept_list()
         self.user = set_up_user()
     
     def test_index_view(self):
@@ -107,17 +94,12 @@ class DevViewsTest(SimpleTestCase):
         # make sure questions are displayed
         response = self.client.get(reverse('exam:detail', args=[exam.id]))
         self.assertEqual(response.status_code, 200)
-        for concept in (DummyConcept.objects.all()):
+        for concept in (Concept.objects.all()):
             self.assertContains(response, concept)
-            
-        #These next tests fail. I confirmed with print statments that the questions do indeed
-        #exist for the exam object, so I'm guessing there's a problem in the template, given
-        #how complicated it is.
-        #
-        #for question in (exam.freeresponsequestion_set.all()):
-        #    self.assertContains(response, question.question)
-        #for question in (exam.multiplechoicequestion_set.all()):
-        #    self.assertContains(response, question.question)
+        for question in (exam.freeresponsequestion_set.all()):
+            self.assertContains(response, question.question)
+        for question in (exam.multiplechoicequestion_set.all()):
+            self.assertContains(response, question.question)
 
     def test_create_view(self):
         # User not logged in, redirected
@@ -168,7 +150,7 @@ class DevViewsTest(SimpleTestCase):
         # make sure concept choices are present
         response = self.client.get(reverse('exam:select_concept', args=[exam.id]))
         self.assertEqual(response.status_code, 200)
-        for concept in (DummyConcept.objects.all()):
+        for concept in (Concept.objects.all()):
             self.assertContains(response, concept)
         
         # Select no concept, should get an error
@@ -179,7 +161,7 @@ class DevViewsTest(SimpleTestCase):
             
         # Select a concept. No object is created, but we should redirect to a
         # page to create a question for this concept
-        concept = DummyConcept.objects.get(name = "Concept A")
+        concept = Concept.objects.get(name = "Concept A")
         response = self.client.post(reverse('exam:select_concept', args=[exam.id]),
                                     {'concept':concept,})
         self.assertRedirects(response, reverse('exam:question_create',
@@ -191,7 +173,7 @@ class DevViewsTest(SimpleTestCase):
             Check interview and excerpt data
         """
         exam = get_or_create_exam()
-        concept = DummyConcept.objects.get(name = "Concept A")
+        concept = Concept.objects.get(name = "Concept A")
         
         # User not logged in, redirected
         response = self.client.get(reverse('CI_exam:question_create',
@@ -299,11 +281,10 @@ class DevViewsTest(SimpleTestCase):
     def test_multiple_choice_version_view(self):
         """        
         """
-        get_or_create_exam().delete()
-        exam = get_or_create_exam() # get a fresh exam
-        concept = DummyConcept.objects.get(name = "Concept A")
+        #get_or_create_exam().delete()
+        exam = get_or_create_exam(suffix=' version_view') # get a fresh exam
+        concept = Concept.objects.get(name = "Concept A")
         question = MultipleChoiceQuestion.objects.get(exam=exam)
-
         
         # User not logged in, redirected
         response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':question.id}))
@@ -324,3 +305,68 @@ class DevViewsTest(SimpleTestCase):
         # question_id does not exist
         response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':99}))
         self.assertEqual(response.status_code, 404)
+        
+        # check that there is one version
+        response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':question.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, question.question, count=1)
+        for option in question.multiplechoiceoption_set.all():
+            self.assertContains(response, option, count=1)
+        
+        # update question, check that all data for both versions are listed
+        old_question = question.question
+        old_options = {}
+        with transaction.atomic(), reversion.create_revision():
+            question.question = 'this is updated question text'
+            question.save()
+            for option in question.multiplechoiceoption_set.all():
+                old_options[option]=option.text
+                option.text = option.text.upper()
+                option.save()
+        response = self.client.get(reverse('CI_exam:mc_versions',kwargs ={'question_id':question.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, question.question, count=1)
+        self.assertContains(response, old_question, count=1)
+        for option in question.multiplechoiceoption_set.all():
+            self.assertContains(response, option, count=1)
+            self.assertContains(response, old_options[option], count=1)
+            
+        # is there a way to check that these things come in the right order?
+        
+        # check that submit redirects us
+        response = self.client.post(reverse('CI_exam:mc_versions',
+                                            kwargs ={'question_id':question.id}),
+                                    {'version':1})
+        self.assertRedirects(response, reverse('exam:detail', kwargs ={'exam_id':exam.id,}))
+
+#class CopyViewTest(SimpleTestCase):
+#    def setUp(self):
+#        get_concept_list()
+#        self.user = set_up_user()
+#    
+#    def test_permissions(self):
+#        exam = get_or_create_exam()
+#        exam.stage=ExamStage.DIST
+#        exam.kind=ExamKind.CI
+#        exam.save()
+        
+        ## User not logged in, redirected
+        #response = self.client.get(reverse('survey:copy', args=[exam.id]))
+        #self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dist/%s/copy/'%exam.id)
+        #
+        ## User logged in, not staff
+        #self.client.login(email=self.user.email, password='password')
+        #response = self.client.get(reverse('survey:copy', args=[exam.id]))
+        #self.assertEqual(response.status_code, 403)
+        #
+        ## User is staff
+        #self.user.is_staff = True
+        #self.user.save()
+        #response = self.client.get(reverse('survey:copy', args=[exam.id]))
+        #self.assertEqual(response.status_code, 200)
+        #
+        ## exam id does not exist
+        #response = self.client.get(reverse('survey:copy', args=[99]))
+        #self.assertEqual(response.status_code, 404)
+        
+        

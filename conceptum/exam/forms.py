@@ -304,6 +304,12 @@ class QuestionVersionForm(forms.ModelForm):
         super(QuestionVersionForm, self).__init__(*args, **kwargs)
         self.fields['version']=forms.ChoiceField(choices=self.get_version_choices(),
                                                  widget=forms.RadioSelect())
+
+
+class FreeResponseVersionForm(QuestionVersionForm):
+    class Meta:
+        model = FreeResponseQuestion
+        fields = []
     
     @transaction.atomic()
     @reversion.create_revision()
@@ -316,12 +322,6 @@ class QuestionVersionForm(forms.ModelForm):
         version_list = self.instance.get_unique_versions()
         version_list[index].revert()
         return self.instance
-
-
-class FreeResponseVersionForm(QuestionVersionForm):
-    class Meta:
-        model = FreeResponseQuestion
-        fields = []
 
         
 class MultipleChoiceVersionForm(QuestionVersionForm):
@@ -472,9 +472,9 @@ class DistributeForm(forms.Form):
         return cleaned_data
 
 
-class BlankForm(forms.Form):
+class CleanupForm(forms.Form):
     """
-    Used in CleanupView, which doesn't actually need any fields.
+    A Blank Form
     """
     class Meta:
         fields = []
