@@ -76,10 +76,37 @@ qList is a 2d list of the following format:
 	    <label for="toplist_node2"><h2 class = "list">Question Responses <div class = "plus"> + </div>  </h2></label>
 	    <input type = "checkbox" id = "toplist_node2">
 		<ol>    
-		{% if mc_list %}
+		{% if question_list %}
 		<!-- qList = [ q1, q2, ...] where
 			q1 = [question, [option1, option2, ...]
-		--><h3>Multiple Choice</h3>
+		-->
+			{% for entry in question_list %}
+				{% if entry.question.is_multiple_choice %}
+					{# entry is a list: [question, chosen, options]#}
+					<li><h4>{{entry.question}}</h4>
+					<ol type = "a">
+					{% for item in entry.options %}
+						{% if item.is_correct and item.id = entry.chosen %}
+							<li style="color:green"> <b>{{item}} </b> </li>
+						{% elif item.id == entry.chosen %}
+							<li style ="color:red"> <b> {{item}} </b> </li>
+						{% elif item.is_correct %}
+							<li style = "color:green"> {{item}} </li>
+						{% else %}
+							<li> {{item}}</li>
+						{% endif %}
+					{% endfor %}
+					</ol>
+					</li>
+				{% else %}
+					{# entry is a list: [question, answer] #}
+					<li><h4>{{entry.question}}</h4>
+					<ul> {{entry.answer}}</ul>
+					</li>   
+				{% endif %}
+			{% endfor %}
+		
+{% comment %}
 			{% for question, chosen, options in mc_list %}
 				<li><h4>{{question}}</h4>
 				<ol type = "a">
@@ -109,7 +136,12 @@ qList is a 2d list of the following format:
 				<ul> {{answer}}</ul>
 				</li>   
 			{% endfor %}
+{% endcomment %}
+		{% else %}
+			<li> No submitted multiple choice answers from {{response}} </li>
 		{% endif %}
+		
+	
 		</ol>
 	</li>
 	</ul>

@@ -56,22 +56,23 @@ exam_patterns = patterns('',
         url(r'^response/(?P<key>\w+)/$', views.ExamResponseDetailView.as_view(), name = 'response_detail'),
     ))),    
     
+    
+    
+    #(r'^comments/', include('django_comments.urls')),
+)
+
+urlpatterns = patterns('',
+    url(r'^survey/', include(exam_patterns, app_name='exam', namespace='survey')),
+    url(r'^CI/', include(exam_patterns, app_name='exam', namespace='CI_exam')),
+    url(r'^cleanup/$', views.CleanupView.as_view(), name='distribute_cleanup'),
+    
     # TAKE TEST
-    url(r'^taketest/(?P<pk>\w+)/$', views.TakeTestIRBView,
+    url(r'^taketest/(?P<pk>\w+)/$', views.TakeTestIRBView.as_view(),
         name='take_test_IRB'), 
     url(r'^taketest/(?P<pk>\w+)/form/$', views.TakeTestView.as_view(),
         name='take_test'), #formerly exam_response
     url(r'^response_complete/$', TemplateView.as_view(
         template_name='exam/response_complete.html'), name='response_complete'),
     url(r'^unavailable/$', TemplateView.as_view(
-        template_name='exam/exam_unavailable.html'), name='unavailable'),
-    
-    #(r'^comments/', include('django_comments.urls')),
-)
-
-urlpatterns = patterns('',
-
-    url(r'^survey/', include(exam_patterns, app_name='exam', namespace='survey')),
-    url(r'^CI/', include(exam_patterns, app_name='exam', namespace='CI_exam')),
-    url(r'^cleanup/$', views.CleanupView.as_view(), name='distribute_cleanup'),
+        template_name='exam/exam_unavailable.html'), name='exam_unavailable'),
 )

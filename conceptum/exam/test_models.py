@@ -36,8 +36,7 @@ class ModelsTest(SimpleTestCase):
     def test_fr_get_unique_versions(self):
         # Reversion registration through the admin interface does not work in tests,
         # nor does ReversionMiddleware work to create revisions
-        exam, created = Exam.objects.get_or_create(name='Test Exam',
-                                                   description='an exam for testing')
+        exam = Exam.objects.create(name='Test Exam', description='an exam for testing')
         concept_type = ContentType.objects.get_for_model(DummyConcept)
         concept = DummyConcept.objects.get(name = "Concept A")
         
@@ -86,8 +85,7 @@ class ModelsTest(SimpleTestCase):
         Because MCQ and FRQ use the same get_unique_versions function, this test does not
         repeat tests done by test_fr_get_unique_versions
         """
-        exam, created = Exam.objects.get_or_create(name='Test Exam',
-                                                   description='an exam for testing')
+        exam = Exam.objects.create(name='Test Exam', description='an exam for testing')
         concept_type = ContentType.objects.get_for_model(DummyConcept)
         option_type = ContentType.objects.get_for_model(MultipleChoiceOption)
         concept = DummyConcept.objects.get(name = "Concept A")

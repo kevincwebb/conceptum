@@ -782,6 +782,7 @@ class ResponseSetDetailView(LoginRequiredMixin,
         context['exam'] = self.exam
         context['response_set'] = self.object
         context['responses'] = self.object.examresponse_set.filter(submitted__isnull=False)
+        context['pending'] = self.object.examresponse_set.filter(submitted__isnull=True)
         context['stats'] = self.set_stats()
         context['user_is_uploader_or_staff'] =\
             (self.request.user.is_staff or self.request.user.profile==self.object.instructor)
@@ -795,28 +796,49 @@ class ExamResponseDetailView(LoginRequiredMixin,
     template_name = 'exam/exam_response_detail.html'
     model = ExamResponse
     pk_url_kwarg = 'key'
-
+    
+    def make_question_list(self):
+        multiple_choice_responses = self.object.multiplechoiceresponse_set.all()
+        free_response_responses = self.object.freeresponseresponse_set.all()
+        
+        question_list = []
+        for question in self.object.response_set.exam.question_set.all():
+            if question.is_multiple_choice:
+                response = multiple_choice_responses.get(question=question)
+                q = {'question':question, 'chosen':response.option_id}  #name of question; answer chosen
+                qOptions = []
+                qOptions.extend(question.multiplechoiceoption_set.all())
+                q['options']=qOptions
+                question_list.append(q)
+            else:
+                response = free_response_responses.get(question=question)
+                q = {'question':question, 'answer':response.response}
+                question_list.append(q)
+        
+        return question_list
+    
     def get_context_data(self, **kwargs):
         context = super(ExamResponseDetailView, self).get_context_data(**kwargs)
         
-        mc_list = []
-        q = []
-        for question in self.object.multiplechoiceresponse_set.all():
-            q = [question.question, question.option_id]     #name of question, answer chosen
-            qOptions = []
-            qOptions.extend(question.question.multiplechoiceoption_set.all())
-            q.append(qOptions)
-            mc_list.append(q)
-        fr_list = []
-        for question in self.object.freeresponseresponse_set.all():
-            q = [question.question, question.response]
-            fr_list.append(q)        
+        #mc_list = []
+        #q = []
+        #for question in self.object.multiplechoiceresponse_set.all():
+        #    q = [question.question, question.option_id]     #name of question, answer chosen
+        #    qOptions = []
+        #    qOptions.extend(question.question.multiplechoiceoption_set.all())
+        #    q.append(qOptions)
+        #    mc_list.append(q)
+        #fr_list = []
+        #for question in self.object.freeresponseresponse_set.all():
+        #    q = [question.question, question.response]
+        #    fr_list.append(q)        
         
         context['exam'] = self.exam
         context['response'] = self.object
         context['stats'] = qstats(self.object.multiplechoiceresponse_set.all())
-        context['mc_list'] = mc_list
-        context['fr_list'] = fr_list
+        #context['mc_list'] = mc_list
+        #context['fr_list'] = fr_list
+        context['question_list'] = self.make_question_list()
         return context
     
 
@@ -1035,19 +1057,31 @@ class CleanupView(LoginRequiredMixin,
 
 ############################# TAKE TEST ##################################################
 
-def TakeTestIRBView(request, pk):
-    """
-    TODO: make CBV, check that the exam is available (as in TakeTestView)
-    """
-    template = loader.get_template('exam/take_test_IRB.html')
-    context = RequestContext(request,
-                             { 'pk':pk},)
-    return HttpResponse(template.render(context))
+#def TakeTestIRBView(request, pk):
+#    """
+#    TODO: make CBV, check that the exam is available (as in TakeTestView)
+#    """
+#    template = loader.get_template('exam/take_test_IRB.html')
+#    context = RequestContext(request,
+#                             { 'pk':pk},)
+#    return HttpResponse(template.render(context))
 
+class TakeTestIRBView(generic.DetailView):
+    model = ExamResponse
+    template_name = 'exam/take_test_IRB.html'
+
+    def dispatch(self, *args, **kwargs):
+        """
+        Check that the ExamResponse is available.
+        """
+        try:
+            if self.get_object().is_available():
+                return super(TakeTestIRBView, self).dispatch(*args, **kwargs)
+        except Http404:
+            pass
+        return HttpResponseRedirect(reverse('exam_unavailable'))
     
-class TakeTestView(#UnauthenticatedUserMixin,
-                   CurrentAppMixin,
-                   generic.UpdateView):
+class TakeTestView(generic.UpdateView):
     """
     This is where students take the Exam. A student will get a URL that ends with the
     key to a specific ExamResponse. If that ER has expired or already been submitted, or
@@ -1062,14 +1096,14 @@ class TakeTestView(#UnauthenticatedUserMixin,
     
     def dispatch(self, *args, **kwargs):
         """
-        Check that the ER is available.
+        Check that the ExamResponse is available.
         """
         try:
             if self.get_object().is_available():
                 return super(TakeTestView, self).dispatch(*args, **kwargs)
         except Http404:
             pass
-        return HttpResponseRedirect(reverse('exam:exam_unavailable', current_app=self.current_app))
+        return HttpResponseRedirect(reverse('exam_unavailable'))
         
     def form_valid(self, form):
         """

@@ -69,32 +69,44 @@
     
 <!-- need the response set to be passed in -->
 <ul class = "collapsible_list">
-    <li><h3><span class="tab">Submitted Responses to {{response_set}} </span>
-    
+    <li><h3><span class="tab">Submitted Responses to {{response_set}} </span>    
         <label for="responses_node"><div class = "ind_button "> + </div></label></h3>
-    <input type = "checkbox" id = "responses_node" checked>
+        <input type = "checkbox" id = "responses_node" checked>
     
-  <ul class = "collapsible_overview">
-  {% if responses %}
-    {% for response in responses %}
-      <li class = "table"><a href = "
-          {% url 'exam:response_detail' response.key %}">
-          
-{{ response }}</a></li> 
-    {% endfor %}
-  {% else %}
-    None
-  {% endif %}
-  </ul>
+    <ul class = "collapsible_overview">
+    {% if responses %}
+        {% for response in responses %}
+            <li class = "table"><a href = "
+            {% url 'exam:response_detail' response.key %}">{{ response }}</a></li> 
+        {% endfor %}
+    {% else %}
+        None
+    {% endif %}
+    </ul>
     <br>
-    
-    <a href="{% url 'exam:response_sets' exam.id%}" class = "btn btn-primary">Back</a><br>
-    
-    
     </li>
+</ul>
 
-<br>
-
+<ul class = "collapsible_list">
+    <li><h3><span class="tab">Unsubmitted Responses</span>    
+        <label for="pending_node"><div class = "ind_button "> + </div></label></h3>
+        <input type = "checkbox" id = "pending_node" checked>
+    
+    <ul class = "collapsible_overview">
+    {% if pending %}
+        {% for response in pending %}
+            <li class = "table">{{ response }}</li> 
+        {% endfor %}
+    {% else %}
+        None
+    {% endif %}
+    </ul>
+    <br>
+    </li>
+</ul>
+    
+<a href="{% url 'exam:response_sets' exam.id%}" class = "btn btn-primary">Back</a><br>
+    
 
 </div> <!-- container -->
 

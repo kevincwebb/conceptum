@@ -494,19 +494,39 @@ class ExamResponseForm(forms.ModelForm):
         """
         Generate a field for each associated QuestionResponse object.
         """
-        super(ExamResponseForm, self).__init__(*args, **kwargs) 
-        for response in self.instance.freeresponseresponse_set.all():
-            self.fields["FR_response_%d" % response.id] = \
-                forms.CharField(label=_(response.question.__unicode__()),
-                                required=True,
-                                widget=forms.Textarea(),)
-        for response in self.instance.multiplechoiceresponse_set.all():
-            self.fields["MC_response_%d" % response.id] = \
-                forms.ModelChoiceField(label=_(response.question.__unicode__()),
-                                       required=True,
-                                       queryset=response.question.multiplechoiceoption_set.all(),
-                                       empty_label=None,
-                                       widget=forms.RadioSelect())
+        super(ExamResponseForm, self).__init__(*args, **kwargs)
+        multiple_choice_responses = self.instance.multiplechoiceresponse_set.all()
+        free_response_responses = self.instance.freeresponseresponse_set.all()
+        
+        # need to create response fields in the order that their questions are ordered
+        for question in self.instance.response_set.exam.question_set.all():
+            if question.is_multiple_choice:
+                response = multiple_choice_responses.get(question=question)
+                self.fields["MC_response_%d" % response.id] = forms.ModelChoiceField(
+                    label=_(response.question.__unicode__()),
+                    required=True,
+                    queryset=response.question.multiplechoiceoption_set.all(),
+                    empty_label=None,
+                    widget=forms.RadioSelect())
+            else:
+                response = free_response_responses.get(question=question)
+                self.fields["FR_response_%d" % response.id] = forms.CharField(
+                    label=_(response.question.__unicode__()),
+                    required=True,
+                    widget=forms.Textarea(),)
+        
+        #for response in self.instance.freeresponseresponse_set.all():
+        #    self.fields["FR_response_%d" % response.id] = \
+        #        forms.CharField(label=_(response.question.__unicode__()),
+        #                        required=True,
+        #                        widget=forms.Textarea(),)
+        #for response in self.instance.multiplechoiceresponse_set.all():
+        #    self.fields["MC_response_%d" % response.id] = \
+        #        forms.ModelChoiceField(label=_(response.question.__unicode__()),
+        #                               required=True,
+        #                               queryset=response.question.multiplechoiceoption_set.all(),
+        #                               empty_label=None,
+        #                               widget=forms.RadioSelect())
             
     def save(self):
         """

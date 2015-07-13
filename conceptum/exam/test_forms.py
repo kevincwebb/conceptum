@@ -10,36 +10,34 @@ import reversion
 from profiles.tests import set_up_user
 from interviews.models import get_concept_list, DummyConcept as Concept
 from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, MultipleChoiceOption,\
-                    ExamKind, QUESTION_LENGTH, REQUIRED_CHOICES
+                    ExamKind, ExamStage, QUESTION_LENGTH, REQUIRED_CHOICES
 from .forms import MultipleChoiceEditForm, FreeResponseVersionForm
 
 
-def get_or_create_exam(suffix=''):
+def create_exam():
     """
     gets or creates an exam and some questions
     """
-    exam, created = Exam.objects.get_or_create(name='Test Exam%s' % suffix,
-                                               kind=ExamKind.CI,
-                                               description='an exam for testing')
-    if created:
-        concept_type = ContentType.objects.get_for_model(Concept)
-        concept = Concept.objects.get(name = "Concept A")
-        with transaction.atomic(), reversion.create_revision():
-            FreeResponseQuestion.objects.create(exam=exam,
-                                    question="What is the answer to this FR question?%s" % suffix,
-                                    number=1,
-                                    content_type=concept_type,
-                                    object_id=concept.id)
-        concept = Concept.objects.get(name = "Concept B")
-        with transaction.atomic(), reversion.create_revision():
-            mcq = MultipleChoiceQuestion.objects.create(exam=exam,
-                                    question="What is the answer to this MC question?%s" % suffix,
-                                    number=2,
-                                    content_type=concept_type,
-                                    object_id=concept.id)
-            MultipleChoiceOption.objects.create(question=mcq, text="choice 1", index=1, is_correct=True)
-            MultipleChoiceOption.objects.create(question=mcq, text="choice 2", index=2)
-            MultipleChoiceOption.objects.create(question=mcq, text="choice 3", index=3)
+    exam = Exam.objects.create(name='Test Exam',
+                               kind = ExamKind.CI,
+                               stage = ExamStage.DEV,
+                               description='an exam for testing')
+    concept_type = ContentType.objects.get_for_model(Concept)
+    concept = Concept.objects.get(name = "Concept A")
+    FreeResponseQuestion.objects.create(exam=exam,
+                                question="What is the answer to this FR question?",
+                                number=1,
+                                content_type=concept_type,
+                                object_id=concept.id)
+    concept = Concept.objects.get(name = "Concept B")
+    mcq = MultipleChoiceQuestion.objects.create(exam=exam,
+                                question="What is the answer to this MC question?",
+                                number=2,
+                                content_type=concept_type,
+                                object_id=concept.id)
+    MultipleChoiceOption.objects.create(question=mcq, text="choice 1", index=1, is_correct=True)
+    MultipleChoiceOption.objects.create(question=mcq, text="choice 2", index=2)
+    MultipleChoiceOption.objects.create(question=mcq, text="choice 3", index=3)
     return exam
 
 
@@ -52,7 +50,7 @@ class DevFormsTest(SimpleTestCase):
         self.client.login(email=self.user.email, password='password')
  
     def test_add_free_response_form(self):
-        exam = get_or_create_exam()
+        exam = create_exam()
         concept = Concept.objects.get(name = "Concept A")
         question_text = 'Is this a new free response question?'
         
@@ -82,7 +80,7 @@ class DevFormsTest(SimpleTestCase):
         self.assertFormError(response, 'form', 'question', error, "" )
     
     def test_add_multiple_choice_form(self):
-        exam = get_or_create_exam()
+        exam = create_exam()
         concept = Concept.objects.get(name = "Concept A")
         question_text = 'Is this a new multiplce choice question?'
         
@@ -155,7 +153,7 @@ class DevFormsTest(SimpleTestCase):
         q.delete()
     
     def test_multiple_choice_edit_form(self):
-        exam = get_or_create_exam(suffix=' edit_form')
+        exam = create_exam()
         question = MultipleChoiceQuestion.objects.get(exam=exam)
         options = question.multiplechoiceoption_set.all()
         
@@ -181,7 +179,6 @@ class DevFormsTest(SimpleTestCase):
                      'index_%d' % options[1].id:2}
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
-        print response
         self.assertEqual(response.status_code, 302)
         question = MultipleChoiceQuestion.objects.get(id=question.id)
         options = question.multiplechoiceoption_set.all()
@@ -294,7 +291,7 @@ class DevFormsTest(SimpleTestCase):
         self.assertFormError(response, 'form', None, error, "" )
 
     def test_free_response_version_form(self):
-        exam = get_or_create_exam()    
+        exam = create_exam()    
         concept_type = ContentType.objects.get_for_model(Concept)
         concept = Concept.objects.get(name = "Concept A")
         # Have to create a new question with never-before-used pk because there are version\
@@ -334,10 +331,10 @@ class DevFormsTest(SimpleTestCase):
         self.assertEqual(question.question, 'A FR question for versioning?')
 
     def test_multiple_choice_version_form(self):
-        exam = get_or_create_exam()    
+        exam = create_exam()    
         concept_type = ContentType.objects.get_for_model(Concept)
         concept = Concept.objects.get(name = "Concept A")
-        # Have to create a new question with never-before-used pk because there are version\
+        # Have to create a new question with never-before-used pk because there are version
         # objects still lingering in the database from old deleted questions.
         with transaction.atomic(), reversion.create_revision():
             question = MultipleChoiceQuestion.objects.create(

@@ -168,6 +168,10 @@ class Question(models.Model):
     rank = models.IntegerField(null=True, blank = True)
     optional = models.BooleanField(default=False)
     
+    class Meta:
+        ordering = ['number']
+
+    
     def __unicode__(self):
         return self.question
     
