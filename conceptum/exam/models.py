@@ -252,7 +252,7 @@ class FreeResponseQuestion(Question):
     class Meta:
         proxy = True
 
-reversion.register(FreeResponseQuestion)
+reversion.register(Question)
 
 
 class MultipleChoiceQuestion(Question):
@@ -331,7 +331,7 @@ class MultipleChoiceOption(models.Model):
                                  'question.exam.stage is not DEV')
         super(MultipleChoiceOption, self).save(*args, **kwargs)
         
-reversion.register(MultipleChoiceQuestion, follow=["multiplechoiceoption_set"])
+#reversion.register(MultipleChoiceQuestion, follow=["multiplechoiceoption_set"])
 reversion.register(MultipleChoiceOption)
     
 
