@@ -7,8 +7,13 @@
     {{wizard.form.select_questions.errors}}
     
     {% for choice, object in choices_and_objects %}
-        <ul>{{ object.content_object }}</br>
-        {{ choice }}</br>
+        
+        <ul>-------------------------------------</br>
+        <i>{{ object.content_object }}</i></br>
+        {{ choice }}
+        {% if object.image %}
+            <a HREF="{{object.image.url}}"><img HEIGHT=50 WIDTH=50 SRC="{{object.image.url}}"></a>
+        {% endif %}
             <ul>
             {% for option in object.multiplechoiceoption_set.all %}
                 <li>
@@ -19,6 +24,7 @@
             {% endfor %}
             </ul>
         </ul>
+        </br>
     {% endfor %}
         
   {% endblock form_content %}

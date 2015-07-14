@@ -42,3 +42,6 @@ secrets.json
 
 # Gautam's things
 *gautam*.py
+
+# Media files uploaded in dev
+*conceptum/media/*

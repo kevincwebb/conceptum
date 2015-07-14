@@ -135,15 +135,51 @@ class AddMultipleChoiceForm(forms.ModelForm):
         return cleaned_data
 
 
+class FreeResponseEditForm(forms.ModelForm):
+    """
+    """
+    class Meta:
+        model = FreeResponseQuestion
+        fields = ['question', 'image']
+        widgets = {
+            'question': forms.TextInput(attrs={'size': '60'})}
+    
+    def __init__(self, *args, **kwargs):
+        super(FreeResponseEditForm, self).__init__(*args, **kwargs)
+        self.fields["concept"] = forms.ModelChoiceField(queryset=get_concept_list(),
+                                                        initial = self.instance.content_object)
+    
+    @transaction.atomic()
+    @reversion.create_revision()  
+    def save(self):
+        """
+        Saves the question and all choices.
+        Deletes a choice if its field is blank.
+        Creates a new choice if 'new_choice' field is not blank.
+        
+        It is important to save this question and all its options, even if they are unchanged,
+        so that they are included in the revision.
+        """
+        self.instance.question = self.cleaned_data.get('question')
+        self.instance.object_id = self.cleaned_data.get('concept').id
+        if self.cleaned_data.get('image'):
+            self.instance.image = self.cleaned_data.get('image')
+        else:
+            self.instance.image = None
+        self.instance.save()
+        return self.instance
+
+
 class MultipleChoiceEditForm(forms.ModelForm):
     """
     Form for editing a multiple choice question. If there are less than MAX_CHOICES choices,
     there is an extra field to add a new choice. If a choice's text is deleted and the form
     is submitted, that choice will be deleted.
     
-    The view expects that the 3rd field is the forms.ChoiceField for marking a correct answer,
+    The view expects that the 4th field is the forms.ChoiceField for marking a correct answer,
     followed by alternating choice and index fields.
     """
+    
     class Meta:
         model = MultipleChoiceQuestion
         fields = ['question','image']
@@ -164,7 +200,8 @@ class MultipleChoiceEditForm(forms.ModelForm):
         Creates extra field for adding a new choice. 
         """    
         super(MultipleChoiceEditForm, self).__init__(*args, **kwargs)
-        
+        self.fields["concept"] = forms.ModelChoiceField(queryset=get_concept_list(),
+                                                        initial = self.instance.content_object)
         self.fields["correct"] = forms.ChoiceField(label=_("Correct Choice"),
                                                    choices=self.choices(),
                                                    initial=self.instance.correct_option.id,
@@ -251,7 +288,11 @@ class MultipleChoiceEditForm(forms.ModelForm):
         so that they are included in the revision.
         """
         self.instance.question = self.cleaned_data.get('question')
-        self.instance.image = self.cleaned_data.get('image')
+        self.instance.object_id = self.cleaned_data.get('concept').id
+        if self.cleaned_data.get('image'):
+            self.instance.image = self.cleaned_data.get('image')
+        else:
+            self.instance.image = None
         self.instance.save()
         
         for choice in self.instance.multiplechoiceoption_set.all():
@@ -514,20 +555,7 @@ class ExamResponseForm(forms.ModelForm):
                     label=_(response.question.__unicode__()),
                     required=True,
                     widget=forms.Textarea(),)
-        
-        #for response in self.instance.freeresponseresponse_set.all():
-        #    self.fields["FR_response_%d" % response.id] = \
-        #        forms.CharField(label=_(response.question.__unicode__()),
-        #                        required=True,
-        #                        widget=forms.Textarea(),)
-        #for response in self.instance.multiplechoiceresponse_set.all():
-        #    self.fields["MC_response_%d" % response.id] = \
-        #        forms.ModelChoiceField(label=_(response.question.__unicode__()),
-        #                               required=True,
-        #                               queryset=response.question.multiplechoiceoption_set.all(),
-        #                               empty_label=None,
-        #                               widget=forms.RadioSelect())
-            
+    
     def save(self):
         """
         Save the student's responses.
