@@ -2,13 +2,14 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.db import models, transaction
 from django.test import SimpleTestCase
+from django.utils.translation import ugettext_lazy as _
 
 import reversion
 
 from profiles.tests import set_up_user
 from interviews.models import get_concept_list, DummyConcept as Concept
 from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, MultipleChoiceOption,\
-                    ExamKind, ExamStage
+                    ExamKind, ExamStage, Question
 
 def create_exam():
     """
@@ -22,13 +23,11 @@ def create_exam():
     concept = Concept.objects.get(name = "Concept A")
     FreeResponseQuestion.objects.create(exam=exam,
                                 question="What is the answer to this FR question?",
-                                number=1,
                                 content_type=concept_type,
                                 object_id=concept.id)
     concept = Concept.objects.get(name = "Concept B")
     mcq = MultipleChoiceQuestion.objects.create(exam=exam,
                                 question="What is the answer to this MC question?",
-                                number=2,
                                 content_type=concept_type,
                                 object_id=concept.id)
     MultipleChoiceOption.objects.create(question=mcq, text="choice 1", index=1, is_correct=True)
@@ -358,25 +357,71 @@ class FinalizeViewTest(SimpleTestCase):
         
     def test_permissions(self):
         exam = create_exam()
+        finalize_url = reverse('CI_exam:finalize', kwargs={'exam_id':exam.id})
         
         # User not logged in, redirected
-        response = self.client.get(reverse('CI_exam:finalize',kwargs ={'exam_id':exam.id}))
+        response = self.client.get(finalize_url)
         self.assertRedirects(response,
                              '/accounts/login/?next=/exams/CI/finalize/%s/'%exam.id)
         
         # User logged in, not staff
         self.client.login(email=self.user.email, password='password')
-        response = self.client.get(reverse('CI_exam:finalize',kwargs ={'exam_id':exam.id}))
+        response = self.client.get(finalize_url)
         self.assertEqual(response.status_code, 403)
         
         # User is staff
         self.user.is_staff = True
         self.user.save()
-        response = self.client.get(reverse('CI_exam:finalize',kwargs ={'exam_id':exam.id}))
+        response = self.client.get(finalize_url)
         self.assertEqual(response.status_code, 200)
         
         # exam_id does not exist
         response = self.client.get(reverse('CI_exam:finalize',kwargs ={'exam_id':99}))
+    
+    def test_data(self):
+        exam = create_exam()
+        concept_type = ContentType.objects.get_for_model(Concept)
+        concept = Concept.objects.get(name = "Concept A")
+        FreeResponseQuestion.objects.create(
+            exam=exam,
+            question="Another free response question?",
+            content_type=concept_type,
+            object_id=concept.id)
+        questions = exam.question_set.all()
+        finalize_url = reverse('CI_exam:finalize', kwargs={'exam_id':exam.id})
+        self.user.is_staff = True
+        self.user.save()
+        self.client.login(email=self.user.email, password='password')
+        
+        # check that all questions appear
+        response = self.client.get(finalize_url)
+        for question in exam.question_set.all():
+            self.assertContains(response, question)
+        self.assertEqual(len(response.context['form']['select_questions']), 3)
+        
+        # Step 0 - select
+        response = self.client.post(finalize_url,
+                                    {'finalize_view-current_step':'0',
+                                     '0-select_questions':[questions[0].id,questions[1].id]})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Step 2')
+        self.assertEqual(len(response.context['form'].queryset),2)
+        
+        # Step 1 - order
+        deleted_question = questions[2]
+        response = self.client.post(finalize_url, {'finalize_view-current_step':'1',
+                                                   '1-question_%d' % questions[0].id:1,
+                                                   '1-question_%d' % questions[1].id:2})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Step 3')
+        
+        # Step 2 - submit
+        response = self.client.post(finalize_url, {'finalize_view-current_step':'2'})
+        self.assertEqual(response.status_code, 302)
+        exam = Exam.objects.get(pk=exam.id)
+        self.assertEqual(exam.stage, ExamStage.DIST)
+        self.assertEqual(len(exam.question_set.all()), 2)
+        self.assertFalse(Question.objects.filter(pk=deleted_question.id))
 
 
 class CopyViewTest(SimpleTestCase):

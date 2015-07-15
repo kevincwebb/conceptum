@@ -11,7 +11,8 @@ from profiles.tests import set_up_user
 from interviews.models import get_concept_list, DummyConcept as Concept
 from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, MultipleChoiceOption,\
                     ExamKind, ExamStage, QUESTION_LENGTH, REQUIRED_CHOICES
-from .forms import MultipleChoiceEditForm, FreeResponseVersionForm
+from .forms import MultipleChoiceEditForm, FreeResponseVersionForm, MultipleChoiceVersionForm,\
+                   FinalizeOrderForm
 
 
 def create_exam():
@@ -26,13 +27,11 @@ def create_exam():
     concept = Concept.objects.get(name = "Concept A")
     FreeResponseQuestion.objects.create(exam=exam,
                                 question="What is the answer to this FR question?",
-                                number=1,
                                 content_type=concept_type,
                                 object_id=concept.id)
     concept = Concept.objects.get(name = "Concept B")
     mcq = MultipleChoiceQuestion.objects.create(exam=exam,
                                 question="What is the answer to this MC question?",
-                                number=2,
                                 content_type=concept_type,
                                 object_id=concept.id)
     MultipleChoiceOption.objects.create(question=mcq, text="choice 1", index=1, is_correct=True)
@@ -362,7 +361,7 @@ class DevFormsTest(SimpleTestCase):
         with transaction.atomic(), reversion.create_revision():
             question.question = 'updated question?'
             question.save()
-        form = FreeResponseVersionForm(instance=question)
+        form = MultipleChoiceVersionForm(instance=question)
         self.assertEqual(len(form.get_version_choices()),2)
         self.assertEqual(form.get_version_choices()[0][1],question.question)
         
@@ -373,3 +372,51 @@ class DevFormsTest(SimpleTestCase):
         self.assertEqual(response.status_code, 302)
         question = MultipleChoiceQuestion.objects.get(id=question.id)
         self.assertEqual(question.question, 'A MC question for versioning?')
+    
+    
+class FinalizeFormsTest(SimpleTestCase):
+    def setUp(self):
+        get_concept_list()
+        self.user = set_up_user()
+        self.user.is_staff = True
+        self.user.save()
+        self.client.login(email=self.user.email, password='password')
+    
+    def test_errors(self):
+        exam = create_exam()
+        questions = exam.question_set.all()
+        finalize_url = reverse('CI_exam:finalize', kwargs={'exam_id':exam.id})
+        
+        # STEP 0 ------------------
+        # empty post    
+        response = self.client.post(finalize_url, {'finalize_view-current_step':'0'})
+        error = _("This field is required.")
+        self.assertFormError(response, 'form', 'select_questions', error, "" )
+        
+        # move to next step
+        response = self.client.post(finalize_url,
+                                    {'finalize_view-current_step':'0',
+                                     '0-select_questions':[questions[0].id,questions[1].id]})
+        
+        # STEP 1 ------------------
+        # empty post
+        response = self.client.post(finalize_url, {'finalize_view-current_step':'1'})
+        error = _("This field is required.")
+        self.assertFormError(response, 'form', 'question_%d' % questions[0].id, error, "" )
+        
+        # invalid numbers
+        response = self.client.post(finalize_url, {'finalize_view-current_step':'1',
+                                                   '1-question_%d' % questions[0].id:0,
+                                                   '1-question_%d' % questions[1].id:3})
+        error = _("Ensure this value is greater than or equal to 1.")
+        self.assertFormError(response, 'form', 'question_%d' % questions[0].id, error, "" )
+        error = _("Ensure this value is less than or equal to 2.")
+        self.assertFormError(response, 'form', 'question_%d' % questions[1].id, error, "" )
+        
+        # duplicate numbers
+        response = self.client.post(finalize_url, {'finalize_view-current_step':'1',
+                                                   '1-question_%d' % questions[0].id:1,
+                                                   '1-question_%d' % questions[1].id:1})
+        error = _("Please assign numbers such that there are no duplicates.")
+        self.assertFormError(response, 'form', None, error, "" )
+        

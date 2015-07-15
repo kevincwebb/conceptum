@@ -361,7 +361,6 @@ class FinalizeSelectForm(forms.ModelForm):
 
 class FinalizeOrderForm(forms.Form):
     class Meta:
-        #model = Exam
         fields = []
     
     def __init__(self, *args, **kwargs):
@@ -382,8 +381,8 @@ class FinalizeOrderForm(forms.Form):
             if used_numbers.count(number):
                 raise ValidationError("Please assign numbers such that there are no duplicates.")
             else:
-                # because we don't need to throw this error if there are e.g. 2 blank fields
                 if number in range(1, len(self.queryset)+1):
+                # if the number isn't in this range, then it is a different validation error.
                     used_numbers.append(number)
             
         return cleaned_data

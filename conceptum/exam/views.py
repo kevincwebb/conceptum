@@ -159,9 +159,9 @@ class ExamDistIndexView(LoginRequiredMixin,
 
 
 class ExamDetailView(LoginRequiredMixin,
-                ContribRequiredMixin,
-                CurrentAppMixin,
-                generic.DetailView):
+                     ContribRequiredMixin,
+                     CurrentAppMixin,
+                     generic.DetailView):
     """
     View exam details and questions.
     """
@@ -800,7 +800,6 @@ class ExamResponseDetailView(LoginRequiredMixin,
     def make_question_list(self):
         multiple_choice_responses = self.object.multiplechoiceresponse_set.all()
         free_response_responses = self.object.freeresponseresponse_set.all()
-        
         question_list = []
         for question in self.object.response_set.exam.question_set.all():
             if question.is_multiple_choice:
@@ -814,30 +813,13 @@ class ExamResponseDetailView(LoginRequiredMixin,
                 response = free_response_responses.get(question=question)
                 q = {'question':question, 'answer':response.response}
                 question_list.append(q)
-        
         return question_list
     
     def get_context_data(self, **kwargs):
-        context = super(ExamResponseDetailView, self).get_context_data(**kwargs)
-        
-        #mc_list = []
-        #q = []
-        #for question in self.object.multiplechoiceresponse_set.all():
-        #    q = [question.question, question.option_id]     #name of question, answer chosen
-        #    qOptions = []
-        #    qOptions.extend(question.question.multiplechoiceoption_set.all())
-        #    q.append(qOptions)
-        #    mc_list.append(q)
-        #fr_list = []
-        #for question in self.object.freeresponseresponse_set.all():
-        #    q = [question.question, question.response]
-        #    fr_list.append(q)        
-        
+        context = super(ExamResponseDetailView, self).get_context_data(**kwargs)     
         context['exam'] = self.exam
         context['response'] = self.object
         context['stats'] = qstats(self.object.multiplechoiceresponse_set.all())
-        #context['mc_list'] = mc_list
-        #context['fr_list'] = fr_list
         context['question_list'] = self.make_question_list()
         return context
     
