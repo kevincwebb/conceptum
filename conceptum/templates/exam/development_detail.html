@@ -50,11 +50,7 @@
     
         <label for="mc_question_node">
         <div id = "plus" class = "ind_button plus_ind_button"> + </div> <div id = "minus" class = "ind_button minus_ind_button"> - </div>
-        
-        
-        
-        
-        
+
         </label></h3>
     <input type = "checkbox" id = "mc_question_node" checked onclick = "PlusMinus(this)">
         
@@ -87,6 +83,9 @@
                 {% else %}
                     <b>{{q}}</b>
                 {% endif %}
+                {% if q.image %}
+                  <a HREF="{{q.image.url}}"><img HEIGHT=50 WIDTH=50 SRC="{{q.image.url}}"></a>
+                {% endif %}
             <div class = "overview_inner_list">
               <ol type = "a">
                 {%for option in options %}
@@ -108,7 +107,9 @@
                 {% else %}
               <b>{{q}}</b>
                 {% endif %}  
-          
+                {% if q.image %}
+                  <a HREF="{{q.image.url}}"><img HEIGHT=50 WIDTH=50 SRC="{{q.image.url}}"></a>
+                {% endif %}
               
               <div class = "overview_inner_list">
               <ol type = "a">
@@ -180,24 +181,33 @@
         {% if concept%}
               <td bgcolor = "#B2B2B2">{{concept}} </td>
               {%if questions %}
-              <td>{% for q in questions %}
-              {%with forloop.counter as index%}
-                {% if index == 1 %}
-                 {% if object.stage == 1 %}
-                 <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> 
-                {% else %}
+              <td>
+              {% for q in questions %}
+                {% if forloop.first %}
+                  {% if object.stage == 1 %}
+                    <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a>
+                  {% else %}
                     <b>{{q}}</b>
-                {% endif %} </td>
-                  {%else%}
+                  {% endif %}
+                  {% if q.image %}
+                    <a HREF="{{q.image.url}}"><img HEIGHT=50 WIDTH=50 SRC="{{q.image.url}}"></a>
+                  {% endif %}
+                </td>
+                
+              {%else%}
          <tr> <td bgcolor = "#CECECE"></td> 
               <td>
-                  {% if object.stage == 1 %}
-                 <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> 
+                {% if object.stage == 1 %}
+                  <a href="{% url 'exam:fr_edit' q.id %}">{{q}}</a> 
                 {% else %}
-                    <b>{{q}}</b>
-                {% endif %}</td></tr>
-            {%endif%}
-            {%endwith%}
+                  <b>{{q}}</b>
+                {% endif %}
+                {% if q.image %}
+                  <a HREF="{{q.image.url}}"><img HEIGHT=50 WIDTH=50 SRC="{{q.image.url}}"></a>
+                {% endif %}
+                </td></tr>
+              {%endif%}
+            
           {%endfor%}
           {% else %}
             <td>---</td>

@@ -6,22 +6,28 @@
     <h3>Provide a question ordering</h3>
     
     {{ wizard.form.non_field_errors }}
-
     {% for field in form %}
-        {{field.errors}}        
-        <ul>
-        {{ field }} <b>{{field.label}}</b>
-        
-            <ul>
-            {% for option in option_list.pop %}
-                <li>
-                {% if option.is_correct %} <b>{{option}}</b>
-                {% else %} {{option}}
-                {% endif %}
-                </li>
-            {% endfor %}
+        {% for question in question_list.pop %}
+        {# question_list.pop is a list with just a single element #}
+            {{field.errors}}        
+            <ul>-------------------------------------</br>
+            <i>{{question.content_object}}</i></br>
+            {{ field }} <b>{{question}}</b>
+            {% if question.image %}
+                <a HREF="{{question.image.url}}"><img HEIGHT=50 WIDTH=50 SRC="{{question.image.url}}"></a>
+            {% endif %}
+                <ul>
+                {% for option in question.multiplechoiceoption_set.all %}
+                    <li>
+                    {% if option.is_correct %} <b>{{option}}</b>
+                    {% else %} {{option}}
+                    {% endif %}
+                    </li>
+                {% endfor %}
+                </ul>
             </ul>
-        </ul>
+            </br>
+        {% endfor %}
     {% endfor %}
     
     

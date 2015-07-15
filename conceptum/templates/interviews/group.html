@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Interview Group" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    
+<div class="form-horizontal-heading">
+  <h2>{{object}}</h2>
+</div>
+  
+This group is
+{% if object.unlocked %}
+  <b>unlocked</b>, so contributors can add interviews.
+{% else %}
+  <b>locked</b>, so contributors can view existing interviews but cannot edit them or submit new ones.
+{% endif %}
+</br>
+{% if user.is_staff %}
+  {% if object.unlocked %}
+    <a href = {% url 'interview_lock' object.id %} class="btn btn-warning"> Lock Group </a>
+  {% else %}
+    <a href = {% url 'interview_unlock' object.id %} class="btn btn-warning"> Unlock Group </a>
+  {% endif %}
+  <a href = {% url 'interview_rename' object.id %} class="btn btn-primary"> Rename Group </a>
+{% endif %}
+</br></br>
+  
+{% if interview_list %}
+<ul class = "collapsible_overview"> 
+{% for interview, stats in interview_list %}
+       
+    <li class = "table"><span class="over_tab"><a href="{% url 'interview_detail' interview.id %}">{{ interview }}</a></span>
+    
+    <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> </div></label>
+    <input type = "checkbox" id = "toplist_node{{exam.id}}">
+<div class = "overview">
+<ul class = "overview_inner_list">
+    {% for item in stats %}
+    <li> • {{item}}</li>
+    {% endfor %}
+        
+</ul>
+
+</div>
+</li>
+{% endfor %}
+</ul>
+{% else %}
+    <p>No interviews have been submitted.</p>
+{% endif %}
+
+{% if object.unlocked %}
+<a href = {% url 'interview_add' object.id %} class="btn btn-primary"> Add an interview </a>
+{% endif %}
+<a href = {% url 'interview_index' %} class="btn btn-primary"> Back to all groups </a>
+
+</div> <!-- container -->
+
+{% endblock %}

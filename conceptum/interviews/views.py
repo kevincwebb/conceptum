@@ -1,36 +1,45 @@
 from django.shortcuts import get_object_or_404
-from django.core.urlresolvers import reverse_lazy
+from django.core.exceptions import PermissionDenied
+from django.core.urlresolvers import reverse_lazy, reverse
 from django.views import generic
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 
-from braces.views import LoginRequiredMixin, UserPassesTestMixin
+from braces.views import LoginRequiredMixin, UserPassesTestMixin, StaffuserRequiredMixin
 
 from profiles.mixins import ContribRequiredMixin
-from .models import Interview
+from .models import Interview, InterviewGroup
 from .forms import AddForm, EditForm
 
-
-# TODO: check permissions to allow users into certain pages
 
 class IndexView(LoginRequiredMixin,
                 ContribRequiredMixin,
                 generic.ListView):
+    model = InterviewGroup
+    template_name = 'interviews/index.html'
+
+
+class CreateGroupView(LoginRequiredMixin,
+                      StaffuserRequiredMixin,
+                      generic.CreateView):
+    model = InterviewGroup
+    template_name = 'interviews/create.html'
+    
+    def get_success_url(self):
+        return reverse('interview_group', args=[self.object.id])
+
+
+class GroupView(LoginRequiredMixin,
+                ContribRequiredMixin,
+                generic.DetailView):
     """
     Lists all interviews in the database, click on an interview to go to its DetailView
     """
-    template_name = 'interviews/index.html'
-    interview_list = []
-    # for intv in Interview.objects.all():
-    #     excerpts = intv.excerpt_set.all()
-    #     interview = [intv]
-    #     interview.extend(excerpts)
-    #     interview_list.append(interview)
-    
-    context_object_name = 'interview_list'
-    
+    template_name = 'interviews/group.html'
+    model = InterviewGroup
+    pk_url_kwarg = 'group_id'
     
     def get_context_data(self, **kwargs):
         """
@@ -38,10 +47,9 @@ class IndexView(LoginRequiredMixin,
         to edit, i.e., this user is the original uploader or has staff privileges.
         The template should use the boolean user_can_edit to do this check
         """
-        
-        context = super(IndexView, self).get_context_data(**kwargs)
+        context = super(GroupView, self).get_context_data(**kwargs)
         interview_list = []
-        for intv in Interview.objects.all():
+        for intv in self.object.interview_set.all():
             excerpts_obj = intv.excerpt_set.all()
             excerpts = []
             for exc in excerpts_obj:
@@ -55,8 +63,31 @@ class IndexView(LoginRequiredMixin,
         context['interview_list'] = interview_list
         return context
 
-    def get_queryset(self):
-        return Interview.objects.all()
+
+class RenameView(LoginRequiredMixin,
+                 StaffuserRequiredMixin,
+                 generic.UpdateView):
+    template_name = 'interviews/edit.html'
+    model = InterviewGroup
+    pk_url_kwarg = 'group_id'
+    fields = ['name']
+    
+    def get_success_url(self):
+        return reverse('interview_group', args=[self.object.id])
+
+
+def lock_group(request, group_id):
+    group = get_object_or_404(InterviewGroup, pk=group_id)
+    group.unlocked = False
+    group.save()
+    return HttpResponseRedirect(reverse('interview_group', args=[group.id]))
+
+
+def unlock_group(request, group_id):
+    group = get_object_or_404(InterviewGroup, pk=group_id)
+    group.unlocked = True
+    group.save()
+    return HttpResponseRedirect(reverse('interview_group', args=[group.id]))
 
 
 class DetailView(LoginRequiredMixin,
@@ -68,6 +99,11 @@ class DetailView(LoginRequiredMixin,
     model=Interview
     template_name = 'interviews/detail.html'
 
+    def user_can_edit(self):
+        return (self.object.group.unlocked and
+            (self.request.user.is_staff or self.request.user==self.object.uploaded_by))
+    
+
     def get_context_data(self, **kwargs):
         """
         The hyperlink to the edit page should only be visible if this user is allowed
@@ -75,7 +111,7 @@ class DetailView(LoginRequiredMixin,
         The template should use the boolean user_can_edit to do this check
         """
         context = super(DetailView, self).get_context_data(**kwargs)
-        context['user_can_edit'] = self.request.user.is_staff or self.request.user==self.object.uploaded_by
+        context['user_can_edit'] = self.user_can_edit()
         return context
 
 
@@ -88,6 +124,26 @@ class AddView(LoginRequiredMixin,
     model = Interview
     template_name = 'interviews/add.html'
     form_class = AddForm
+
+    def dispatch(self, request, *args, **kwargs):
+        group_id = self.kwargs['group_id']
+        if int(group_id) == 0:
+            self.group = None
+        else:
+            self.group = get_object_or_404(InterviewGroup, pk=group_id)        
+            if not self.group.unlocked:
+                raise PermissionDenied
+        return super(AddView, self).dispatch(request, *args, **kwargs)
+    
+    def get_form_kwargs(self):
+        kwargs = super(AddView, self).get_form_kwargs()
+        kwargs['group'] = self.group
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super(AddView, self).get_context_data(**kwargs)
+        context['group'] = self.group
+        return context
 
     def form_valid(self, form):
         """
@@ -127,6 +183,12 @@ class EditView(LoginRequiredMixin,
         interview_id = self.kwargs['pk']
         interview = get_object_or_404(self.model, pk=interview_id)
         return (user.is_staff or user==interview.uploaded_by)
+    
+    def dispatch(self, request, *args, **kwargs):
+        interview = get_object_or_404(Interview, pk=self.kwargs['pk'])        
+        if not interview.group.unlocked:
+            raise PermissionDenied
+        return super(EditView, self).dispatch(request, *args, **kwargs)
     
     def get_initial(self):
         initial = {}

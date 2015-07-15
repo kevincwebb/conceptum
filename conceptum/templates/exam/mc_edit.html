@@ -21,13 +21,16 @@
 </div>
   
 
-<form action="" method="post">{% csrf_token %}
+<form action="" method="post" enctype='multipart/form-data'>{% csrf_token %}
     {{ form.non_field_errors}}
     </br>
     {{ form.question.errors }}
     {{ form.question.label_tag }} {{ form.question}}</br>
+    {{ form.concept.errors }}
+    {{ form.concept.label_tag }} {{form.concept}} </br>
     {{ form.image.errors }}
     {{ form.image.label_tag }} {{form.image}} </br>
+
 
 
     <div style="overflow: auto; width:75%; height: 400px;">

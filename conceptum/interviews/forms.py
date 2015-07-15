@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 #from django.contrib import messages
 #from django.contrib.contenttypes.models import ContentType
 
-from .models import Interview, Excerpt, get_concept_list
+from .models import InterviewGroup, Interview, Excerpt, get_concept_list
 
 User = get_user_model()
 
@@ -21,8 +21,16 @@ class AddForm(forms.ModelForm):
         """
         This method creates text field for each concept returned by the imported
         function get_concept_list().
+        
+        If kwarg 'group' is None, then there is a field to select an interview group.
+        If 'group' is not None, then there is no field for interview group, and the
+        provided group is automatically saved to the model.
         """
+        self.group = kwargs.pop('group')
         super(AddForm, self).__init__(*args, **kwargs)
+        if not self.group:
+            self.fields["group"] = forms.ModelChoiceField(
+                queryset=InterviewGroup.objects.filter(unlocked=True))
         for concept in get_concept_list():
             # TODO: when get_concept_list is fixed, we may need to update this line
             self.fields["response_%d" % concept.id] = \
@@ -40,6 +48,10 @@ class AddForm(forms.ModelForm):
         i.interviewee = self.cleaned_data.get('interviewee')
         i.date_of_interview =  self.cleaned_data.get('date_of_interview')
         i.uploaded_by = User.objects.get(pk=request.user.id)
+        if self.group:
+            i.group = self.group
+        else:
+            i.group = self.cleaned_data.get('group')
         i.save()
         
         for concept in get_concept_list():
