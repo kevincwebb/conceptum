@@ -172,6 +172,7 @@ class DevFormsTest(SimpleTestCase):
         #   - delete an option (by leaving it blank)
         post_dict = {'question':'new question',
                      'correct':options[1].id,
+                     'concept':question.object_id,
                      'choice_%d' % options[0].id:'A',
                      'index_%d' % options[0].id:1,
                      'choice_%d' % options[1].id:'B',
@@ -242,6 +243,7 @@ class DevFormsTest(SimpleTestCase):
         # indices not successive / don't start at 1
         post_dict = {'question':'new question',
                      'correct':options[0].id,
+                     'concept':question.object_id,
                      'choice_%d' % options[0].id:'A',
                      'choice_%d' % options[1].id:'B',
                      'choice_new':'C',
@@ -280,6 +282,7 @@ class DevFormsTest(SimpleTestCase):
         # marked wrong field correct
         post_dict = {'question':'new question',
                      'correct':-1,
+                     'concept':question.object_id,
                      'choice_%d' % options[0].id:'A',
                      'choice_%d' % options[1].id:'C',
                      'index_%d' % options[0].id:1,

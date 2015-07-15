@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 from allauth.account.models import EmailAddress
 
 from profiles.models import ContributorProfile
-from .models import Interview, Excerpt, get_concept_list
+from .models import InterviewGroup, Interview, Excerpt, get_concept_list
 
 User = get_user_model()
 
@@ -49,15 +49,19 @@ def set_up_user():
         user.profile.save()
     return user
 
-def get_or_create_interview(user, interviewee='Dr. Test', date=datetime.date(2014,01,01)):
+def get_or_create_interview(user, group, interviewee='Dr. Test', date=datetime.date(2014,01,01)):
     """
-    Gets or creates an interview with fields set to the specified arguments.
+    Gets or creates an interview with fields set to the given arguments.
     Does not create any excerpts.
-    The only required argument is user: in most cases just use self.user if it exists
+    
+    Required arguments:
+        user - in most cases just use self.user if it exists
+        group - use self.group
     """
-    interview, created = Interview.objects.get_or_create(interviewee=interviewee,
-                                                  date_of_interview=date,
-                                                  uploaded_by=user)
+    interview, created = Interview.objects.get_or_create(group=group,
+                                                         interviewee=interviewee,
+                                                         date_of_interview=date,
+                                                         uploaded_by=user)
     return interview
 
 def create_excerpt(interview, index=0, response='This is a response'):
@@ -78,13 +82,15 @@ class FormsTest(TestCase):
         self.user.profile.is_contrib = True
         self.user.profile.save()
         self.client.login(email=self.user.email, password='password')
+        self.group, created = InterviewGroup.objects.get_or_create(name='Test Interviews',
+                                                                   unlocked=True)
 
     def test_add_form_correct(self):
         interviewee = 'Santa Claus'
         date_of_interview = datetime.date(2013,12,25)
         concept = get_concept_list()[0]
         concept_response = "This is a response."
-        response = self.client.post(reverse('interview_add'),
+        response = self.client.post(reverse('interview_add', args=[self.group.id]),
                                     {'interviewee': interviewee,
                                      'date_of_interview': date_of_interview,
                                      'response_%d' % concept.id: concept_response})
@@ -110,15 +116,15 @@ class FormsTest(TestCase):
         
     def test_add_form_errors(self):
         # Blank Fields
-        response = self.client.post(reverse('interview_add'), {'interviewee': '',
-                                                               'date_of_interview': '' })
+        response = self.client.post(reverse('interview_add', args=[self.group.id]),
+                                    {'interviewee': '', 'date_of_interview': '' })
         error = _("This field is required.")
         self.assertFormError(response, 'form', 'interviewee', error, "" )
         self.assertFormError(response, 'form', 'date_of_interview', error, "" )
         
         # Invalid date
-        response = self.client.post(reverse('interview_add'), {'interviewee': 'Dad',
-                                                               'date_of_interview': '1234' })
+        response = self.client.post(reverse('interview_add', args=[self.group.id]),
+                                    {'interviewee': 'Dad', 'date_of_interview': '1234' })
         error = _("Enter a valid date.")
         self.assertFormError(response, 'form', 'date_of_interview', error, "" )
 
@@ -129,7 +135,7 @@ class FormsTest(TestCase):
         Change response to a concept (0), delete response to a concept (1), and responsd
         to a new concept (2).
         """
-        interview = get_or_create_interview(self.user)
+        interview = get_or_create_interview(self.user, self.group)
         excerpt_0 = create_excerpt(interview, 0)
         excerpt_1 = create_excerpt(interview, 1)
         
@@ -178,7 +184,7 @@ class FormsTest(TestCase):
         self.assertRedirects(response, reverse('interview_detail', args=(interview.id,)))
         
     def test_edit_form_errors(self):
-        interview = get_or_create_interview(self.user)
+        interview = get_or_create_interview(self.user, self.group)
         
         # Blank Fields
         response = self.client.post(reverse('interview_edit', args=(interview.id,)),
@@ -196,7 +202,7 @@ class FormsTest(TestCase):
         self.assertFormError(response, 'form', 'date_of_interview', error, "" )
     
     def test_confirm_delete(self):
-        interview = get_or_create_interview(self.user)
+        interview = get_or_create_interview(self.user, self.group)
         response = self.client.post(reverse('interview_delete', args=(interview.id,)),{})
         self.assertRedirects(response, reverse('interview_index'))
         self.assertFalse(Interview.objects.filter(pk=interview.id))

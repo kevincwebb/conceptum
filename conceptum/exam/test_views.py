@@ -213,14 +213,11 @@ class DevViewsTest(SimpleTestCase):
             kwargs ={'exam_id':exam.id,'concept_id':concept.id,'question_type':'mc'}),
             {'question':'question', 'choice_1':'yes', 'choice_2':'no', 'correct':'1'})
         self.assertRedirects(response, reverse('exam:detail', kwargs ={'exam_id':exam.id,}))
-        
-    # def test_free_response_edit_view(self):
-    #    There isn't any functionality in FreeResponseEditView that isn't also used by
-    #    MultipleChoiceEditView, since they both subclass QuestionEditView. Consider
-    #    test_multiple_choice_edit_view to cover FreeResponseEditView.
 
     def test_multiple_choice_edit_view(self):
-        """        
+        """
+        There isn't any important functionality in FreeResponseEditView that isn't also used by
+        MultipleChoiceEditView, since they both subclass QuestionEditView.
         """
         exam = create_exam()
         question = MultipleChoiceQuestion.objects.get(exam=exam)
@@ -272,11 +269,14 @@ class DevViewsTest(SimpleTestCase):
         # Check that submit redirects us
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
             {'question':'question', 'choice_%d'%options[0].id:'yes', 'index_%d'%options[0].id:'1',
-             'choice_%d'%options[1].id:'no', 'index_%d'%options[1].id:'2', 'correct':options[0].id})
+             'choice_%d'%options[1].id:'no', 'index_%d'%options[1].id:'2', 'correct':options[0].id,
+             'concept':question.object_id})
         self.assertRedirects(response, reverse('exam:detail', kwargs ={'exam_id':exam.id,}))
     
     def test_multiple_choice_version_view(self):
-        """        
+        """
+        There isn't any important functionality in FreeResponseVersionView that isn't also used by
+        MultipleChoiceEditView, since they both subclass QuestionEditView.
         """
         exam = create_exam() # get a fresh exam
         concept_type = ContentType.objects.get_for_model(Concept)

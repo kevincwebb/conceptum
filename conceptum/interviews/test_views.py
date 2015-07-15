@@ -8,7 +8,7 @@ from allauth.account.models import EmailAddress
 
 from profiles.tests import set_up_user
 from profiles.models import ContributorProfile
-from .models import Interview, Excerpt, get_concept_list, DummyConcept
+from .models import InterviewGroup, Interview, Excerpt, get_concept_list, DummyConcept
 
 User = get_user_model()
 concept_list = get_concept_list()
@@ -19,13 +19,17 @@ concept_list = get_concept_list()
 #    this function has been moved to profiles.tests.py
 #    """
 
-def get_or_create_interview(user, interviewee='Dr. Test', date=datetime.date(2014,01,01)):
+def get_or_create_interview(user, group, interviewee='Dr. Test', date=datetime.date(2014,01,01)):
     """
     Gets or creates an interview with fields set to the given arguments.
     Does not create any excerpts.
-    The only required argument is user: in most cases just use self.user if it exists
+    
+    Required arguments:
+        user - in most cases just use self.user if it exists
+        group - use self.group
     """
-    interview, created = Interview.objects.get_or_create(interviewee=interviewee,
+    interview, created = Interview.objects.get_or_create(group=group,
+                                                         interviewee=interviewee,
                                                          date_of_interview=date,
                                                          uploaded_by=user)
     return interview
@@ -49,35 +53,38 @@ def create_excerpt(interview, index=0, response='This is a response'):
 class ViewsPermissionsTest(SimpleTestCase):
     def setUp(self):
         self.user = set_up_user()
+        self.group, created = InterviewGroup.objects.get_or_create(name='Test Interviews',
+                                                          unlocked=True)
         
-    def test_index_view(self):
+    def test_group_view(self):
         """
         User must be authenticated to view this page
         """
+        group_url = reverse('interview_group', args=[self.group.id])
         # User not logged in
-        response = self.client.get(reverse('interview_index'))
-        self.assertRedirects(response, '/accounts/login/?next=/interviews/')
+        response = self.client.get(group_url)
+        self.assertRedirects(response, '/accounts/login/?next=/interviews/%d/' % self.group.id)
         
         # User logged in, not contrib
         self.client.login(email=self.user.email, password='password')
-        response = self.client.get(reverse('interview_index'))
+        response = self.client.get(group_url)
         self.assertEqual(response.status_code, 403)
         
         # User is contrib
         self.user.profile.is_contrib = True
         self.user.profile.save()
-        response = self.client.get(reverse('interview_index'))
+        response = self.client.get(group_url)
         self.assertEqual(response.status_code, 200)
     
     def test_detail_view(self):
         """
         User must be authenticated to view this page
         """
-        interview = get_or_create_interview(self.user)
+        interview = get_or_create_interview(self.user, self.group)
         
         # User not logged in
         response = self.client.get(reverse('interview_detail', args=(interview.id,)))
-        self.assertRedirects(response, '/accounts/login/?next=/interviews/%s/' % interview.id)
+        self.assertRedirects(response, '/accounts/login/?next=/interviews/%s/detail/' % interview.id)
         
         # User logged in, not contrib
         self.client.login(email=self.user.email, password='password')
@@ -94,19 +101,21 @@ class ViewsPermissionsTest(SimpleTestCase):
         """
         User must be authenticated* to view this page
         """
+        add_url = reverse('interview_add', args=[self.group.id])
+        
         # User not logged in
-        response = self.client.get(reverse('interview_add'))
-        self.assertRedirects(response, '/accounts/login/?next=/interviews/add/')
+        response = self.client.get(add_url)
+        self.assertRedirects(response, '/accounts/login/?next=/interviews/%d/add/' % self.group.id)
         
         # User logged in, not contrib
         self.client.login(email=self.user.email, password='password')
-        response = self.client.get(reverse('interview_add'))
+        response = self.client.get(add_url)
         self.assertEqual(response.status_code, 403)
         
         # User is contrib
         self.user.profile.is_contrib = True
         self.user.profile.save()
-        response = self.client.get(reverse('interview_add'))
+        response = self.client.get(add_url)
         self.assertEqual(response.status_code, 200)
         
     def test_edit_view(self):
@@ -119,7 +128,7 @@ class ViewsPermissionsTest(SimpleTestCase):
         uploader.set_password('password')
         uploader.save()
         ContributorProfile.objects.create(user=uploader, is_contrib=True)
-        interview = get_or_create_interview(uploader)
+        interview = get_or_create_interview(uploader, self.group)
         
         # Unauthenticated user (anonymous)
         response = self.client.get(reverse('interview_edit', args=(interview.id,)))
@@ -155,7 +164,7 @@ class ViewsPermissionsTest(SimpleTestCase):
         uploader.set_password('password')
         uploader.save()
         ContributorProfile.objects.create(user=uploader, is_contrib=True)        
-        interview = get_or_create_interview(uploader)
+        interview = get_or_create_interview(uploader, self.group)
         
         # Unauthenticated user (anonymous)
         response = self.client.get(reverse('interview_delete', args=(interview.id,)))
@@ -187,25 +196,27 @@ class ViewsTest(TestCase):
         self.user.profile.is_contrib = True
         self.user.profile.save()
         self.client.login(email=self.user.email, password='password')
+        self.group, created = InterviewGroup.objects.get_or_create(name='Test Interviews',
+                                                          unlocked=True)
 
-    def test_index_view_with_no_interviews(self):
+    def test_group_view_with_no_interviews(self):
         """
         If no interviews exist, an appropriate message should be displayed
         """
-        response = self.client.get(reverse('interview_index'))
+        response = self.client.get(reverse('interview_group', args=[self.group.id]))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "No interviews are available.")
+        self.assertContains(response, "No interviews have been submitted.")
         self.assertQuerysetEqual(response.context['interview_list'],[])
     
-    def test_index_view_with_two_interviews(self):
-        get_or_create_interview(self.user)
-        get_or_create_interview(self.user, 'The Professor')
-        response = self.client.get(reverse('interview_index'))
+    def test_group_view_with_two_interviews(self):
+        get_or_create_interview(self.user, self.group)
+        get_or_create_interview(self.user, self.group, 'The Professor')
+        response = self.client.get(reverse('interview_group', args=[self.group.id]))
         self.assertContains(response, 'Interview with The Professor on 2014-01-01')
         self.assertContains(response, 'Interview with Dr. Test on 2014-01-01')
     
     def test_add_view_concept_list(self):
-        response = self.client.get(reverse('interview_add'))
+        response = self.client.get(reverse('interview_add', args=[self.group.id]))
         for concept in get_concept_list():
             self.assertContains(response, concept)
     
@@ -214,7 +225,7 @@ class ViewsTest(TestCase):
         The detail view of an interview should display the interviewee, date, and uploader
         as well as all excerpts which were not empty
         """
-        interview = get_or_create_interview(self.user)
+        interview = get_or_create_interview(self.user, self.group)
         
         # First with no excerpts
         response = self.client.get(reverse('interview_detail', args=(interview.id,)))
@@ -260,7 +271,7 @@ class ViewsTest(TestCase):
 
 
     def test_edit_view_initial(self):
-        interview = get_or_create_interview(self.user)
+        interview = get_or_create_interview(self.user, self.group)
         excerpt_0 = create_excerpt(interview)
         response = self.client.get(reverse('interview_edit', args=(interview.id,)))
         
