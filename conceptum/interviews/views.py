@@ -7,9 +7,9 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 
-from braces.views import LoginRequiredMixin, UserPassesTestMixin, StaffuserRequiredMixin
+from braces.views import LoginRequiredMixin, UserPassesTestMixin
 
-from profiles.mixins import ContribRequiredMixin
+from profiles.mixins import ContribRequiredMixin, StaffRequiredMixin
 from .models import Interview, InterviewGroup
 from .forms import AddForm, EditForm
 
@@ -22,7 +22,7 @@ class IndexView(LoginRequiredMixin,
 
 
 class CreateGroupView(LoginRequiredMixin,
-                      StaffuserRequiredMixin,
+                      StaffRequiredMixin,
                       generic.CreateView):
     model = InterviewGroup
     template_name = 'interviews/create.html'
@@ -65,7 +65,7 @@ class GroupView(LoginRequiredMixin,
 
 
 class RenameView(LoginRequiredMixin,
-                 StaffuserRequiredMixin,
+                 StaffRequiredMixin,
                  generic.UpdateView):
     template_name = 'interviews/edit.html'
     model = InterviewGroup
@@ -75,15 +75,19 @@ class RenameView(LoginRequiredMixin,
     def get_success_url(self):
         return reverse('interview_group', args=[self.object.id])
 
-
+@login_required
 def lock_group(request, group_id):
+    if not request.user.is_staff:
+        raise PermissionDenied
     group = get_object_or_404(InterviewGroup, pk=group_id)
     group.unlocked = False
     group.save()
     return HttpResponseRedirect(reverse('interview_group', args=[group.id]))
 
-
+@login_required
 def unlock_group(request, group_id):
+    if not request.user.is_staff:
+        raise PermissionDenied
     group = get_object_or_404(InterviewGroup, pk=group_id)
     group.unlocked = True
     group.save()

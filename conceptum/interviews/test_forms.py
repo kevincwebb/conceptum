@@ -9,6 +9,7 @@ from allauth.account.models import EmailAddress
 
 from profiles.models import ContributorProfile
 from .models import InterviewGroup, Interview, Excerpt, get_concept_list
+from .forms import AddForm
 
 User = get_user_model()
 
@@ -84,7 +85,24 @@ class FormsTest(TestCase):
         self.client.login(email=self.user.email, password='password')
         self.group, created = InterviewGroup.objects.get_or_create(name='Test Interviews',
                                                                    unlocked=True)
-
+    
+    def test_add_form_group_field(self):
+        locked_group = InterviewGroup.objects.create(name="Locked Interviews",
+                                                     unlocked=False)
+        
+        # group!=None, so there is no field to select group
+        form = AddForm(group=1)
+        self.assertFalse(form.fields.get('group'))
+        
+        # group=None, so there will be a field to select group
+        form = AddForm(group=None)
+        self.assertTrue(form.fields.get('group'))
+        
+        # make sure field's queryset only contains unlocked groups
+        field = form.fields.get('group')
+        self.assertIn(self.group, field.queryset)
+        self.assertNotIn(locked_group, field.queryset)
+    
     def test_add_form_correct(self):
         interviewee = 'Santa Claus'
         date_of_interview = datetime.date(2013,12,25)

@@ -55,11 +55,42 @@ class ViewsPermissionsTest(SimpleTestCase):
         self.user = set_up_user()
         self.group, created = InterviewGroup.objects.get_or_create(name='Test Interviews',
                                                           unlocked=True)
+    
+    def test_index_view(self):
+        # User not logged in
+        response = self.client.get(reverse('interview_index'))
+        self.assertRedirects(response, '/accounts/login/?next=/interviews/')
+        
+        # User logged in, not contrib
+        self.client.login(email=self.user.email, password='password')
+        response = self.client.get(reverse('interview_index'))
+        self.assertEqual(response.status_code, 403)
+
+        # User is contrib
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
+        response = self.client.get(reverse('interview_index'))
+        self.assertEqual(response.status_code, 200)
+        
+    def test_create_view(self):
+        # User not logged in
+        response = self.client.get(reverse('interview_create'))
+        self.assertRedirects(response, '/accounts/login/?next=/interviews/create/')
+        
+        # User logged in, not staff
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
+        self.client.login(email=self.user.email, password='password')
+        response = self.client.get(reverse('interview_create'))
+        self.assertEqual(response.status_code, 403)
+
+        # User is staff
+        self.user.is_staff = True
+        self.user.save()
+        response = self.client.get(reverse('interview_create'))
+        self.assertEqual(response.status_code, 200)
         
     def test_group_view(self):
-        """
-        User must be authenticated to view this page
-        """
         group_url = reverse('interview_group', args=[self.group.id])
         # User not logged in
         response = self.client.get(group_url)
@@ -75,11 +106,65 @@ class ViewsPermissionsTest(SimpleTestCase):
         self.user.profile.save()
         response = self.client.get(group_url)
         self.assertEqual(response.status_code, 200)
+        
+    def test_rename_view(self):
+        rename_url = reverse('interview_rename', args=[self.group.id])
+        # User not logged in
+        response = self.client.get(rename_url)
+        self.assertRedirects(response, '/accounts/login/?next=/interviews/%d/rename/' % self.group.id)
+        
+        # User logged in, not staff
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
+        self.client.login(email=self.user.email, password='password')
+        response = self.client.get(rename_url)
+        self.assertEqual(response.status_code, 403)
+        
+        # User is staff
+        self.user.is_staff = True
+        self.user.save()
+        response = self.client.get(rename_url)
+        self.assertEqual(response.status_code, 200)
+        
+    def test_lock_view(self):
+        lock_url = reverse('interview_lock', args=[self.group.id])
+        # User not logged in
+        response = self.client.get(lock_url)
+        self.assertRedirects(response, '/accounts/login/?next=/interviews/%d/lock/' % self.group.id)
+        
+        # User logged in, not staff
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
+        self.client.login(email=self.user.email, password='password')
+        response = self.client.get(lock_url)
+        self.assertEqual(response.status_code, 403)
+        
+        # User is staff
+        self.user.is_staff = True
+        self.user.save()
+        response = self.client.get(lock_url)
+        self.assertRedirects(response, reverse('interview_group', args=[self.group.id]))
+        
+    def test_unlock_view(self):
+        unlock_url = reverse('interview_unlock', args=[self.group.id])
+        # User not logged in
+        response = self.client.get(unlock_url)
+        self.assertRedirects(response, '/accounts/login/?next=/interviews/%d/unlock/' % self.group.id)
+        
+        # User logged in, not staff
+        self.user.profile.is_contrib = True
+        self.user.profile.save()
+        self.client.login(email=self.user.email, password='password')
+        response = self.client.get(unlock_url)
+        self.assertEqual(response.status_code, 403)
+        
+        # User is staff
+        self.user.is_staff = True
+        self.user.save()
+        response = self.client.get(unlock_url)
+        self.assertRedirects(response, reverse('interview_group', args=[self.group.id]))
     
     def test_detail_view(self):
-        """
-        User must be authenticated to view this page
-        """
         interview = get_or_create_interview(self.user, self.group)
         
         # User not logged in
@@ -98,9 +183,6 @@ class ViewsPermissionsTest(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         
     def test_add_view(self):
-        """
-        User must be authenticated* to view this page
-        """
         add_url = reverse('interview_add', args=[self.group.id])
         
         # User not logged in
@@ -198,7 +280,7 @@ class ViewsTest(TestCase):
         self.client.login(email=self.user.email, password='password')
         self.group, created = InterviewGroup.objects.get_or_create(name='Test Interviews',
                                                           unlocked=True)
-
+    
     def test_group_view_with_no_interviews(self):
         """
         If no interviews exist, an appropriate message should be displayed
@@ -215,10 +297,53 @@ class ViewsTest(TestCase):
         self.assertContains(response, 'Interview with The Professor on 2014-01-01')
         self.assertContains(response, 'Interview with Dr. Test on 2014-01-01')
     
+    def test_lock_unlock(self):
+        self.user.is_staff = True
+        self.user.save()
+        
+        response = self.client.get(reverse('interview_lock', args=[self.group.id]))
+        self.assertRedirects(response, reverse('interview_group', args=[self.group.id]))
+        self.group = InterviewGroup.objects.get(pk=self.group.id)
+        self.assertFalse(self.group.unlocked)
+        
+        response = self.client.get(reverse('interview_unlock', args=[self.group.id]))
+        self.assertRedirects(response, reverse('interview_group', args=[self.group.id]))
+        self.group = InterviewGroup.objects.get(pk=self.group.id)
+        self.assertTrue(self.group.unlocked)
+        
+        self.user.is_staff = False
+        self.user.save()
+    
     def test_add_view_concept_list(self):
         response = self.client.get(reverse('interview_add', args=[self.group.id]))
         for concept in get_concept_list():
             self.assertContains(response, concept)
+            
+    def test_add_view_locked(self):
+        self.group.unlocked = False
+        self.group.save()
+        response = self.client.get(reverse('interview_add', args=[self.group.id]))
+        self.assertEqual(response.status_code, 403)
+
+        self.group.unlocked = True
+        self.group.save()
+        response = self.client.get(reverse('interview_add', args=[self.group.id]))
+        self.assertEqual(response.status_code, 200)
+        
+    def test_add_view_kwargs(self):
+        # bad group_id
+        response = self.client.get(reverse('interview_add', args=[99]))
+        self.assertEqual(response.status_code, 404)
+        
+        # good group_id
+        response = self.client.get(reverse('interview_add', args=[self.group.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context['form'].fields.get('group'))
+        
+        # group_id = 0
+        response = self.client.get(reverse('interview_add', args=[0]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['form'].fields.get('group'))
     
     def test_detail_view_valid_pk(self):
         """
@@ -269,7 +394,6 @@ class ViewsTest(TestCase):
         response = self.client.get(reverse('interview_detail', args=(99,)))
         self.assertEqual(response.status_code, 404)
 
-
     def test_edit_view_initial(self):
         interview = get_or_create_interview(self.user, self.group)
         excerpt_0 = create_excerpt(interview)
@@ -284,3 +408,15 @@ class ViewsTest(TestCase):
 
         self.assertContains(response, excerpt_0.content_object, status_code=200)            
         self.assertContains(response, excerpt_0.response, status_code=200)
+    
+    def test_edit_view_locked(self):
+        self.group.unlocked = False
+        self.group.save()
+        interview = get_or_create_interview(self.user, self.group)
+        response = self.client.get(reverse('interview_edit', args=[interview.id]))
+        self.assertEqual(response.status_code, 403)
+
+        self.group.unlocked = True
+        self.group.save()
+        response = self.client.get(reverse('interview_edit', args=[interview.id]))
+        self.assertEqual(response.status_code, 200)
