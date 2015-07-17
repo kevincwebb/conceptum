@@ -27,7 +27,7 @@ class MultipleChoiceOptionInLine(admin.TabularInline):
 
 
 class ExamAdmin(admin.ModelAdmin):
-    fields = ('name','description','kind','stage')
+    fields = ('name','description','kind','stage', 'randomize')
 
 
 class FreeResponseQuestionAdmin(admin.ModelAdmin):

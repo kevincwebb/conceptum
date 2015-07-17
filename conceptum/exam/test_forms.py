@@ -423,3 +423,9 @@ class FinalizeFormsTest(SimpleTestCase):
         error = _("Please assign numbers such that there are no duplicates.")
         self.assertFormError(response, 'form', None, error, "" )
         
+        # randomized - should ignore field errors
+        response = self.client.post(finalize_url, {'finalize_view-current_step':'1',
+                                                   '1-randomize':True})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Step 3')
+        

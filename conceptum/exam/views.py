@@ -228,7 +228,7 @@ class ExamCreateView(LoginRequiredMixin,
     model = Exam
     template_name = 'exam/new_exam.html'
     form_class =  forms.models.modelform_factory(Exam,
-                                                 fields=('name','description','randomize'),
+                                                 fields=('name','description'),
                                                  widgets={"description": forms.Textarea })
 
     def form_valid(self, form):
@@ -250,7 +250,7 @@ class ExamEditView(LoginRequiredMixin,
     pk_url_kwarg = 'exam_id'
     template_name = 'exam/edit_exam.html'
     form_class =  forms.models.modelform_factory(Exam,
-                                                 fields=('name','description','randomize'),
+                                                 fields=('name','description'),
                                                  widgets={"description": forms.Textarea })
 
     def form_valid(self, form):
@@ -650,6 +650,17 @@ class FinalizeView(LoginRequiredMixin,
             kwargs['selected_questions']=self.get_cleaned_data_for_step('0').get('select_questions')
         return kwargs
     
+    def order_questions(self):
+        data = self.get_all_cleaned_data()
+        if data.get('randomize')==True:
+            return data.get('select_questions').order_by('object_id')
+        else:
+            questions = {}
+            for question in data.get('select_questions'):
+                questions[data.get('question_%d'%question.id)] = question
+            ordered_questions = sorted(questions.items(), key=operator.itemgetter(0))
+            return zip(*ordered_questions)[1]
+    
     def get_context_data(self, **kwargs):
         context = super(FinalizeView, self).get_context_data(**kwargs)
         context['exam'] = self.exam
@@ -660,22 +671,23 @@ class FinalizeView(LoginRequiredMixin,
             form = self.get_form()
             context['question_list'] = [[question] for question in reversed(form.queryset)]
         if self.steps.current == '2':
-            data = self.get_all_cleaned_data()
-            questions = {}
-            for question in data.get('select_questions'):
-                questions[data.get('question_%d'%question.id)] = question
-            ordered_questions = sorted(questions.items(), key=operator.itemgetter(0))
-            context['ordered_questions'] = zip(*ordered_questions)[1]
+            context['ordered_questions'] = self.order_questions()
+            context['randomize'] = self.get_all_cleaned_data().get('randomize')
         return context
 
     def done(self, form_list, **kwargs):
         data = self.get_all_cleaned_data()
+        randomize = data.get('randomize')
         for question in self.exam.question_set.all():
             if question in data.get('select_questions'):
-                question.number = data.get('question_%d'%question.id)
+                if randomize:
+                    question.number = 1
+                else:
+                    question.number = data.get('question_%d'%question.id)
                 question.save()
             else:
                 question.delete()
+        self.exam.randomize = randomize
         self.exam.stage = ExamStage.DIST
         self.exam.save()
         return HttpResponseRedirect(reverse('exam:index', current_app=self.current_app))
@@ -792,23 +804,41 @@ class ExamResponseDetailView(LoginRequiredMixin,
     pk_url_kwarg = 'key'
     
     def make_question_list(self):
-        multiple_choice_responses = self.object.multiplechoiceresponse_set.all()
-        free_response_responses = self.object.freeresponseresponse_set.all()
+        multiple_choice_responses = list(self.object.multiplechoiceresponse_set.all().order_by('number'))
+        free_response_responses = list(self.object.freeresponseresponse_set.all().order_by('number'))
         question_list = []
-        for question in self.object.response_set.exam.question_set.all():
-            if question.is_multiple_choice:
-                response = multiple_choice_responses.get(question=question)
-                q = {'question':question, 'chosen':response.option_id}
-                qOptions = []
-                qOptions.extend(question.multiplechoiceoption_set.all())
-                q['options']=qOptions
-                question_list.append(q)
+        #if self.exam.randomize:
+        #    order_by = 'object_id'
+        #else:
+        #    order_by = 'number'
+        #for question in self.exam.question_set.all().order_by(order_by):
+        #    if question.is_multiple_choice:
+        #        response = multiple_choice_responses.get(question=question)
+        #        q = {'question':question, 'chosen':response.option_id}
+        #        qOptions = []
+        #        qOptions.extend(question.multiplechoiceoption_set.all())
+        #        q['options']=qOptions
+        #        question_list.append(q)
+        #    else:
+        #        response = free_response_responses.get(question=question)
+        #        q = {'question':question, 'answer':response.response}
+        #        question_list.append(q)
+        while multiple_choice_responses or free_response_responses:
+            if multiple_choice_responses\
+                and (not free_response_responses or
+                (multiple_choice_responses[0].number < free_response_responses[0].number)):
+                    response = multiple_choice_responses.pop(0)
+                    q = {'question':response.question, 'chosen':response.option_id}
+                    qOptions = []
+                    qOptions.extend(response.question.multiplechoiceoption_set.all())
+                    q['options']=qOptions
+                    question_list.append(q)
             else:
-                response = free_response_responses.get(question=question)
-                q = {'question':question, 'answer':response.response}
+                response = free_response_responses.pop(0)
+                q = {'question':response.question, 'answer':response.response}
                 question_list.append(q)
         return question_list
-    
+
     def get_context_data(self, **kwargs):
         context = super(ExamResponseDetailView, self).get_context_data(**kwargs)     
         context['exam'] = self.exam
@@ -955,13 +985,29 @@ class DistributeView(LoginRequiredMixin,
                 exam_response = ExamResponse.objects.create(response_set=self.object,
                                                             respondent=email,
                                                             expiration_datetime=expiration_datetime)
-                # TODO: instead of all(), filter by module
-                for question in self.object.exam.freeresponsequestion_set.all():
-                    FreeResponseResponse.objects.create(question=question,
-                                                        exam_response=exam_response)
-                for question in self.object.exam.multiplechoicequestion_set.all():
-                    MultipleChoiceResponse.objects.create(question=question,
-                                                      exam_response=exam_response)
+                i = 1
+                order_by = 'number'
+                if self.exam.randomize:
+                    order_by = '?'
+                for question in self.object.exam.question_set.all().order_by(order_by):
+                    if question.is_multiple_choice:
+                        mcq = MultipleChoiceQuestion.objects.get(pk=question.pk)
+                        MultipleChoiceResponse.objects.create(question=mcq,
+                                                              exam_response=exam_response,
+                                                              number = i)
+                    else:
+                        frq = FreeResponseQuestion.objects.get(pk=question.pk)
+                        FreeResponseResponse.objects.create(question=frq,
+                                                            exam_response=exam_response,
+                                                            number = i)
+                    i += 1
+                
+                #for question in self.object.exam.freeresponsequestion_set.all():
+                #    FreeResponseResponse.objects.create(question=question,
+                #                                        exam_response=exam_response)
+                #for question in self.object.exam.multiplechoicequestion_set.all():
+                #    MultipleChoiceResponse.objects.create(question=question,
+                #                                      exam_response=exam_response)
                 exam_response.send(self.request, email)    
         return HttpResponseRedirect(self.get_success_url())
 
@@ -1073,6 +1119,29 @@ class TakeTestView(generic.UpdateView):
             pass
         return HttpResponseRedirect(reverse('exam_unavailable'))
     
+    def make_question_list(self):
+        multiple_choice_responses = list(self.object.multiplechoiceresponse_set.all().order_by('number'))
+        free_response_responses = list(self.object.freeresponseresponse_set.all().order_by('number'))
+        question_list = []
+        while multiple_choice_responses or free_response_responses:
+            if multiple_choice_responses\
+                and (not free_response_responses or
+                (multiple_choice_responses[0].number < free_response_responses[0].number)):
+                    response = multiple_choice_responses.pop(0)
+                    question_list.append(response.question)
+            else:
+                response = free_response_responses.pop(0)
+                question_list.append(response.question)
+        return question_list
+    
+    def get_form_kwargs(self):
+        """
+        Pass ResponseSet object to form as 'instance' (like an UpdateForm)
+        """
+        kwargs = super(TakeTestView, self).get_form_kwargs()
+        kwargs['ordered_questions'] = self.make_question_list()
+        return kwargs
+    
     def get_context_data(self, **kwargs):
         """
         Pass the list of expired, unsubmitted ERs to the template
@@ -1080,7 +1149,7 @@ class TakeTestView(generic.UpdateView):
         context = super(TakeTestView, self).get_context_data(**kwargs)
         form = self.get_form(self.form_class)
         fields = list(form)
-        questions = self.object.response_set.exam.question_set.all()
+        questions = self.make_question_list()
         context['questions'] = zip(form, questions)
         return context
     

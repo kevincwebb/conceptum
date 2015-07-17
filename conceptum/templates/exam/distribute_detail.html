@@ -17,7 +17,8 @@
 </div>
     <hr>
 
-<h4>Description: {{exam.description}}</h4>
+<h5>Description: {{exam.description}}</h5>
+<h5>Randomize: {{exam.randomize|yesno|capfirst}}</h5>
 {% endblock %}
 
 
@@ -29,7 +30,7 @@
 
   {% if user.is_staff %}
     </br></br>
-    <h4>Staff Controls:</h4>
+    <h4>Staff Controls</h4>
     <a href = {% url 'exam:copy' exam.id %} class="btn btn-warning"> Make a copy for further development </a>
     <a href = {% url 'exam:close' exam.id %} class="btn btn-danger"> Close {{current_app|capfirst}} Distribution </a>
   {% endif %}

@@ -168,10 +168,6 @@ class Question(models.Model):
     rank = models.IntegerField(null=True, blank = True)
     optional = models.BooleanField(default=False)
     
-    class Meta:
-        ordering = ['number']
-
-    
     def __unicode__(self):
         return self.question
     
@@ -458,6 +454,8 @@ class QuestionResponse(models.Model):
     This model is abstract.
     """
     exam_response = models.ForeignKey(ExamResponse)
+    number = models.IntegerField()
+    
     
     class Meta:
         abstract = True

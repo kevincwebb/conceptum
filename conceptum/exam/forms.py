@@ -404,6 +404,8 @@ class FinalizeOrderForm(forms.Form):
     class Meta:
         fields = []
     
+    randomize = forms.BooleanField(required=False)
+    
     def __init__(self, *args, **kwargs):
         self.queryset = kwargs.pop('selected_questions')
         super(FinalizeOrderForm, self).__init__(*args, **kwargs)
@@ -416,16 +418,20 @@ class FinalizeOrderForm(forms.Form):
     
     def clean(self):
         cleaned_data = super(FinalizeOrderForm, self).clean()
-        used_numbers = []
-        for question in self.queryset:
-            number = self.cleaned_data.get('question_%d'%question.id)
-            if used_numbers.count(number):
-                raise ValidationError("Please assign numbers such that there are no duplicates.")
-            else:
-                if number in range(1, len(self.queryset)+1):
-                # if the number isn't in this range, then it is a different validation error.
-                    used_numbers.append(number)
-            
+        if cleaned_data.get('randomize') == True:
+            for question in self.queryset:
+                if self.errors.get('question_%d' % question.id):
+                    self.errors.pop('question_%d' % question.id)
+        else:
+            used_numbers = []
+            for question in self.queryset:
+                number = self.cleaned_data.get('question_%d'%question.id)
+                if used_numbers.count(number):
+                    raise ValidationError("Please assign numbers such that there are no duplicates.")
+                else:
+                    if number in range(1, len(self.queryset)+1):
+                    # if the number isn't in this range, then it is a different validation error.
+                        used_numbers.append(number)
         return cleaned_data
 
 
@@ -534,12 +540,13 @@ class ExamResponseForm(forms.ModelForm):
         """
         Generate a field for each associated QuestionResponse object.
         """
+        self.questions = kwargs.pop('ordered_questions', None)
         super(ExamResponseForm, self).__init__(*args, **kwargs)
         multiple_choice_responses = self.instance.multiplechoiceresponse_set.all()
         free_response_responses = self.instance.freeresponseresponse_set.all()
         
         # need to create response fields in the order that their questions are ordered
-        for question in self.instance.response_set.exam.question_set.all():
+        for question in self.questions:
             if question.is_multiple_choice:
                 response = multiple_choice_responses.get(question=question)
                 self.fields["MC_response_%d" % response.id] = forms.ModelChoiceField(

@@ -5,7 +5,9 @@
 <h3>{{exam.name}}</h3>
 <h5>{{exam.description}}</h5>
 </br>
-<ol>
+<b>Randomize:</b> {{randomize|yesno|capfirst}}
+</br></br>
+{% if randomize %}<ul>{% else %}<ol>{% endif %}
 {% for question in ordered_questions %}
     <li>{{question}}
         {% if question.image %}
@@ -23,7 +25,7 @@
     </li>
     </br></br>
 {% endfor %}
-</ol>
+{% if randomize %}</ul>{% else %}</ol>{% endif %}
 
 <p>Are you sure you want to finalize the exam: {{ exam }}?</br>
       You will not be able to edit the exam, including all questions and their

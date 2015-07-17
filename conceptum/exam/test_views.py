@@ -378,7 +378,7 @@ class FinalizeViewTest(SimpleTestCase):
         # exam_id does not exist
         response = self.client.get(reverse('CI_exam:finalize',kwargs ={'exam_id':99}))
     
-    def test_data(self):
+    def test_with_ordered_questions(self):
         exam = create_exam()
         concept_type = ContentType.objects.get_for_model(Concept)
         concept = Concept.objects.get(name = "Concept A")
@@ -408,7 +408,7 @@ class FinalizeViewTest(SimpleTestCase):
         self.assertEqual(len(response.context['form'].queryset),2)
         
         # Step 1 - order
-        deleted_question = questions[2]
+        deleted_pk = questions[2].pk
         response = self.client.post(finalize_url, {'finalize_view-current_step':'1',
                                                    '1-question_%d' % questions[0].id:1,
                                                    '1-question_%d' % questions[1].id:2})
@@ -420,9 +420,52 @@ class FinalizeViewTest(SimpleTestCase):
         self.assertEqual(response.status_code, 302)
         exam = Exam.objects.get(pk=exam.id)
         self.assertEqual(exam.stage, ExamStage.DIST)
+        self.assertFalse(exam.randomize)
         self.assertEqual(len(exam.question_set.all()), 2)
-        self.assertFalse(Question.objects.filter(pk=deleted_question.id))
+        self.assertFalse(Question.objects.filter(pk=deleted_pk))
+        self.assertEqual(questions[0].number, 1)
+        self.assertEqual(questions[1].number, 2)
 
+    def test_with_randomize(self):
+        exam = create_exam()
+        concept_type = ContentType.objects.get_for_model(Concept)
+        concept = Concept.objects.get(name = "Concept A")
+        FreeResponseQuestion.objects.create(
+            exam=exam,
+            question="Another free response question?",
+            content_type=concept_type,
+            object_id=concept.id)
+        questions = exam.question_set.all()
+        finalize_url = reverse('CI_exam:finalize', kwargs={'exam_id':exam.id})
+        self.user.is_staff = True
+        self.user.save()
+        self.client.login(email=self.user.email, password='password')
+        
+        # Step 0 - select
+        response = self.client.post(finalize_url,
+                                    {'finalize_view-current_step':'0',
+                                     '0-select_questions':[questions[0].id,questions[1].id]})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Step 2')
+        self.assertEqual(len(response.context['form'].queryset),2)
+        
+        # Step 1 - order
+        deleted_pk = questions[2].pk
+        response = self.client.post(finalize_url, {'finalize_view-current_step':'1',
+                                                   '1-randomize':True})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Step 3')
+        
+        # Step 2 - submit
+        response = self.client.post(finalize_url, {'finalize_view-current_step':'2'})
+        self.assertEqual(response.status_code, 302)
+        exam = Exam.objects.get(pk=exam.id)
+        self.assertEqual(exam.stage, ExamStage.DIST)
+        self.assertTrue(exam.randomize)
+        self.assertEqual(len(exam.question_set.all()), 2)
+        self.assertFalse(Question.objects.filter(pk=deleted_pk))
+        self.assertEqual(questions[0].number, 1)
+        self.assertEqual(questions[1].number, 1)
 
 class CopyViewTest(SimpleTestCase):
     def setUp(self):
