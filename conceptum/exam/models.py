@@ -401,6 +401,7 @@ class ExamResponse(models.Model):
     respondent = models.CharField(max_length=RESPONDENT_NAME_LENGTH, default='') # an email
     expiration_datetime = models.DateTimeField()
     sent = models.DateTimeField(null=True)
+    consented_to_research = models.BooleanField(default=False)
     submitted = models.DateTimeField(null=True, blank=True, default=None)
     
     # provides a new create() method that generates a key
@@ -442,7 +443,6 @@ class ExamResponse(models.Model):
         self.save()
 
     def __unicode__(self):
-        # "00000000: email@email.com"
         return self.key[-8:]
 
 

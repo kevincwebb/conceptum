@@ -21,8 +21,8 @@
   </div>
 
   <h3>Your distributed courses:</h3>
-  Click to view details or resend tests in this course.
   {% if responses %}
+    Click to view details or resend tests in this course.
     <ul class = "collapsible_overview">
     {% for set in responses %}     <!-- maybe do some collapsible statistics on each response set -->
         <li class = "table">
@@ -46,6 +46,7 @@
     </ul>
   {% else %}
     You have not distributed this exam.
+    </br></br>
   {% endif %}
   
   <a href = {% url 'exam:response_sets' exam.id %} class='btn btn-primary'> Back </a>

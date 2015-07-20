@@ -525,8 +525,25 @@ class CleanupForm(forms.Form):
     class Meta:
         fields = []
 
+
+IRB_CHOICES = ((True, 'I consent to my answers being used for research.'),
+               (False, 'I am taking this for credit but do not want my answers used for research.'),
+               (False, 'I am under 18, but taking this for credit.'))
+
+class TakeTestIRBForm(forms.ModelForm):
+    class Meta:
+        model = ExamResponse
+        fields = []
+        
+    consent = forms.ChoiceField(choices=IRB_CHOICES, widget = forms.RadioSelect)
     
-class ExamResponseForm(forms.ModelForm):
+    def save(self):
+        self.instance.consented_to_research = (self.cleaned_data.get('consent') == 'True')
+        self.instance.save()
+        return self.instance
+
+    
+class TakeTestForm(forms.ModelForm):
     """
     Has fields for every question in an exam.  These fields are generated in the __init__()
     method.  After an ExamResponse has been submitted, the save() method updates the
@@ -541,7 +558,7 @@ class ExamResponseForm(forms.ModelForm):
         Generate a field for each associated QuestionResponse object.
         """
         self.questions = kwargs.pop('ordered_questions', None)
-        super(ExamResponseForm, self).__init__(*args, **kwargs)
+        super(TakeTestForm, self).__init__(*args, **kwargs)
         multiple_choice_responses = self.instance.multiplechoiceresponse_set.all()
         free_response_responses = self.instance.freeresponseresponse_set.all()
         

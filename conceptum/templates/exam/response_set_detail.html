@@ -28,6 +28,7 @@
 <h4>For Exam: {{ exam.name}}</h3>
     <ul>
     <li><b>Description:</b> {{ exam.description }} </li>
+    <li><b>Randomize:</b> {{ exam.randomize|yesno|capfirst }} </li>
     </ul>
 <h4>Response Set ID={{object.id}}</h4>
     <ul>

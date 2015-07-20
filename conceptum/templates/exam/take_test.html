@@ -20,6 +20,14 @@
     <h3>Take the test here</h3>
   </div>
   
+  <h5>Your answers will
+  {% if object.consented_to_research %}
+    be used (anonymously)
+  {% else %}
+    NOT be used
+  {% endif %}
+  for research.</h5>
+  
   <form class="form-horizontal" role="form"  action="" method="post">{% csrf_token %}
   
   {{ form.non_field_errors }}

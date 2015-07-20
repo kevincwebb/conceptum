@@ -20,6 +20,7 @@
   <ul>
     <li><b>Exam:</b> {{ object.exam.name }} </li>
     <li><b>Description:</b> {{ object.exam.description }}</li>
+    <li><b>Randomize:</b> {{ exam.randomize|yesno|capfirst }} </li>
     <li><b>Course:</b> {{ object.course }}</li>
     <li><b>Created:</b> {{ object.created }}</li>
     <li><b>Instructor:</b> {{ object.instructor }}</li>

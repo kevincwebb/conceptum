@@ -98,14 +98,20 @@
     </p>
     
     <br>
-    <h4>Your Signature and Consent</h4>
+        
+    <h4>Your Consent</h4>
+        <form class="form-horizontal" role="form"  action="" method="post">{% csrf_token %}
+      
+        {{ form.non_field_errors }}
     
-    <p>
-    Please continue with the online exam and it will ask you for your consent to participate:<br>
-        <a href = "{% url 'take_test' object.pk %}" class = "btn btn-warning"> I Accept </a>
-    
-    </p>
-    
+        {{ form.consent.errors}}
+        {{ form.consent }}
+      
+        <div class="submit">
+            <button class="btn btn-warning" type="submit">Continue</button>
+        </div>
+        </form>
+
 </div>
 
 

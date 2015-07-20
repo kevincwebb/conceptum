@@ -24,9 +24,10 @@ from .models import Exam, ResponseSet, ExamResponse, QuestionResponse, FreeRespo
                     MultipleChoiceQuestion, MultipleChoiceOption, FreeResponseResponse,\
                     MultipleChoiceResponse, ExamKind, ExamStage, Question
 from .forms import SelectConceptForm, AddFreeResponseForm, AddMultipleChoiceForm, \
-                   NewResponseSetForm, DistributeForm, ExamResponseForm, CleanupForm, FreeResponseEditForm, \
+                   NewResponseSetForm, DistributeForm, CleanupForm, FreeResponseEditForm, \
                    MultipleChoiceEditForm, FreeResponseVersionForm, MultipleChoiceVersionForm, \
-                   FinalizeSelectForm, FinalizeOrderForm, FinalizeConfirmForm
+                   FinalizeSelectForm, FinalizeOrderForm, FinalizeConfirmForm, TakeTestForm, \
+                   TakeTestIRBForm
 from .mixins import DevelopmentMixin, DistributionMixin, CurrentAppMixin
 
 
@@ -159,7 +160,6 @@ class ExamDistIndexView(LoginRequiredMixin,
 
 
 class ExamDetailView(LoginRequiredMixin,
-                     ContribRequiredMixin,
                      CurrentAppMixin,
                      generic.DetailView):
     """
@@ -200,6 +200,7 @@ class ExamDetailView(LoginRequiredMixin,
 
 
 class DevDetailView(DevelopmentMixin,
+                    ContribRequiredMixin,
                     ExamDetailView):
     template_name = 'exam/development_detail.html'
     
@@ -924,10 +925,10 @@ class DistributeView(LoginRequiredMixin,
     def test_func(self, user):
         """
         This function is used by the UserPassesTestMixin.
-        Make sure that the user is staff or the original distributor.
+        Make sure that the user is the original distributor.
         """
         response_set = get_object_or_404(ResponseSet, pk=self.kwargs['rs_id'])
-        return (user.is_staff or user.profile==response_set.instructor)
+        return (user.profile==response_set.instructor)
     
     def dispatch(self, *args, **kwargs):
         """
@@ -1080,9 +1081,10 @@ class CleanupView(LoginRequiredMixin,
 ############################# TAKE TEST ##################################################
 
 
-class TakeTestIRBView(generic.DetailView):
+class TakeTestIRBView(generic.UpdateView):
     model = ExamResponse
     template_name = 'exam/take_test_IRB.html'
+    form_class = TakeTestIRBForm
 
     def dispatch(self, *args, **kwargs):
         """
@@ -1095,6 +1097,9 @@ class TakeTestIRBView(generic.DetailView):
             pass
         return HttpResponseRedirect(reverse('exam_unavailable'))
     
+    def get_success_url(self):
+        return reverse('take_test', args=[self.object.pk])
+    
 class TakeTestView(generic.UpdateView):
     """
     This is where students take the Exam. A student will get a URL that ends with the
@@ -1106,7 +1111,7 @@ class TakeTestView(generic.UpdateView):
     """
     model = ExamResponse
     template_name='exam/take_test.html'
-    form_class = ExamResponseForm
+    form_class = TakeTestForm
     
     def dispatch(self, *args, **kwargs):
         """

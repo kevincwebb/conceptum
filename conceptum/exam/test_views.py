@@ -3,13 +3,14 @@ from django.core.urlresolvers import reverse
 from django.db import models, transaction
 from django.test import SimpleTestCase
 from django.utils.translation import ugettext_lazy as _
+from django.utils import timezone
 
 import reversion
 
 from profiles.tests import set_up_user
 from interviews.models import get_concept_list, DummyConcept as Concept
 from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, MultipleChoiceOption,\
-                    ExamKind, ExamStage, Question
+                    ExamKind, ExamStage, Question, ResponseSet, ExamResponse
 
 def create_exam():
     """
@@ -569,3 +570,262 @@ class CopyViewTest(SimpleTestCase):
                                     old_options[j])
                 self.assertEqual(new_options[j].text,
                                  old_options[j].text)
+
+
+class DistIndexViewTest(SimpleTestCase):
+    def setUp(self):
+        self.user = set_up_user()
+        self.client.login(email=self.user.email, password='password')
+    
+    def test_permissions(self):
+        # User logged in, not contrib
+        response = self.client.get(reverse('CI_exam:distribute_index'))
+        self.assertEqual(response.status_code, 200)
+        
+        # User not logged in, redirected
+        self.client.logout()
+        response = self.client.get(reverse('CI_exam:distribute_index'))
+        self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dist/')
+    
+    def test_empty(self):
+        for exam in Exam.objects.all():
+            exam.delete()
+        response = self.client.get(reverse('CI_exam:distribute_index'))
+        self.assertContains(response, 'There are no CIs available for distribution.')
+        self.assertContains(response, 'There are no closed CIs.')
+    
+    def test_dist_exam(self):
+        exam, created = Exam.objects.get_or_create(name="Dist Index View Exam",
+                                                   description="...",
+                                                   stage=ExamStage.DIST)
+        response = self.client.get(reverse('CI_exam:distribute_index'))
+        self.assertContains(response, exam.name)
+        
+    def test_closed_exam(self):
+        exam, created = Exam.objects.get_or_create(name="Dist Index View Exam",
+                                                   description="...",
+                                                   stage=ExamStage.CLOSED)
+        response = self.client.get(reverse('CI_exam:distribute_index'))
+        self.assertContains(response, exam.name)
+
+
+class DistDetailViewTest(SimpleTestCase):
+    def setUp(self):
+        self.user = set_up_user()
+        self.client.login(email=self.user.email, password='password')
+        self.exam, created = Exam.objects.get_or_create(name="Dist Detail View Exam",
+                                                        description="...",
+                                                        stage=ExamStage.DIST)
+        self.detail_url = reverse('CI_exam:distribute_detail', args=[self.exam.id])
+    
+    def test_permissions(self):
+        # User logged in, not contrib
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Exam does not exist
+        response = self.client.get(reverse('CI_exam:distribute_detail', args=[99]))
+        self.assertEqual(response.status_code, 404)
+        
+        # User not logged in, redirected
+        self.client.logout()
+        response = self.client.get(self.detail_url)
+        self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dist/%d/' % self.exam.id)
+    
+    def test_staff_buttons(self):
+        response = self.client.get(self.detail_url)
+        self.assertNotContains(response, 'Make a copy')
+        self.assertNotContains(response, 'Close Survey Distribution')
+        
+        self.user.is_staff = True
+        self.user.save()
+        response = self.client.get(self.detail_url)
+        self.assertContains(response, 'Make a copy')
+        self.assertContains(response, 'Close CI Distribution')
+    
+    def test_questions(self):
+        exam = create_exam()
+        exam.stage = ExamStage.DIST
+        exam.save()
+        response = self.client.get(reverse('CI_exam:distribute_detail', args=[exam.id]))
+        for question in exam.question_set.all():
+            self.assertContains(response, question)
+            if question.is_multiple_choice:
+                for option in question.multiplechoiceoption_set.all():
+                    self.assertContains(response, option)
+
+
+class ResponseSetIndexViewTest(SimpleTestCase):
+    def setUp(self):
+        self.user = set_up_user()
+        self.client.login(email=self.user.email, password='password')
+        self.exam, created = Exam.objects.get_or_create(name="RS Index View Exam",
+                                                        description="...",
+                                                        stage=ExamStage.DIST)
+        #self.response_set, created = ResponseSet.objects.get_or_create()
+        self.url = reverse('CI_exam:response_sets', args=[self.exam.id])
+    
+    def test_permissions(self):
+        # User logged in, not contrib
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Exam does not exist
+        response = self.client.get(reverse('CI_exam:response_sets', args=[99]))
+        self.assertEqual(response.status_code, 404)
+        
+        # User not logged in, redirected
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dist/%d/responses/' % self.exam.id)
+        
+    def test_empty(self):
+        for set in ResponseSet.objects.all():
+            set.delete()
+        response = self.client.get(self.url)
+        self.assertContains(response, 'This CI has not been distributed')
+    
+    def test_dist_exam(self):
+        set, created = ResponseSet.objects.get_or_create(course='Index View RS',
+                                                         exam=self.exam,
+                                                         instructor=self.user.profile)
+        response = self.client.get(self.url)
+        self.assertContains(response, set.course)
+
+
+class ResponseSetDetailViewTest(SimpleTestCase):
+    def setUp(self):
+        self.user = set_up_user()
+        self.client.login(email=self.user.email, password='password')
+        self.exam, created = Exam.objects.get_or_create(name="RS Detail View Exam",
+                                                        description="...",
+                                                        stage=ExamStage.DIST)
+        self.set, created = ResponseSet.objects.get_or_create(course='Detail View RS',
+                                                              exam=self.exam,
+                                                              instructor=self.user.profile)
+        self.url = reverse('CI_exam:responses', args=[self.set.id])
+    
+    def test_permissions(self):
+        # User logged in, not contrib
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Exam does not exist
+        response = self.client.get(reverse('CI_exam:responses', args=[99]))
+        self.assertEqual(response.status_code, 404)
+        
+        # User not logged in, redirected
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dist/response_set/%d/' % self.set.id)
+
+
+class ExamResponseDetailViewTest(SimpleTestCase):
+    def setUp(self):
+        self.user = set_up_user()
+        self.client.login(email=self.user.email, password='password')
+        self.exam, created = Exam.objects.get_or_create(name="ER Detail View Exam",
+                                                        description="...",
+                                                        stage=ExamStage.DIST)
+        self.set, created = ResponseSet.objects.get_or_create(course='ER Detail View RS',
+                                                         exam=self.exam,
+                                                         instructor=self.user.profile)
+        self.response = ExamResponse.objects.create(response_set=self.set,
+                                                                    expiration_datetime=timezone.now())
+        self.url = reverse('CI_exam:response_detail', args=[self.response.pk])
+    
+    def test_permissions(self):
+        # User logged in, not contrib
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Exam does not exist
+        response = self.client.get(reverse('CI_exam:response_detail', args=[99]))
+        self.assertEqual(response.status_code, 404)
+        
+        # User not logged in, redirected
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dist/response/%s/' % self.response.pk)
+    
+    def test_unsubmitted(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'has not been submitted yet')
+
+
+class NewResponseSetViewTest(SimpleTestCase):
+    def setUp(self):
+        self.user = set_up_user()
+        self.client.login(email=self.user.email, password='password')
+        self.exam, created = Exam.objects.get_or_create(name="RS Detail View Exam",
+                                                        description="...",
+                                                        stage=ExamStage.DIST)
+        self.url = reverse('CI_exam:distribute_new', args=[self.exam.id])
+        
+    def test_permissions(self):
+        # User logged in, not contrib
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Exam does not exist
+        response = self.client.get(reverse('CI_exam:distribute_new', args=[99]))
+        self.assertEqual(response.status_code, 404)
+        
+        # User not logged in, redirected
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertRedirects(response, '/accounts/login/?next=/exams/CI/dist/%d/new/' % self.exam.id)
+    
+    def test_previous_distributions(self):
+        # emtpy
+        # not empty
+        pass
+    
+    def test_submit_form(self):
+        pass
+
+
+class DistributeViewTest(SimpleTestCase):
+    #setUP
+    #permissions
+    
+    def test_submitted_exams(self):
+        #empty
+        #not empty
+        pass
+    
+    def test_submit_form(self):
+        #redirect
+        #create exam
+        pass
+
+
+class DeleteViewTest(SimpleTestCase):
+    #setUp
+    #permissions
+    
+    def test_delete(self):
+        pass
+    
+
+class CleanupViewTest(SimpleTestCase):
+    #setUp
+    #permissions
+    
+    def test_clean_up(self):
+        pass
+
+
+class IntegratedDistributionTest(SimpleTestCase):
+    def test_ordered(self):
+        # new response set
+        # distribute
+        # take test
+        # view results
+        pass
+    
+    def test_randomized(self):
+        pass
+    
+    
