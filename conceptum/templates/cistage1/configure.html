@@ -15,14 +15,28 @@
 {% block content %}
 <body>
     <div class ="container">
+
+{% if warning %}
+ <font size="20" color="red">WARNING: Stage 1 has already been started.</font>
+ <br />
+ <font size="20" color="red">Submitting this form again will overwrite any previous work.</font>
+{% endif %}
+
 <h1>Stage 1 Creation Form</h1>
 
-<form action="{% url 'stage 1 get setup'%}" method="post">
+<form action="{% url 'stage1 configure'%}" method="post">
   {% csrf_token %}
   {{ form.as_p }}
   <input type="submit" value="Submit">
 </form>
         <p></p>
+
+{% if warning %}
+ <font size="20" color="red">WARNING: Stage 1 has already been started.</font>
+ <br />
+ <font size="20" color="red">Submitting this form again will overwrite any previous work.</font>
+{% endif %}
+
     </div>
 </body>
     

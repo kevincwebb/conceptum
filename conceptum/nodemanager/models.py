@@ -50,7 +50,9 @@ class CITreeInfo(models.Model):
 
             #if there are multiple master trees (which there
             #shouldn't), just return the first one
-            return [node for node in nodes if node.is_root_node()].pop()
+            roots = [node for node in nodes if node.is_root_node()]
+            print 'get master tree root:', roots
+            return roots.pop()
         else:
             print "Error: Master Tree does not exist"
             return None
@@ -102,7 +104,7 @@ class ConceptNode(MPTTModel):
     free_entry = 'F'
     merge = 'M'
     rank = 'R'
-    closed = 'R'
+    closed = 'C'
 
     TYPE_CHOICES = (
         (free_entry, 'Free Entry'),
