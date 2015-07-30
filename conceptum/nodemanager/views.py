@@ -6,6 +6,8 @@ from django.core.urlresolvers import reverse
 from nodemanager.models import CITreeInfo, ConceptNode, ConceptAtom
 from nodemanager.forms import AtomFormSet, CreateMergeForm, UpdateMergeFormSet
 
+# TODO: If admin, send contribs/noncontribs
+
 # add/edit/remove interface for concept atoms
 def entry(request, node_id, redirected=False):
     """
@@ -22,7 +24,7 @@ def entry(request, node_id, redirected=False):
                              {'node': node,
                               'user': user,
                               'redirected': redirected},)
-    
+
     # Only nodes in the "free entry" state can have nodes entered
     if not node.node_type == 'F':
         return render(request, 'nodemanager/stage_error.html')
@@ -31,7 +33,7 @@ def entry(request, node_id, redirected=False):
     if user in node.users_contributed_set():
         template = loader.get_template('nodemanager/atomlist.html')
         context['atoms'] = atoms
-    
+
     # Otherwise, give them a form (which will be populated with their
     # choices if they have already made some)
     else:
@@ -42,6 +44,7 @@ def entry(request, node_id, redirected=False):
 
     return HttpResponse(template.render(context))
 
+# TODO: rename this something sensible like "submit entry"
 def get_entry(request, node_id):
     """
     This function processes a user-submitted form containing their
@@ -49,7 +52,7 @@ def get_entry(request, node_id):
     pre-entered picks, as well as entering new ones.
     """
     if request.method == 'POST':
-        
+
         formset = AtomFormSet(request.POST)
 
         if formset.is_valid():
@@ -62,9 +65,9 @@ def get_entry(request, node_id):
                 form_text = form.cleaned_data.get('text')
                 pk = form.cleaned_data.get('pk')
 
-                if form_text: 
+                if form_text:
 
-                    if not pk: 
+                    if not pk:
                         new_atom = ConceptAtom(
                             concept_node=get_object_or_404(ConceptNode,pk=node_id),
                             user=request.user,
@@ -119,6 +122,7 @@ def merge(request, node_id):
                               'edit_formset': edit_formset},)
     return HttpResponse(template.render(context))
 
+# TODO: Rename?
 def get_merge(request, node_id, merge_type=None):
     """
     This function handles a submitted form containing information
@@ -176,7 +180,7 @@ def get_merge(request, node_id, merge_type=None):
             return redirect('merge', node_id=node.id)
 
         #the form is invalid, and we redirect the errors to the user
-        else: 
+        else:
             render_args = {'node': node,
                            'user': user}
 

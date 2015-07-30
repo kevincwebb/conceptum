@@ -18,7 +18,7 @@ def home(request):
             priv_list.append("contributor")
         priv_list.append("user")
         priv_list = ", ".join(priv_list)
-            
+
         context = {'CI_COURSE': settings.CI_COURSE,
                    'priv_list':priv_list}
         return render(request, 'home_user.html', context)

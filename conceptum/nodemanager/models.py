@@ -2,16 +2,18 @@
 
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey #for tree structure
-from authtools.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 
 from ranking.models import RankingProcess
+
+from profiles.models import ContributorProfile
 
 class CITreeInfo(models.Model):
     """
     CI Tree Info defines parameters that hold true throughout an
     entire concept hierarchy. These parameters are:
-    
+
     - users (can add and vote on new concepts)
 
     - administrators (user privileges, +merge, +set boundaries, +force
@@ -20,9 +22,6 @@ class CITreeInfo(models.Model):
     - type: whether or not this tree is the "master" -- or tree with
       the highest user approval rating
     """
-
-    admins = models.ManyToManyField(User, related_name='admins')
-    users = models.ManyToManyField(User, related_name='users')
 
     # master tree is loaded on the landing page. there can only be one
     # at any given time.
@@ -51,10 +50,9 @@ class CITreeInfo(models.Model):
             #if there are multiple master trees (which there
             #shouldn't), just return the first one
             roots = [node for node in nodes if node.is_root_node()]
-            print 'get master tree root:', roots
             return roots.pop()
         else:
-            print "Error: Master Tree does not exist"
+            print "Master Tree does not exist"
             return None
 
 
@@ -66,7 +64,7 @@ class ConceptNode(MPTTModel):
     """
     Each node manages the canonical process for creating a modular
     concept inventory.
-    
+
     1. Everyone brainstorms potential concepts (simple text)
     2. The raw list is pruned by an admin to produce a final set.
     3. everyone votes on this set to determine which are selected.
@@ -80,7 +78,7 @@ class ConceptNode(MPTTModel):
 
     - CI Tree Info: which overall hierarchy it is attached to
       (concepts don't know about neighbors, only children.
-    
+
     - User: tracks which users have visited the concept node. Resets
       when the node changes state
 
@@ -92,13 +90,14 @@ class ConceptNode(MPTTModel):
       question text.
     """
 
+    User = get_user_model()
+
     ci_tree_info = models.ForeignKey(CITreeInfo)
 
     # required by mptt
     parent = TreeForeignKey('self', null=True, related_name='children')
 
-    user = models.ManyToManyField(User) #multiple users can visit one
-                                        #node
+    user = models.ManyToManyField(User) #multiple users can visit one node
 
     #temporary arbitrary charfield (meant to be choices)
     free_entry = 'F'
@@ -117,6 +116,9 @@ class ConceptNode(MPTTModel):
                                  default=free_entry)
 
     content = models.TextField(max_length=140)
+
+    max_children = models.IntegerField(default = 5)
+    child_typename = models.CharField(max_length = 50, default='unnamed')
 
     def __unicode__(self):
         return self.content
@@ -140,24 +142,14 @@ class ConceptNode(MPTTModel):
         """
         Return all the admins of this node.
         """
-        return self.ci_tree_info.admins.all()
-
-    def is_valid_user(self, user):
-        """
-        Given a user, determine if the user is in the node's set of
-        visitors. (this is admin-inclusive)
-        """
-
-        if user in self.ci_tree_info.users.all() or user in self.ci_tree_info.admins.all():
-            return True
-        else:
-            return False
+        User = get_user_model()
+        return User.objects.filter(is_staff=True)
 
     def is_active(self):
         """
         Returns whether or not the node is has finished all processes.
         """
-        
+
         if not self.node_type == self.closed:
             return True
         else:
@@ -185,11 +177,10 @@ class ConceptNode(MPTTModel):
             self.add_atoms_as_new_nodes(ranking_process.get_rank_choices())
             self.node_type = self.closed
 
-        self.save()
-
         #transition means a new stage of the stage 1 process has begun
         #so we scrub the contributed_users list
         self.user.clear()
+        self.save()
 
         return
 
@@ -197,8 +188,10 @@ class ConceptNode(MPTTModel):
         """
         Check if all the users have visited the node.
         """
-        
-        if list(self.users_contributed_set()) == list(self.ci_tree_info.users.all()):
+        User = get_user_model()
+        fullset = (User.objects.filter(profile__is_contrib=True) | User.objects.filter(is_staff=True)).distinct()
+
+        if set(self.users_contributed_set()) == set(fullset):
             return True
         else:
             return False
@@ -207,11 +200,39 @@ class ConceptNode(MPTTModel):
         """
         Check if an admin has visited the node
         """
-        
+
         if not set(self.admin_set()).isdisjoint(set(self.users_contributed_set())):
             return True
         else:
             return False
+
+# TODO: Show admins who has/hasn't contributed.  Allow advancing anyway.
+    def get_contribution_sets(self):
+        """
+        Return a dictionary containing two keys: 'contributed' and 'notcontributed',
+        whose values are lists of strings with the name/email address of the users
+        who have and have not yet contributed to this node.
+        """
+
+        User = get_user_model()
+        fullset = (User.objects.filter(profile__is_contrib=True) | User.objects.filter(is_staff=True)).distinct()
+        fullset = set(fullset)
+
+        contributor_set = set(self.users_contributed_set())
+
+        contributors = list()
+        non_contributors = list()
+
+        for c in contributor_set:
+            contributors.append('%s <%s>' % (c.name, c.email))
+
+        for nc in fullset.difference(contributor_set):
+            non_contributors.append('%s <%s>' % (nc.name, nc.email))
+
+        result = { 'contributed': contributors,
+                   'notcontributed': non_contributors }
+
+        return result
 
     def is_stage_finished(self):
         """
@@ -234,7 +255,6 @@ class ConceptNode(MPTTModel):
             new_child.save()
 
         return
-            
 
 
 class ConceptAtom(models.Model):
@@ -251,6 +271,8 @@ class ConceptAtom(models.Model):
     - Final Choice: whether or not this atom is in the post-merge set
     - Merged Atoms: what concept atoms were merged under this one
     """
+
+    User = get_user_model()
 
     concept_node = models.ForeignKey(ConceptNode)
 
@@ -296,5 +318,5 @@ class ConceptAtom(models.Model):
 
     def get_dependent_atoms(self):
         """ Get all atoms merged under this one."""
-        
+
         return ConceptAtom.objects.filter(merged_atoms__pk=self.pk)

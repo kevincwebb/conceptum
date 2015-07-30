@@ -3,22 +3,98 @@
 {% load url from future %}
 {% load i18n %}
 {% load static %}
+{% load mptt_tags %}
 
-{% block head_title %}{% trans "Exam Responses" %}{% endblock %}
-
-{% block extra_headers %}
-
-<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
-
-{% endblock %}
+{% block head_title %}{% trans "Concepts" %}{% endblock %}
 
 {% block content %}
-{% load mptt_tags %}
 <div class = "container">
-<h1>Welcome to the Stage 1 Landing Page!</h1>
 
+<div class="page-header">
+  <h1>Stage 1: Content Selection</h1>
+</div>
+
+{% recursetree tree %}
+
+{% if node.is_leaf_node %}
+
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <a href="javascript:void(0)" onclick="testfunc({{ node.id }}, '{{ node.content }}')">{{ node.content }}</a>
+            <!--
+            <button type="button" class="btn btn-default" onclick="testfunc({{ node.id }}, '{{ node.content }}')">
+            {{ node.content }}
+            </button>
+            -->
+        </div>
+    </div>
+
+{% else %}
+
+    {% if node.is_root_node %}
+
+    <div class="panel panel-default" id="rootpanel">
+        <div class="panel-heading">
+            <h2 class="panel-title">{{ node.content }}</h2>
+        </div>
+        <div class="panel-body">
+            <div class="panel-group" id="accordion{{ node.id }}">
+                {{ children }}
+            </div>
+        </div>
+    </div>
+
+
+    {% else %}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordian{{ node.parent.id }}" href="#collapse{{ node.id }}">{{ node.content }}</a>
+                </h4>
+            </div>
+            <div id="collapse{{ node.id }}" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <div class="panel-group" id="accordion{{ node.id }}">
+                        {{ children }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+
+{% endif %}
+
+{% endrecursetree %}
+
+<div class="panel panel-default">
+    <div class="panel-heading" id="nodename">
+    </div>
+
+    <div class="panel-body" id="nodeinfo">
+    </div>
+
+</div>
+
+
+<!--
 <ul>
-  {% recursetree master_tree_set %}
+    {% recursetree tree %}
+        <li>
+            {{ node.content }}
+            {% if not node.is_leaf_node %}
+                <ul class="children">
+                    {{ children }}
+                </ul>
+            {% endif %}
+        </li>
+    {% endrecursetree %}
+</ul>
+-->
+
+<!--
+{% recursetree tree %}
         <li>
           <b>Content:</b> {{ node.content }}
           <br>
@@ -70,15 +146,26 @@
                 </ul>
           {% endif %}
         </li>
-   {% endrecursetree %}
-<p>
-<p>
-<p>
-<p>
-<br>
-<br>
-You are: {{ user.name }}
-</ul>
-</div>
+{% endrecursetree %}
+-->
+
+</div> <!-- Container -->
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+
+function testfunc(id, content) {
+    $("#nodename").html("<h4>" + content + "<h4>");
+
+    $.ajax({async: true, url: "/stage1/node/" + id + "/entry", success: function(result){
+            $("#nodeinfo").html(result);
+        }});
+
+    return false;
+}
+</script>
 
 {% endblock %}

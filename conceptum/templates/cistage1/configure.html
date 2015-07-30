@@ -24,9 +24,27 @@
 
 <h1>Stage 1 Creation Form</h1>
 
+<br />
+
 <form action="{% url 'stage1 configure'%}" method="post">
   {% csrf_token %}
-  {{ form.as_p }}
+
+  {{ form.non_field_errors }}
+
+  {% for field in form %}
+  <div class="fieldWrapper">
+    {{ field.errors }}
+    <label for="{{ field.id_for_label }}">{{ field.label }}.</label>
+    <br />
+    {{ field.help_text }}
+    <br />
+    {{ field }}
+    <br />
+    <br />
+    <br />
+  </div>
+  {% endfor %}
+
   <input type="submit" value="Submit">
 </form>
         <p></p>
