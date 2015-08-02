@@ -20,8 +20,8 @@
     <h3>{{ interview }} by {{ interview.uploaded_by }}</h3>
   </div>
 
-  {% for excerpt in interview.excerpt_set.all %}
-    <b>Topic:</b> {{ excerpt.content_object }} <br>
+  {% for excerpt in interview.conceptexcerpt_set.all %}
+    <b>Topic:</b> {{ excerpt.concept_tag }} <br>
     <b>Response:</b> {{ excerpt.response }} <br>
     <br>
   {% endfor %}
@@ -36,7 +36,7 @@
   {% endif %}
   <br>
 
-  <a href = {% url 'interview_group' interview.group.id %} class="btn btn-primary"> Return to interviews </a>
+  <a href = {% url 'interview_index' %} class="btn btn-primary"> Return to interviews </a>
 
 </div> <!-- container -->
 
