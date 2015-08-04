@@ -41,63 +41,51 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-        
+
             <a class="navbar-brand" href="/"><span class = "title">Conceptum</span></a>
             {% if user.is_authenticated %}
                 <a class="navbar-brand" href="{% url 'stage1 dispatch' %}">Concepts</a>
                 <a class="navbar-brand" href="{% url 'interview_index' %}">Interviews</a>
-            
 
-            
-            
              <ul class="nav navbar-nav">
             <li class="dropdown">
               <a href="#" data-toggle="dropdown" class = "navbar-brand">Surveys <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="{% url "survey:index" %}">Development</a></li>
                 <li><a href="{% url "survey:distribute_index" %}">Distribution</a></li>
-                
               </ul>
             </li>
             </ul>
-            
-            
-            
-                      <ul class="nav navbar-nav">
+
+            <ul class="nav navbar-nav">
             <li class="dropdown">
               <a href="#" data-toggle="dropdown" class = "navbar-brand">Exams <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="{% url "CI_exam:index" %}">Development</a></li>
                 <li><a href="{% url "CI_exam:distribute_index" %}">Distribution</a></li>
-                
               </ul>
             </li>
             </ul>
 
-            
-            
-            
-            
 
-            
             <!-- possible dropdown for dev vs. distribute index -->
-            
-            
+
+
             <a class="navbar-brand" href="{% url 'exam:index' %}">Statistics</a>
-            
-            
-            
+
+
+
             {% else %}
                 <a class="navbar-brand" id="no-permissions">Concepts</a>
                 <a class="navbar-brand" id="no-permissions">Interviews</a>
             <a class="navbar-brand" id="no-permissions">Surveys</a>
                 <a class="navbar-brand" id="no-permissions">Exams</a>
-            <a class="navbar-brand" id="no-permissions">Statistics</a> 
+            <a class="navbar-brand" id="no-permissions">Statistics</a>
             {% endif %}
-            
-        
-            
-            
+
+
+
+
         </div>
         <div class="navbar-collapse collapse">
           {% if user.is_authenticated %}
@@ -111,8 +99,8 @@
                   {% endif %}
                 <li class="divider"></li>
                 <li><a href="{% url "account_logout" %}?next=/">Logout</a></li>
-                  
-                
+
+
               </ul>
             </li>
           </ul>
@@ -137,7 +125,7 @@
     {% endblock content %}
 
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 
     <!-- place project specific Javascript in this file -->

@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Page not found{% endblock %}
+{% block title %}Bad request{% endblock %}
 
-{% block page_title %}Page not found{% endblock page_title %}
+{% block page_title %}Bad request{% endblock page_title %}
 
 {% block content %}
 <div class="container">
@@ -10,10 +10,10 @@
     <br />
     <div class="panel panel-danger">
         <div class="panel-heading">
-            <h2 class="panel-title">404: Page not found</h2>
+            <h2 class="panel-title">400: Bad request</h2>
         </div>
         <div class="panel-body">
-            This is not the page you were looking for.
+            Something you submitted wasn't formatted properly?
         </div>
     </div>
 </div>

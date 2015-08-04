@@ -1,1 +1,20 @@
-<h1>Whoops!</h1>
+{% extends "base.html" %}
+
+{% block title %}Server error{% endblock %}
+
+{% block page_title %}Server error{% endblock page_title %}
+
+{% block content %}
+<div class="container">
+    <br />
+    <br />
+    <div class="panel panel-danger">
+        <div class="panel-heading">
+            <h2 class="panel-title">500: Server error</h2>
+        </div>
+        <div class="panel-body">
+            Whoops, something went wrong.
+        </div>
+    </div>
+</div>
+{% endblock content %}
