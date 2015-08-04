@@ -2,14 +2,15 @@
 
 {% block form_content %}
 
-</br>
-{{exam.name}}
-</br>
-{{exam.description}}
+<h3>{{exam.name}}</h3>
+<h5>{{exam.description}}</h5>
 </br>
 <ol>
 {% for question in ordered_questions %}
     <li>{{question}}
+        {% if question.image %}
+            <a HREF="{{question.image.url}}"><img HEIGHT=50 WIDTH=50 SRC="{{question.image.url}}"></a>
+        {% endif %}
         <ol type="a">
         {% for option in question.multiplechoiceoption_set.all %}
             <li>
@@ -20,9 +21,9 @@
         {% endfor %}
         </ol>
     </li>
+    </br></br>
 {% endfor %}
 </ol>
-</br>
 
 <p>Are you sure you want to finalize the exam: {{ exam }}?</br>
       You will not be able to edit the exam, including all questions and their

@@ -19,9 +19,8 @@
 <div class="form-horizontal-heading">
   <h2>Edit Free Response Question</h2>
 </div>
-  
 
-<form action="" method="post">{% csrf_token %}
+<form action="" method="post" enctype='multipart/form-data'>{% csrf_token %}
     {{ form.as_p }}
     
     <button class="btn btn-primary " type="submit" value="Update"> Update </button>

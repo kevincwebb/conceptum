@@ -102,8 +102,7 @@
     
     <p>
     Please continue with the online exam and it will ask you for your consent to participate:<br>
-        
-        <a href = "{% url 'exam:take_test' pk %}" class = "btn btn-warning"> I Accept </a>
+        <a href = "{% url 'take_test' object.pk %}" class = "btn btn-warning"> I Accept </a>
     
     </p>
     

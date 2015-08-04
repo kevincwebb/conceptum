@@ -103,7 +103,7 @@ def merge(request, node_id):
     node = get_object_or_404(ConceptNode,pk=node_id)
 
     # only for the merging stage
-    if not node.node_type == 'P':
+    if not node.node_type == 'M':
         return render(request, 'nodemanager/stage_error.html')
 
     #populate the form with all the existing concept atoms for that

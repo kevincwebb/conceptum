@@ -26,16 +26,17 @@
     <br>
   {% endfor %}
 
+  You are only allowed to edit/delete interviews which were uploaded by you.
+  Staff users can edit/delete all interviews.<br>
+  
   {% if user_can_edit %}
     <a href = {% url 'interview_edit' object.id %} class="btn btn-primary"> Edit </a>
-    <a href = {% url 'interview_delete' object.id %} class="btn btn-warning"> Delete </a>
-    (You will be asked to confirm deleting an interview.)<br>
+    <a href = {% url 'interview_delete' object.id %} class="btn btn-danger"> Delete </a>
+    <br>
   {% endif %}
   <br>
-  You are only allowed to edit/delete interviews which were uploaded by you.
-  Staff users can edit/delete all interviews.<br><br>
 
-  <a href = {% url 'interview_index' %} class="btn btn-primary"> Return to interviews </a>
+  <a href = {% url 'interview_group' interview.group.id %} class="btn btn-primary"> Return to interviews </a>
 
 </div> <!-- container -->
 

@@ -76,17 +76,22 @@ qList is a 2d list of the following format:
 	    <label for="toplist_node2"><h2 class = "list">Question Responses <div class = "plus"> + </div>  </h2></label>
 	    <input type = "checkbox" id = "toplist_node2">
 		<ol>    
-		{% if mc_list %}
+
 		<!-- qList = [ q1, q2, ...] where
 			q1 = [question, [option1, option2, ...]
-		--><h3>Multiple Choice</h3>
-			{% for question, chosen, options in mc_list %}
-				<li><h4>{{question}}</h4>
+		-->
+		{% for entry in question_list %}
+			{% if entry.question.is_multiple_choice %}
+				{# entry is a dictionary with these keys: question, chosen, options #}
+				<li><h4>{{entry.question}}</h4>
+				{% if entry.question.image %}
+					<a HREF="{{entry.question.image.url}}"><img HEIGHT=50 WIDTH=50 SRC="{{entry.question.image.url}}"></a>
+				{% endif %}
 				<ol type = "a">
-				{% for item in options %}
-					{% if item.is_correct and item.id = chosen %}        <!-- eventually replace 1 with whatever identifies the correct answer -->
+				{% for item in entry.options %}
+					{% if item.is_correct and item.id = entry.chosen %}
 						<li style="color:green"> <b>{{item}} </b> </li>
-					{% elif item.id == chosen %}
+					{% elif item.id == entry.chosen %}
 						<li style ="color:red"> <b> {{item}} </b> </li>
 					{% elif item.is_correct %}
 						<li style = "color:green"> {{item}} </li>
@@ -96,20 +101,20 @@ qList is a 2d list of the following format:
 				{% endfor %}
 				</ol>
 				</li>
-			{% endfor %} 
-		{% else %}
-			<li> No submitted multiple choice answers from {{response}} </li>
-		{% endif %}
-		<br>
-			
-		{% if fr_list %}
-			<h3>Free Response</h3>
-			{% for question, answer in fr_list %}
-				<li><h4>{{question}}</h4>
-				<ul> {{answer}}</ul>
+			{% else %}
+				{# entry is a dictionary with these keys: question, answer #}
+				<li><h4>{{entry.question}}</h4>
+				{% if entry.question.image %}
+					<a HREF="{{entry.question.image.url}}"><img HEIGHT=50 WIDTH=50 SRC="{{entry.question.image.url}}"></a>
+				{% endif %}
+				<ul> {{entry.answer}}</ul>
 				</li>   
-			{% endfor %}
-		{% endif %}
+			{% endif %}
+		{% empty %}
+			<li> No submitted multiple choice answers from {{response}} </li>
+		{% endfor %}
+		
+	
 		</ol>
 	</li>
 	</ul>

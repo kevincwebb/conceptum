@@ -21,8 +21,20 @@
   </div>
 
   {% for excerpt in interview.conceptexcerpt_set.all %}
-    <b>Topic:</b> {{ excerpt.concept_tag }} <br>
+    <h4>Concept Tag: {{ excerpt.concept_tag }} </h4>
+    {% if user_can_edit %}
+    <a href = {% url 'conceptexcerpt_edit'  object.id excerpt.id %} class = "btn btn-primary"> Edit </a>
+    <a href = {% url 'conceptexcerpt_delete'  object.id excerpt.id %} class = "btn btn-danger"> Delete </a>
+    {% endif %}
+    <br>
     <b>Response:</b> {{ excerpt.response }} <br>
+    <b>Tags:</b>
+    {% for tag in excerpt.topictags_set.all %}
+        {{tag}}, 
+    {% endfor %}
+    <br>
+    <b>Ability Level:</b> {{excerpt.ability_level}} <br>
+    <b>Importance Ranking:</b> {{excerpt.importance}} <br>
     <br>
   {% endfor %}
 
@@ -30,8 +42,8 @@
   Staff users can edit/delete all interviews.<br>
   
   {% if user_can_edit %}
-    <a href = {% url 'interview_edit' object.id %} class="btn btn-primary"> Edit </a>
-    <a href = {% url 'interview_delete' object.id %} class="btn btn-danger"> Delete </a>
+    <a href = {% url 'conceptinterview_edit' object.id %} class="btn btn-primary"> Edit </a>
+    <a href = {% url 'conceptinterview_delete' object.id %} class="btn btn-danger"> Delete </a>
     <br>
   {% endif %}
   <br>

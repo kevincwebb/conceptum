@@ -1,41 +1,43 @@
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.test import SimpleTestCase
 from django.utils.translation import ugettext_lazy as _
+
+import reversion
 
 from profiles.tests import set_up_user
 from interviews.models import get_concept_list, DummyConcept as Concept
 from .models import Exam, FreeResponseQuestion, MultipleChoiceQuestion, MultipleChoiceOption,\
-                    ExamKind, QUESTION_LENGTH, REQUIRED_CHOICES
-from .forms import MultipleChoiceEditForm
+                    ExamKind, ExamStage, QUESTION_LENGTH, REQUIRED_CHOICES
+from .forms import MultipleChoiceEditForm, FreeResponseVersionForm
 
 
-def get_or_create_exam():
+def create_exam():
     """
     gets or creates an exam and some questions
     """
-    exam, created = Exam.objects.get_or_create(name='Test Exam',
-                                               kind=ExamKind.CI,
-                                               description='an exam for testing')
-    if created:
-        concept_type = ContentType.objects.get_for_model(Concept)
-        concept = Concept.objects.get(name = "Concept A")
-        FreeResponseQuestion.objects.create(exam=exam,
-                                            question="What is the answer to this FR question?",
-                                            number=1,
-                                            content_type=concept_type,
-                                            object_id=concept.id)
-        concept = Concept.objects.get(name = "Concept B")
-        mcq = MultipleChoiceQuestion.objects.create(exam=exam,
-                                                    question="What is the answer to this MC question?",
-                                                    number=2,
-                                                    content_type=concept_type,
-                                                    object_id=concept.id)
-        MultipleChoiceOption.objects.create(question=mcq, text="choice 1", index=1, is_correct=True);
-        MultipleChoiceOption.objects.create(question=mcq, text="choice 2", index=2);
-        MultipleChoiceOption.objects.create(question=mcq, text="choice 3", index=3);
+    exam = Exam.objects.create(name='Test Exam',
+                               kind = ExamKind.CI,
+                               stage = ExamStage.DEV,
+                               description='an exam for testing')
+    concept_type = ContentType.objects.get_for_model(Concept)
+    concept = Concept.objects.get(name = "Concept A")
+    FreeResponseQuestion.objects.create(exam=exam,
+                                question="What is the answer to this FR question?",
+                                number=1,
+                                content_type=concept_type,
+                                object_id=concept.id)
+    concept = Concept.objects.get(name = "Concept B")
+    mcq = MultipleChoiceQuestion.objects.create(exam=exam,
+                                question="What is the answer to this MC question?",
+                                number=2,
+                                content_type=concept_type,
+                                object_id=concept.id)
+    MultipleChoiceOption.objects.create(question=mcq, text="choice 1", index=1, is_correct=True)
+    MultipleChoiceOption.objects.create(question=mcq, text="choice 2", index=2)
+    MultipleChoiceOption.objects.create(question=mcq, text="choice 3", index=3)
     return exam
 
 
@@ -48,7 +50,7 @@ class DevFormsTest(SimpleTestCase):
         self.client.login(email=self.user.email, password='password')
  
     def test_add_free_response_form(self):
-        exam = get_or_create_exam()
+        exam = create_exam()
         concept = Concept.objects.get(name = "Concept A")
         question_text = 'Is this a new free response question?'
         
@@ -78,7 +80,7 @@ class DevFormsTest(SimpleTestCase):
         self.assertFormError(response, 'form', 'question', error, "" )
     
     def test_add_multiple_choice_form(self):
-        exam = get_or_create_exam()
+        exam = create_exam()
         concept = Concept.objects.get(name = "Concept A")
         question_text = 'Is this a new multiplce choice question?'
         
@@ -151,8 +153,7 @@ class DevFormsTest(SimpleTestCase):
         q.delete()
     
     def test_multiple_choice_edit_form(self):
-        get_or_create_exam().delete()
-        exam = get_or_create_exam() # get a fresh copy
+        exam = create_exam()
         question = MultipleChoiceQuestion.objects.get(exam=exam)
         options = question.multiplechoiceoption_set.all()
         
@@ -172,12 +173,13 @@ class DevFormsTest(SimpleTestCase):
         #   - delete an option (by leaving it blank)
         post_dict = {'question':'new question',
                      'correct':options[1].id,
-                     'choice_1':'A',
-                     'index_1':1,
-                     'choice_2':'B',
-                     'index_2':2}
+                     'choice_%d' % options[0].id:'A',
+                     'index_%d' % options[0].id:1,
+                     'choice_%d' % options[1].id:'B',
+                     'index_%d' % options[1].id:2}
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
+        self.assertEqual(response.status_code, 302)
         question = MultipleChoiceQuestion.objects.get(id=question.id)
         options = question.multiplechoiceoption_set.all()
         self.assertEqual(question.question,'new question')
@@ -190,8 +192,8 @@ class DevFormsTest(SimpleTestCase):
         self.assertEqual(len(options),2) #before, there were 3
         
         # Change option order
-        post_dict['index_1']=2
-        post_dict['index_2']=1
+        post_dict['index_%d' % options[0].id]=2
+        post_dict['index_%d' % options[1].id]=1
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
         options = MultipleChoiceQuestion.objects.get(id=question.id).multiplechoiceoption_set.all()
@@ -226,14 +228,14 @@ class DevFormsTest(SimpleTestCase):
         self.assertFormError(response, 'form', 'correct', None, "" )
         
         # Duplicate option
-        post_dict['choice_1']='same'
-        post_dict['choice_2']='same'
+        post_dict['choice_%d' % options[0].id]='same'
+        post_dict['choice_%d' % options[1].id]='same'
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
         error = _("You have two identical choices.")
         self.assertFormError(response, 'form', None, error, "" )
         post_dict['choice_new']='same'
-        post_dict['choice_2']='B'
+        post_dict['choice_%d' % options[1].id]='B'
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
         self.assertFormError(response, 'form', None, error, "" )
@@ -241,17 +243,17 @@ class DevFormsTest(SimpleTestCase):
         # indices not successive / don't start at 1
         post_dict = {'question':'new question',
                      'correct':options[0].id,
-                     'choice_1':'A',
-                     'choice_2':'B',
+                     'choice_%d' % options[0].id:'A',
+                     'choice_%d' % options[1].id:'B',
                      'choice_new':'C',
-                     'index_1':2,
-                     'index_2':3,
+                     'index_%d' % options[0].id:2,
+                     'index_%d' % options[1].id:3,
                      'index_new':4}
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
         error = _("Order must begin with 1, with no doubles or gaps")
         self.assertFormError(response, 'form', None, error, "" )
-        post_dict['index_2']=1 #we have 1, 2, 4
+        post_dict['index_%d' % options[1].id]=1 #we have 1, 2, 4
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
         self.assertFormError(response, 'form', None, error, "" )
@@ -263,14 +265,14 @@ class DevFormsTest(SimpleTestCase):
         # question and index don't match up
         post_dict = {'question':'new question',
                      'correct':options[0].id,
-                     'choice_1':'A'}
+                     'choice_%d' % options[0].id:'A'}
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
         error = _("Make sure all non-blank choices have an order.")
         self.assertFormError(response, 'form', None, error, "" )
         post_dict = {'question':'new question',
                      'correct':options[0].id,
-                     'index_1':'1'}
+                     'index_%d' % options[0].id:'1'}
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
         error = _("Make sure all blank choices do not have an order.")
@@ -279,11 +281,95 @@ class DevFormsTest(SimpleTestCase):
         # marked wrong field correct
         post_dict = {'question':'new question',
                      'correct':-1,
-                     'choice_1':'A',
-                     'choice_2':'C',
-                     'index_1':1,
-                     'index_2':2}
+                     'choice_%d' % options[0].id:'A',
+                     'choice_%d' % options[1].id:'C',
+                     'index_%d' % options[0].id:1,
+                     'index_%d' % options[1].id:2}
         response = self.client.post(reverse('CI_exam:mc_edit',kwargs ={'question_id':question.id}),
                                     post_dict)
         error = _("The choice you marked correct is blank.")
         self.assertFormError(response, 'form', None, error, "" )
+
+    def test_free_response_version_form(self):
+        exam = create_exam()    
+        concept_type = ContentType.objects.get_for_model(Concept)
+        concept = Concept.objects.get(name = "Concept A")
+        # Have to create a new question with never-before-used pk because there are version\
+        # objects still lingering in the database from old deleted questions.
+        with transaction.atomic(), reversion.create_revision():
+            question = FreeResponseQuestion.objects.create(
+                id = 3691,
+                exam=exam,
+                question="A FR question for versioning?",
+                number=1,
+                content_type=concept_type,
+                object_id=concept.id)
+        
+        # choosing current version should make a new non-unique version
+        self.assertEqual(len(reversion.get_for_object(question)),1)
+        response = self.client.post(reverse('CI_exam:fr_versions',
+                                            kwargs ={'question_id':question.id}),
+                                    {'version':0})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(reversion.get_for_object(question)),2)
+        self.assertEqual(len(question.get_unique_versions()), 1)
+        
+        # make a new version, this should be first in the list
+        with transaction.atomic(), reversion.create_revision():
+            question.question = 'updated question?'
+            question.save()
+        form = FreeResponseVersionForm(instance=question)
+        self.assertEqual(len(form.get_version_choices()),2)
+        self.assertEqual(form.get_version_choices()[0][1],question.question)
+        
+        # choose old version and update question
+        response = self.client.post(reverse('CI_exam:fr_versions',
+                                            kwargs ={'question_id':question.id}),
+                                    {'version':1})
+        self.assertEqual(response.status_code, 302)
+        question = FreeResponseQuestion.objects.get(id=question.id)
+        self.assertEqual(question.question, 'A FR question for versioning?')
+
+    def test_multiple_choice_version_form(self):
+        exam = create_exam()    
+        concept_type = ContentType.objects.get_for_model(Concept)
+        concept = Concept.objects.get(name = "Concept A")
+        # Have to create a new question with never-before-used pk because there are version
+        # objects still lingering in the database from old deleted questions.
+        with transaction.atomic(), reversion.create_revision():
+            question = MultipleChoiceQuestion.objects.create(
+                id = 9875,
+                exam=exam,
+                question="A MC question for versioning?",
+                number=1,
+                content_type=concept_type,
+                object_id=concept.id)
+            MultipleChoiceOption.objects.create(id=2048, question=question, text="choice 1",
+                                                index=1, is_correct=True)
+            MultipleChoiceOption.objects.create(id=3810, question=question, text="choice 2",
+                                                index=2)
+        
+        # choosing current version should make a new non-unique version
+        self.assertEqual(len(reversion.get_for_object(question)),1)
+        response = self.client.post(reverse('CI_exam:mc_versions',
+                                            kwargs ={'question_id':question.id}),
+                                    {'version':0})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(reversion.get_for_object(question)),2)
+        self.assertEqual(len(question.get_unique_versions()), 1)
+        
+        # make a new version, this should be first in the list
+        with transaction.atomic(), reversion.create_revision():
+            question.question = 'updated question?'
+            question.save()
+        form = FreeResponseVersionForm(instance=question)
+        self.assertEqual(len(form.get_version_choices()),2)
+        self.assertEqual(form.get_version_choices()[0][1],question.question)
+        
+        # choose old version and update question
+        response = self.client.post(reverse('CI_exam:mc_versions',
+                                            kwargs ={'question_id':question.id}),
+                                    {'version':1})
+        self.assertEqual(response.status_code, 302)
+        question = MultipleChoiceQuestion.objects.get(id=question.id)
+        self.assertEqual(question.question, 'A MC question for versioning?')

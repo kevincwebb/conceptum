@@ -168,6 +168,10 @@ class Question(models.Model):
     rank = models.IntegerField(null=True, blank = True)
     optional = models.BooleanField(default=False)
     
+    class Meta:
+        ordering = ['number']
+
+    
     def __unicode__(self):
         return self.question
     
@@ -196,7 +200,6 @@ class Question(models.Model):
         This is neither a subset nor superset of the list returned by get_unique_for_object.
         """
         versions = reversion.get_for_object(self)
-        print versions
         unique_versions = []
         for v in versions:
             if not unique_versions:
@@ -279,9 +282,9 @@ class MultipleChoiceQuestion(Question):
         when this problem was supposedly fixed). However, revision.revert() does not work with
         our proxy model, but we were able to change one line to make it work.
         
-        The problem was that `version.object.__class__` is Question (not registered with reversion,
-        caused an error). However, `version.object_version.object.__class__` is MultipleChoiceQuestion,
-        which is what we want.
+        The problem was that `version.object.__class__` is Question (not registered with
+        reversion, caused an error). However, `version.object_version.object.__class__` is
+        MultipleChoiceQuestion, which is what we want.
         """
         version_set = revision.version_set.all()
         old_revision = {}
@@ -423,7 +426,7 @@ class ExamResponse(models.Model):
         send_mail function.
         """
         current_site = Site.objects.get_current()
-        test_url = reverse("exam:take_test_IRB", args=[self.key])
+        test_url = reverse("take_test_IRB", args=[self.key])
         test_url = request.build_absolute_uri(test_url)
         # The ctx dictionary is a way to create variables to be used in the message
         # template (no need to get into the send_mail function below.)

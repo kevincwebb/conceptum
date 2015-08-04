@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.formtools.wizard.views import SessionWizardView
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 
 import reversion
@@ -23,7 +24,7 @@ from .models import Exam, ResponseSet, ExamResponse, QuestionResponse, FreeRespo
                     MultipleChoiceQuestion, MultipleChoiceOption, FreeResponseResponse,\
                     MultipleChoiceResponse, ExamKind, ExamStage, Question
 from .forms import SelectConceptForm, AddFreeResponseForm, AddMultipleChoiceForm, \
-                   NewResponseSetForm, DistributeForm, ExamResponseForm, BlankForm, \
+                   NewResponseSetForm, DistributeForm, ExamResponseForm, CleanupForm, FreeResponseEditForm, \
                    MultipleChoiceEditForm, FreeResponseVersionForm, MultipleChoiceVersionForm, \
                    FinalizeSelectForm, FinalizeOrderForm, FinalizeConfirmForm
 from .mixins import DevelopmentMixin, DistributionMixin, CurrentAppMixin
@@ -462,8 +463,6 @@ class QuestionCreateView(LoginRequiredMixin,
     @reversion.create_revision()
     def form_valid(self, form):
         concept_type = ContentType.objects.get_for_model(Concept)
-        # we could move the object creation to each form's save() method, however,
-        # we would need to pass self.exam and self.concept to the form
         if (self.question_type == 'fr'):
             FreeResponseQuestion.objects.create(exam = self.exam,
                                                 question = form.cleaned_data.get('question'),
@@ -508,7 +507,7 @@ class QuestionEditView(LoginRequiredMixin,
 
 class FreeResponseEditView(QuestionEditView):
     model = FreeResponseQuestion
-    fields = ['question','image']
+    form_class = FreeResponseEditForm
     template_name = 'exam/fr_edit.html'
     
     @transaction.atomic()
@@ -528,11 +527,11 @@ class MultipleChoiceEditView(QuestionEditView):
         context = super(MultipleChoiceEditView, self).get_context_data(**kwargs)
         form = self.get_form(self.form_class)
         fields = list(form)
-        #   fields[2] is a ChoiceField for marking the correct answer
-        #   fields[3::2] is all choice_%d fields; fields[4::2] is all index_%d fields
+        #   fields[3] is a ChoiceField for marking the correct answer
+        #   fields[4::2] is all choice_%d fields; fields[5::2] is all index_%d fields
         #   We zip these into one list so that the template can get a tuple for all fields
         #   pertaining to a single choice
-        context['choice_fields'] = zip(fields[3::2], list(fields[2]), fields[4::2])
+        context['choice_fields'] = zip(fields[4::2], list(fields[3]), fields[5::2])
         return context
 
 
@@ -555,7 +554,8 @@ class FreeResponseVersionView(QuestionVersionView):
     def get_context_data(self, **kwargs):
         context = super(FreeResponseVersionView, self).get_context_data(**kwargs)
         context['question_type'] = 'fr'
-        context['version_list'] = self.object.get_unique_versions()
+        context['version_list'] = [[version.object_version.object]
+            for version in reversed(self.object.get_unique_versions())]
         return context
 
 
@@ -583,7 +583,8 @@ class MultipleChoiceVersionView(QuestionVersionView):
     def get_context_data(self, **kwargs):
         context = super(MultipleChoiceVersionView, self).get_context_data(**kwargs)
         context['question_type'] = 'mc'
-        context['version_list'] = self.object.get_unique_versions()
+        context['version_list'] = [[version.object_version.object]
+            for version in reversed(self.object.get_unique_versions())]
         context['option_list'] = self.get_option_list()
         return context
 
@@ -657,13 +658,7 @@ class FinalizeView(LoginRequiredMixin,
             context['choices_and_objects'] = zip(form['select_questions'], form['select_questions'].field.queryset)
         if self.steps.current == '1':
             form = self.get_form()
-            option_list = []
-            for question in reversed(form.queryset):
-                if question.is_multiple_choice:
-                    option_list.append(question.multiplechoiceoption_set.all())
-                else:
-                    option_list.append([])
-            context['option_list'] = option_list
+            context['question_list'] = [[question] for question in reversed(form.queryset)]
         if self.steps.current == '2':
             data = self.get_all_cleaned_data()
             questions = {}
@@ -781,6 +776,7 @@ class ResponseSetDetailView(LoginRequiredMixin,
         context['exam'] = self.exam
         context['response_set'] = self.object
         context['responses'] = self.object.examresponse_set.filter(submitted__isnull=False)
+        context['pending'] = self.object.examresponse_set.filter(submitted__isnull=True)
         context['stats'] = self.set_stats()
         context['user_is_uploader_or_staff'] =\
             (self.request.user.is_staff or self.request.user.profile==self.object.instructor)
@@ -794,28 +790,32 @@ class ExamResponseDetailView(LoginRequiredMixin,
     template_name = 'exam/exam_response_detail.html'
     model = ExamResponse
     pk_url_kwarg = 'key'
-
+    
+    def make_question_list(self):
+        multiple_choice_responses = self.object.multiplechoiceresponse_set.all()
+        free_response_responses = self.object.freeresponseresponse_set.all()
+        
+        question_list = []
+        for question in self.object.response_set.exam.question_set.all():
+            if question.is_multiple_choice:
+                response = multiple_choice_responses.get(question=question)
+                q = {'question':question, 'chosen':response.option_id}
+                qOptions = []
+                qOptions.extend(question.multiplechoiceoption_set.all())
+                q['options']=qOptions
+                question_list.append(q)
+            else:
+                response = free_response_responses.get(question=question)
+                q = {'question':question, 'answer':response.response}
+                question_list.append(q)
+        return question_list
+    
     def get_context_data(self, **kwargs):
-        context = super(ExamResponseDetailView, self).get_context_data(**kwargs)
-        
-        mc_list = []
-        q = []
-        for question in self.object.multiplechoiceresponse_set.all():
-            q = [question.question, question.option_id]     #name of question, answer chosen
-            qOptions = []
-            qOptions.extend(question.question.multiplechoiceoption_set.all())
-            q.append(qOptions)
-            mc_list.append(q)
-        fr_list = []
-        for question in self.object.freeresponseresponse_set.all():
-            q = [question.question, question.response]
-            fr_list.append(q)        
-        
+        context = super(ExamResponseDetailView, self).get_context_data(**kwargs)      
         context['exam'] = self.exam
         context['response'] = self.object
         context['stats'] = qstats(self.object.multiplechoiceresponse_set.all())
-        context['mc_list'] = mc_list
-        context['fr_list'] = fr_list
+        context['question_list'] = self.make_question_list()
         return context
     
 
@@ -1009,7 +1009,7 @@ class CleanupView(LoginRequiredMixin,
     in case automatic cleanup is desired.  http://stackoverflow.com/a/11789141
     """
     template_name = 'exam/cleanup.html'
-    form_class = BlankForm
+    form_class = CleanupForm
     success_url = reverse_lazy('distribute_cleanup')
     
     def get_context_data(self, **kwargs):
@@ -1034,19 +1034,23 @@ class CleanupView(LoginRequiredMixin,
 
 ############################# TAKE TEST ##################################################
 
-def TakeTestIRBView(request, pk):
-    """
-    TODO: make CBV, check that the exam is available (as in TakeTestView)
-    """
-    template = loader.get_template('exam/take_test_IRB.html')
-    context = RequestContext(request,
-                             { 'pk':pk},)
-    return HttpResponse(template.render(context))
 
+class TakeTestIRBView(generic.DetailView):
+    model = ExamResponse
+    template_name = 'exam/take_test_IRB.html'
+
+    def dispatch(self, *args, **kwargs):
+        """
+        Check that the ExamResponse is available.
+        """
+        try:
+            if self.get_object().is_available():
+                return super(TakeTestIRBView, self).dispatch(*args, **kwargs)
+        except Http404:
+            pass
+        return HttpResponseRedirect(reverse('exam_unavailable'))
     
-class TakeTestView(#UnauthenticatedUserMixin,
-                   CurrentAppMixin,
-                   generic.UpdateView):
+class TakeTestView(generic.UpdateView):
     """
     This is where students take the Exam. A student will get a URL that ends with the
     key to a specific ExamResponse. If that ER has expired or already been submitted, or
@@ -1061,15 +1065,26 @@ class TakeTestView(#UnauthenticatedUserMixin,
     
     def dispatch(self, *args, **kwargs):
         """
-        Check that the ER is available.
+        Check that the ExamResponse is available.
         """
         try:
             if self.get_object().is_available():
                 return super(TakeTestView, self).dispatch(*args, **kwargs)
         except Http404:
             pass
-        return HttpResponseRedirect(reverse('exam:exam_unavailable', current_app=self.current_app))
-        
+        return HttpResponseRedirect(reverse('exam_unavailable'))
+    
+    def get_context_data(self, **kwargs):
+        """
+        Pass the list of expired, unsubmitted ERs to the template
+        """
+        context = super(TakeTestView, self).get_context_data(**kwargs)
+        form = self.get_form(self.form_class)
+        fields = list(form)
+        questions = self.object.response_set.exam.question_set.all()
+        context['questions'] = zip(form, questions)
+        return context
+    
     def form_valid(self, form):
         """
         Mark the time the exam has been submitted, and call the form's save() method,
@@ -1081,4 +1096,4 @@ class TakeTestView(#UnauthenticatedUserMixin,
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        return reverse('exam:response_complete', current_app=self.current_app)
+        return reverse('response_complete')

@@ -19,10 +19,13 @@
   <center>
   <div class="form-horizontal-heading">
     <h2>Add Interview</h2>
+    {% if group %}
+      <h4>to Group: {{group}}</h4>
+    {% endif %}
   </div>
   </center>
 
-<form class="form-horizontal" role="form"  action="{% url 'interview_add' %}" method="post">{% csrf_token %}
+<form class="form-horizontal" role="form"  action="" method="post">{% csrf_token %}
   
   {{ form.non_field_errors }}
 

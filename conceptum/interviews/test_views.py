@@ -201,10 +201,8 @@ class ViewsTest(TestCase):
         get_or_create_interview(self.user)
         get_or_create_interview(self.user, 'The Professor')
         response = self.client.get(reverse('interview_index'))
-        self.assertQuerysetEqual(response.context['interview_list'],
-                                 ['<Interview: Interview with The Professor on 2014-01-01>',
-                                 '<Interview: Interview with Dr. Test on 2014-01-01>'],
-                                 ordered=False )
+        self.assertContains(response, 'Interview with The Professor on 2014-01-01')
+        self.assertContains(response, 'Interview with Dr. Test on 2014-01-01')
     
     def test_add_view_concept_list(self):
         response = self.client.get(reverse('interview_add'))

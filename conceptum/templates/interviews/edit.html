@@ -18,11 +18,11 @@
 
   <center>
   <div class="form-horizontal-heading">
-    <h2>Edit Interview</h2>
+    <h2>Rename Group</h2>
   </div>
   </center>
 
-<form class="form-horizontal" role="form"  action="{% url 'interview_edit' object.id %}" method="post">{% csrf_token %}
+<form class="form-horizontal" role="form"  action="" method="post">{% csrf_token %}
   
   {{ form.non_field_errors }}
 
@@ -37,8 +37,8 @@
   {% endfor %}
   
   <div class="submit">
-    <button class="btn btn-lg btn-primary btn-block" type="submit">Save Changes</button>
-    <a href = {% url 'interview_detail' object.id %} class='btn btn-lg btn-info btn-block' > Cancel </a>
+    <button class="btn btn-primary" type="submit">Save Changes</button>
+    <a href = {% url 'interview_group' object.id %} class='btn btn-info' > Cancel </a>
   </div>
 </form>
 

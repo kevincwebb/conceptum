@@ -41,23 +41,29 @@
         radio.choice_value is the index (newest versions first)
         radio.choice_label is the question text
         radio.tag is a selectable radio button
-        
-      use radio.choice_value in combination with version_list
-      to get the corresponding version object
+      
+      version_list.pop is a list with just a single item, allowing us to access
+      attributes of the question model for each version
     {% endcomment %}
-    {%for radio in form.version %}
+    {% for radio in form.version %}
+    {% for version in version_list.pop %}
         {% if radio.choice_value == '0' %}
           <tr class = warning>
           <td> Current Version </td>
         {% else %}
           <tr class = success>
           <td>{{ radio.choice_value}}  </td>
-          {% comment %}
-          This may be confusing: radio.choice_value is just an index,
-          not a version number.
-          {% endcomment %}
+          {# This may be confusing: radio.choice_value is just an index, not a version number. #}
         {% endif %}
-        <td>{{radio.choice_label}}</td>
+        <td>
+          {{radio.choice_label}}</br>
+          {% if version.image %}
+            <a HREF="{{version.image.url}}"><img HEIGHT=50 WIDTH=50 SRC="{{version.image.url}}"></a>
+            </br>
+          {% endif %}
+          <i>{{version.content_object}}</i>
+          
+        </td>
         {% if question_type == 'mc' %}
           <td>
             {% for option in option_list.pop %}
@@ -71,6 +77,7 @@
         {% endif %}
         <td>{{radio.tag}}<br></td>
       </tr>
+    {% endfor %}
     {% endfor %}
   </tbody>
   </table>
