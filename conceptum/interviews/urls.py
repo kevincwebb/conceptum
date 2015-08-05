@@ -18,6 +18,8 @@ urlpatterns = patterns('',
     #/interviews/concept/
     url(r'^concept/$', views.ConceptInterviewIndexView.as_view(), name = 'conceptinterview_index'),
     #don't need concept group views because it's all the same
+    #/interviews/concept/create
+    url(r'^concept/create$', views.CreateConceptGroupView.as_view(), name = 'conceptinterview_create'),
     #/interviews/concept/1/detail
     url(r'^concept/(?P<pk>\d+)/detail/$', views.ConceptInterviewDetailView.as_view(), name='conceptinterview_detail'),
     #/interviews/concept/1/add

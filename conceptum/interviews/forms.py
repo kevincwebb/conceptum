@@ -32,9 +32,10 @@ class AddForm(forms.ModelForm):
         """
         self.group = kwargs.pop('group')
         super(AddForm, self).__init__(*args, **kwargs)
+        
         if not self.group:
             self.fields["group"] = forms.ModelChoiceField(
-                queryset=InterviewGroup.objects.filter(unlocked=True))
+                queryset=InterviewGroup.objects.filter(unlocked=True, is_concept = False))
         for concept in get_concept_list():
             # TODO: when get_concept_list is fixed, we may need to update this line
             self.fields["response_%d" % concept.id] = \
@@ -158,9 +159,9 @@ class ConceptInterviewAddForm(forms.ModelForm):
         If 'group' is not None, then there is no field for interview group, and the
         provided group is automatically saved to the model.
         """
-        self.group = kwargs.get('group')
+        self.group = kwargs.pop('group')
         super(ConceptInterviewAddForm, self).__init__(*args, **kwargs)
-        if not self.group:
+        if self.group == None:
             self.fields["group"] = forms.ModelChoiceField(
                 queryset=InterviewGroup.objects.filter(unlocked=True, is_concept = True))
         
@@ -283,6 +284,12 @@ class ConceptExcerptEditForm(forms.ModelForm):
         i.ability_level = self.cleaned_data.get('ability_level')
         i.importance = self.cleaned_data.get('importance')
         i.save()
+        
+        
+class GroupForm(forms.ModelForm):
+    class Meta:
+        model = InterviewGroup
+        fields = ['name','unlocked']
         
 
 

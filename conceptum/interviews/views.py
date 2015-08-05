@@ -39,11 +39,33 @@ class CreateGroupView(LoginRequiredMixin,
                       StaffuserRequiredMixin,
                       generic.CreateView):
     model = InterviewGroup
+    fields = ['name', 'unlocked']
     template_name = 'interviews/create.html'
+    
+    def form_valid(self, form):
+        form.instance.is_concept = False
+        return super(CreateGroupView,self).form_valid(form)
     
     def get_success_url(self):
         return reverse('interview_group', args=[self.object.id])
 
+
+class CreateConceptGroupView(LoginRequiredMixin,
+                      StaffuserRequiredMixin,
+                      generic.CreateView):
+    model = InterviewGroup
+    fields = ['name', 'unlocked']
+    template_name = 'interviews/create.html'
+    #form_class =  forms.models.modelform_factory(InterviewGroup,
+                #                                fields=('name','unlocked'))
+
+    
+    def form_valid(self, form):
+        form.instance.is_concept = True
+        return super(CreateConceptGroupView,self).form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('interview_group', args=[self.object.id])
 
 class GroupView(LoginRequiredMixin,
                 ContribRequiredMixin,
@@ -232,7 +254,7 @@ class DeleteView(LoginRequiredMixin,
        
     model = Interview
     template_name = 'interviews/confirm_delete.html'
-    success_url = reverse_lazy('interview_index')
+    
     
     raise_exception = True
     redirect_unauthenticated_users = True
@@ -245,6 +267,14 @@ class DeleteView(LoginRequiredMixin,
         interview_id = self.kwargs['pk']
         interview = get_object_or_404(self.model, pk=interview_id)
         return (user.is_staff or user==interview.uploaded_by)
+    
+    def get_success_url(self):
+        interview_id = self.kwargs['pk']
+        interview = get_object_or_404(self.model, pk=interview_id)
+        if (interview.is_concept):
+            return reverse_lazy('conceptinterview_index')
+        else:
+            return reverse_lazy('interview_index')
     
 
 ################ CONCEPT INTERVIEWS ####################
@@ -259,6 +289,7 @@ class ConceptInterviewIndexView(LoginRequiredMixin,
     def get_context_data(self, **kwargs):
         context = super(ConceptInterviewIndexView, self).get_context_data(**kwargs)
         context['object_list'] = InterviewGroup.objects.filter(is_concept = True)
+        context['concept'] = True
         return context    
     
 class ConceptInterviewDetailView(LoginRequiredMixin,
@@ -362,7 +393,6 @@ class ConceptExcerptAddView(LoginRequiredMixin,
         
         interview_id = self.kwargs['pk']
         interview = Interview.objects.get(pk = interview_id)
-        print(interview)
         excerpt = ConceptExcerpt()
         excerpt.interview = interview
         excerpt.concept_tag = form.cleaned_data.get('concept_tag')
@@ -433,40 +463,40 @@ class ConceptInterviewEditView(LoginRequiredMixin,
 
 
 
-class ConceptInterviewAddView(LoginRequiredMixin,
-              ContribRequiredMixin,
-              generic.CreateView):
-    """
-    FormView for a user to add an interview.
-    """
-    model = Interview
-    template_name = 'interviews/conceptinterview_add.html'
-    form_class = ConceptInterviewAddForm
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(ConceptInterviewAddView, self).dispatch(request, *args, **kwargs)
-    
-    def get_form_kwargs(self):
-        kwargs = super(ConceptInterviewAddView, self).get_form_kwargs()
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super(ConceptInterviewAddView, self).get_context_data(**kwargs)
-        return context
-
-    def form_valid(self, form):
-        """
-        Calls the AddForm save method, which takes the request as an argument
-        """
-        self.object = form.save(self.request)
-        return HttpResponseRedirect(self.get_success_url())
-    
-    def get_success_url(self):
-        """
-        Returns the result of the get_absolute_url method in the Interview model.
-        This redirects to the interview's detail page
-        """    
-        return self.object.get_absolute_url()
+# class ConceptInterviewAddView(LoginRequiredMixin,
+#               ContribRequiredMixin,
+#               generic.CreateView):
+#     """
+#     FormView for a user to add an interview.
+#     """
+#     model = Interview
+#     template_name = 'interviews/conceptinterview_add.html'
+#     form_class = ConceptInterviewAddForm
+# 
+#     def dispatch(self, request, *args, **kwargs):
+#         return super(ConceptInterviewAddView, self).dispatch(request, *args, **kwargs)
+#     
+#     def get_form_kwargs(self):
+#         kwargs = super(ConceptInterviewAddView, self).get_form_kwargs()
+#         return kwargs
+# 
+#     def get_context_data(self, **kwargs):
+#         context = super(ConceptInterviewAddView, self).get_context_data(**kwargs)
+#         return context
+# 
+#     def form_valid(self, form):
+#         """
+#         Calls the AddForm save method, which takes the request as an argument
+#         """
+#         self.object = form.save(self.request)
+#         return HttpResponseRedirect(self.get_success_url())
+#     
+#     def get_success_url(self):
+#         """
+#         Returns the result of the get_absolute_url method in the Interview model.
+#         This redirects to the interview's detail page
+#         """    
+#         return self.object.get_absolute_url()
 
 
 class ConceptExcerptEditView(LoginRequiredMixin,
@@ -478,7 +508,7 @@ class ConceptExcerptEditView(LoginRequiredMixin,
     a staff user is allowed to edit an interview.
     """
     model = ConceptExcerpt
-    template_name = 'interviews/edit.html'        #may or may not have to create one
+    template_name = 'interviews/conceptexcerpt_edit.html'        #may or may not have to create one
     form_class = ConceptExcerptEditForm
     pk_url_kwarg = 'excerpt_id'
     
@@ -499,6 +529,13 @@ class ConceptExcerptEditView(LoginRequiredMixin,
         excerpt = get_object_or_404(self.model, pk=self.kwargs['excerpt_id'])  
         return super(ConceptExcerptEditView, self).dispatch(request, *args, **kwargs)
    
+    def get_context_data(self, **kwargs):
+        context = super(ConceptExcerptEditView, self).get_context_data(**kwargs)
+        excerpt_id = self.kwargs['excerpt_id']
+        excerpt = get_object_or_404(self.model, pk = excerpt_id)
+        interview = excerpt.interview
+        context['interview'] = interview
+        return context
     
     def form_valid(self, form):
         """

@@ -69,10 +69,19 @@ This group is
     <p>No interviews have been submitted.</p>
 {% endif %}
 
-{% if object.unlocked %}
-<a href = {% url 'interview_add' object.id %} class="btn btn-primary"> Add an interview </a>
+
+{% if object.is_concept %}
+    {% if object.unlocked %}
+    <a href = {% url 'conceptinterview_add' object.id %} class="btn btn-primary"> Add an interview </a>
+    {% endif %}
+    <a href = {% url 'conceptinterview_index' %} class ="btn btn-primary"> Back to all groups</a>
+{% else %}
+    {% if object.unlocked %}
+    <a href = {% url 'interview_add' object.id %} class="btn btn-primary"> Add an interview </a>
+    {% endif %}
+    <a href = {% url 'interview_index' %} class="btn btn-primary"> Back to all groups </a>
+
 {% endif %}
-<a href = {% url 'interview_index' %} class="btn btn-primary"> Back to all groups </a>
 
 </div> <!-- container -->
 

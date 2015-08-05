@@ -17,7 +17,11 @@
 <div class="container">
     
 <div class="form-horizontal-heading">
+{% if concept %}
+    <h2> Concept Interview Groups </h2>
+{% else %}
   <h2>Interview Groups</h2>
+{% endif %}
 </div>
 
 <ul class = "collapsible_overview">   
@@ -25,17 +29,29 @@
   <li class = "table">
     <span class="over_tab">
     <a href="{% url 'interview_group' group.id %}">{{ group }}</a>
-    Unlocked = {{group.unlocked}}
     </span>
+    {% if group.unlocked %}
+        Unlocked
+    {% else %}
+        Locked
+    {% endif %}
   </li>
 {% empty %}
     <p>There are no interview groups. An admin will need to create one.</p>
 {% endfor %}
 </ul>
-
-<a href = {% url 'interview_add' 0 %} class="btn btn-primary"> Add an interview </a>
+    
+{% if concept %}
+    <a href = {% url 'conceptinterview_add' 0 %} class="btn btn-primary"> Add an interview </a>
+{% else %}
+    <a href = {% url 'interview_add' 0 %} class="btn btn-primary"> Add an interview </a>
+{% endif %}
 {% if user.is_staff %}
-  <a href = {% url 'interview_create' %} class="btn btn-warning"> Create an interview group </a>
+    {% if concept %}
+        <a href = {% url 'conceptinterview_create' %} class="btn btn-warning"> Create an interview group </a>
+    {% else %}
+        <a href = {% url 'interview_create' %} class="btn btn-warning"> Create an interview group </a>
+    {% endif %}
 {% endif %}
 
 </div> <!-- container -->
