@@ -19,6 +19,10 @@
 <div class="form-horizontal-heading">
   <h2>{{object}}</h2>
 </div>
+    
+{% if object.is_concept %}
+This interview group is for concept interviews.
+{% endif %}
   
 This group is
 {% if object.unlocked %}
@@ -40,9 +44,13 @@ This group is
 {% if interview_list %}
 <ul class = "collapsible_overview"> 
 {% for interview, stats in interview_list %}
-       
-    <li class = "table"><span class="over_tab"><a href="{% url 'interview_detail' interview.id %}">{{ interview }}</a></span>
-    
+    <li class = "table"><span class="over_tab">
+    {% if object.is_concept %}
+        <a href="{% url 'conceptinterview_detail' interview.id %}">{{ interview }}</a>
+    {% else %}
+        <a href="{% url 'interview_detail' interview.id %}">{{ interview }}</a>
+    {% endif %}
+    </span>
     <label for="toplist_node{{exam.id}}"><div class = "overview-button">Overview <div class = "plus"> + </div> </div></label>
     <input type = "checkbox" id = "toplist_node{{exam.id}}">
 <div class = "overview">

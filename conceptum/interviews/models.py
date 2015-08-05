@@ -30,7 +30,7 @@ def get_concept_list():
 class InterviewGroup(models.Model):
     name = models.CharField(max_length=255)
     unlocked = models.BooleanField(default=True)
-    #is_concept = models.BooleanField(default = False)
+    is_concept = models.BooleanField(default = False)
 
     def __str__(self):
         return self.name
@@ -49,7 +49,7 @@ class Interview(models.Model):
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL)
     date_uploaded = models.DateField(auto_now_add=True)
     
-    #is_concept = models.BooleanField(default = False)
+    is_concept = models.BooleanField(default = False)
     
     def __str__(self):
         return "Interview with {person} on {date}".format(
@@ -75,20 +75,20 @@ class Excerpt(models.Model):
     response = models.TextField()
     
     
-# #Concept Tag (doesn't exist, entered by interviewer) +
-# #Text Justification(response) + ability level ranking + importance ranking +
-# #Interviewee + topic tag (can be multiple)
-# class ConceptExcerpt(models.Model):
-#     interview = models.ForeignKey(Interview)
-#     response = models.TextField()
-#     concept_tag = models.CharField(max_length = 255)
-#     ability_level = models.PositiveIntegerField(default = 0)
-#     importance = models.PositiveIntegerField(default = 0)
-#     
-#     ##TODO topic tags
-#     
-#     
-# class TopicTag(models.Model):
-#     tag = models.CharField(max_length = 255)
-#     excerpts = models.ManyToManyField(ConceptExcerpt)
-# 
+#Concept Tag (doesn't exist, entered by interviewer) +
+#Text Justification(response) + ability level ranking + importance ranking +
+#Interviewee + topic tag (can be multiple)
+class ConceptExcerpt(models.Model):
+    interview = models.ForeignKey(Interview)
+    response = models.TextField()
+    concept_tag = models.CharField(max_length = 255)
+    ability_level = models.PositiveIntegerField(default = 0)
+    importance = models.PositiveIntegerField(default = 0)
+    
+    ##TODO topic tags
+    
+    
+class TopicTag(models.Model):
+    tag = models.CharField(max_length = 255)
+    excerpts = models.ManyToManyField(ConceptExcerpt)
+

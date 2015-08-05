@@ -44,6 +44,7 @@
         
             <a class="navbar-brand" href="/"><span class = "title">Conceptum</span></a>
             {% if user.is_authenticated %}
+                <a class="navbar-brand" href="{% url 'conceptinterview_index' %}">Concept Interviews</a>
                 <a class="navbar-brand" href="{% url 'stage1 dispatch' %}">Concepts</a>
                 <a class="navbar-brand" href="{% url 'interview_index' %}">Interviews</a>
             
