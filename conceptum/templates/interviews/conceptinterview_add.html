@@ -18,7 +18,7 @@
 
   <center>
   <div class="form-horizontal-heading">
-    <h2>Add Interview</h2>
+    <h2>Add Concept Interview</h2>
     {% if group %}
       <h4>to Group: {{group}}</h4>
     {% endif %}
@@ -26,6 +26,7 @@
   </center>
 
 <form class="form-horizontal" role="form"  action="" method="post">{% csrf_token %}
+  
   {{ form.non_field_errors }}
 
   {% for field in form %}
@@ -39,12 +40,8 @@
   {% endfor %}
   
   <div class="submit">
-      <button class="btn btn-lg btn-primary btn-block" type="submit">Save Changes</button>
-    {% if object.is_concept %}
-        <a href = {% url 'interview_index' %} class='btn btn-lg btn-info btn-block' > Cancel </a>
-      {% else %}
-    <a href = {% url 'conceptinterview_index' %} class='btn btn-lg btn-info btn-block' > Cancel </a>
-      {% endif %}
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Save Changes</button>
+    <a href = {% url 'interview_index' %} class='btn btn-lg btn-info btn-block' > Cancel </a>
   </div>
 </form>
 

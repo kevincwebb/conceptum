@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Interview Detail" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+ 
+  <div class="horizontal-heading">
+    <h3>{{ interview }} by {{ interview.uploaded_by }}</h3>
+  </div>
+    {% if user_can_edit %}
+    <a href = {% url 'conceptinterview_edit' object.id %} class="btn btn-primary"> Edit </a>
+    <a href = {% url 'conceptexcerpt_add' interview.id %} class = "btn btn-primary">Add Excerpts</a>
+    <a href = {% url 'interview_delete' interview.id %} class = "btn btn-danger">Delete Interview</a>
+    <br>
+  {% endif %}
+
+  {% for excerpt in interview.conceptexcerpt_set.all %}
+    <h4>Concept Tag: {{ excerpt.concept_tag }} &nbsp &nbsp
+    {% if user_can_edit %}
+    <a href = {% url 'conceptexcerpt_edit' excerpt.id %} class = "btn btn-primary"> Edit Excerpt </a>
+    <a href = {% url 'conceptexcerpt_delete' excerpt.id %} class = "btn btn-warning"> Delete Excerpt</a>
+    {% endif %}
+    </h4>
+    <ul class = "no-style">
+        <li><b>Response:</b> <p> &nbsp {{ excerpt.response }} </p></li>
+     <li><b>Tags:</b>
+    {% for tag in excerpt.topictag_set.all %}
+        {{tag.tag}}, 
+    {% endfor %}
+        </li>
+     <li><b>Ability Level:</b> {{excerpt.ability_level}} </li>
+     <li><b>Importance Ranking:</b> {{excerpt.importance}}</li>
+    </ul>
+  {% endfor %}
+
+  You are only allowed to edit/delete interviews which were uploaded by you.
+  Staff users can edit/delete all interviews.<br>
+  
+
+  <br>
+
+  <a href = {% url 'conceptinterview_index' %} class="btn btn-primary"> Return to interviews </a>
+
+</div> <!-- container -->
+
+{% endblock %}

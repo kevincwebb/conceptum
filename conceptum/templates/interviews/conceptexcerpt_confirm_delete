@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Delete interview?" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  
+  <div class="form-horizontal-heading">
+    <h2>Delete Interview?</h2>
+  </div>
+  
+  <form action="" method="post">{% csrf_token %}
+      <p>Are you sure you want to delete "{{ object }}"?</p>
+      <div class="submit">
+        <button class="btn btn-warning" type="submit">Confirm Delete</button>
+        <a href = {% url 'interview_detail' object.id %} class='btn btn-primary'> Cancel </a>
+      </div>
+  </form>
+
+<br>
+
+</div> <!-- container -->
+
+{% endblock %}

@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block head_title %}{% trans "Add interview" %}{% endblock %}
+{% block head_title %}{% trans "Edit interview" %}{% endblock %}
 
 {% block extra_headers %}
 
@@ -18,14 +18,12 @@
 
   <center>
   <div class="form-horizontal-heading">
-    <h2>Add Interview</h2>
-    {% if group %}
-      <h4>to Group: {{group}}</h4>
-    {% endif %}
+    <h2>Edit Excerpt for {{interview}} </h2>
   </div>
   </center>
 
 <form class="form-horizontal" role="form"  action="" method="post">{% csrf_token %}
+  
   {{ form.non_field_errors }}
 
   {% for field in form %}
@@ -39,15 +37,12 @@
   {% endfor %}
   
   <div class="submit">
-      <button class="btn btn-lg btn-primary btn-block" type="submit">Save Changes</button>
-    {% if object.is_concept %}
-        <a href = {% url 'interview_index' %} class='btn btn-lg btn-info btn-block' > Cancel </a>
-      {% else %}
-    <a href = {% url 'conceptinterview_index' %} class='btn btn-lg btn-info btn-block' > Cancel </a>
-      {% endif %}
+    <button class="btn btn-primary" type="submit">Save Changes</button>
+    <a href = {% url 'conceptinterview_detail' interview.id %} class='btn btn-info' > Cancel </a>
   </div>
 </form>
 
+<br>
 
 </div> <!-- container -->
 

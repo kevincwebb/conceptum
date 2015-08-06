@@ -21,7 +21,8 @@
 
   {% for excerpt in excerpt_list %}
  
-    <b>Interview:</b> {{ excerpt.interview }} <br>
+    <!-- when interviews is fixed change this back to excerpt.interview -->
+    <b>Interview:</b> {{ excerpt }} <br>
     <b>Response:</b> {{ excerpt.response }} <br>
     <br>
   {% endfor %}

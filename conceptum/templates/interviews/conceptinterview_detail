@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Interview Detail" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+ 
+  <div class="horizontal-heading">
+    <h3>{{ interview }} by {{ interview.uploaded_by }}</h3>
+  </div>
+
+  {% for excerpt in interview.excerpt_set.all %}
+    <b>Topic:</b> {{ excerpt.content_object }} <br>
+    <b>Response:</b> {{ excerpt.response }} <br>
+    <br>
+  {% endfor %}
+
+  You are only allowed to edit/delete interviews which were uploaded by you.
+  Staff users can edit/delete all interviews.<br>
+  
+  {% if user_can_edit %}
+    <a href = {% url 'interview_edit' object.id %} class="btn btn-primary"> Edit </a>
+    <a href = {% url 'interview_delete' object.id %} class="btn btn-danger"> Delete </a>
+    <br>
+  {% endif %}
+  <br>
+
+  <a href = {% url 'interview_group' interview.group.id %} class="btn btn-primary"> Return to interviews </a>
+
+</div> <!-- container -->
+
+{% endblock %}
