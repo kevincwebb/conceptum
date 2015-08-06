@@ -1,0 +1,323 @@
+{% extends "nodemanager/node.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block content %}
+
+<style type="text/css">
+
+/* Styling for the left side, which stores the unclassified atoms. */
+#atoms {
+    float: left;
+    width: 49%;
+    overflow: auto;
+    min-width: 200px;
+    min-height: 300px;
+}
+
+#atom_list .atom {
+    cursor: move;
+}
+
+#atom_list .label {
+    padding: 5px;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+/* Styling for the right side, which stores the groups. */
+#groups {
+    float: right;
+    width: 49%;
+    overflow: auto;
+    min-width: 200px;
+    min-height: 300px;
+}
+
+#groups .panel-heading {
+    cursor: move;
+}
+
+#groups .atom {
+    cursor: move;
+}
+
+#groups .label {
+    padding: 5px;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+#groups .stealth {
+    display: none;
+}
+
+</style>
+
+
+{{ block.super }}
+
+<div>
+TODO: explain
+Empty groups ignored
+</div>
+
+<div id="group_rename" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Rename group...</h4>
+      </div>
+      <div class="modal-body">
+        <p>New name:</p>
+        <input id="group_new_name" type="text" name="new_name" value=""/>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button id="rename_confirm" type="button" class="btn btn-primary" onclick="rename_group();">Rename group</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="atoms">
+<ul id="atom_list" class="list-unstyled">
+    <li class="atom">
+        <h3>
+        <div class="label label-default atom-label">
+            blah1s
+        </div>
+        </h3>
+    </li>
+    <li class="atom">
+        <h3>
+        <div class="label label-default atom-label">
+            blah2
+        </div>
+        </h3>
+    </li>
+</ul>
+</div>
+
+<div id="groups">
+<ul id="group_list" class="list-unstyled">
+    <li class="panel panel-info stealth" id="stealth_group">
+        <div class="panel-heading">
+            <span class="panel-title">
+            </span>
+            <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-primary dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span></button>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a href="#group_rename" data-toggle="modal">Rename group</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#">Action 2</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="panel-body">
+            <ul class="list-unstyled ui-helper-reset">
+            </ul>
+        </div>
+    </li>
+
+    <li class="panel panel-info">
+        <div class="panel-heading">
+            <span class="panel-title">
+                You can drag this panel.
+            </span>
+            <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-primary dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span></button>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a href="#group_rename" data-toggle="modal">Rename group</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#">TODO: Remove group</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="panel-body">
+            <ul class="list-unstyled ui-helper-reset">
+            </ul>
+        </div>
+    </li>
+</ul>
+
+<button class="btn btn-default" onclick="add_group();">
+Add another group...
+</button>
+</div>
+
+<button class="btn btn-default" onclick="submit_merge();">
+Save entries...
+</button>
+
+<button class="btn btn-danger" onclick="">
+Finalize submission...
+</button>
+
+{% endblock %}  {# block content #}
+
+
+{% block extra_js %}
+
+{{ block.super }}
+
+<script>
+
+/* Function that gets called when an atom is dropped on a list. */
+function atom_to_list(atom, group) {
+    atom.fadeOut(function() {
+        var list = group.find('.list-unstyled');
+        list.append(atom.fadeIn(function(){}));
+    });
+}
+
+/* Init function that gets called when the DOM is ready. */
+$(function() {
+    var atom_list = $('#atom_list');
+    var group_list = $('#group_list');
+
+    /* Make the free atoms on the left draggable. */
+    $("#atom_list .atom").draggable({
+        revert: "invalid",
+        containment: "document",
+        cursor: "move",
+        helper: "clone"
+    });
+
+    /* Make the atom list droppable for atoms coming from a group. */
+    $('#atoms').droppable({
+        accept: "#group_list .atom",
+        activeClass: "ui-state-highlight",
+        hoverClass: "ui-state-hover",
+        drop: function(event, ui) {
+            atom_to_list(ui.draggable, $(this));
+        }
+    });
+
+    /* Make the panels reorderable, using their headings. */
+    group_list.sortable({
+        handle: '.panel-heading'
+    });
+
+    /* Make the bodies of the groups on the right accept atom drops. */
+    $("#group_list .panel").droppable({
+        accept: "#atom_list .atom,#group_list .atom",
+        activeClass: "ui-state-highlight",
+        hoverClass: "ui-state-hover",
+        drop: function(event, ui) {
+            atom_to_list(ui.draggable, $(this));
+        }
+    });
+
+    $("#group_list .panel-heading").uniqueId();
+
+    /* */
+    $("#group_rename").on('show.bs.modal', function(e) {
+        var confirm_button = $('#rename_confirm');
+        var heading = $(e.relatedTarget).closest('.panel-heading');
+        var heading_id = heading.attr("id");
+        var heading_text = $.trim(heading.find(".panel-title").text());
+
+        confirm_button.attr("onclick", "rename_group('" + heading_id + "');");
+        $('#group_new_name').val(heading_text);
+    });
+});
+
+function add_group() {
+    var group_list = $('#group_list');
+    var dummy = $('#stealth_group');
+
+    var newgroup = dummy.clone();
+    newgroup.removeAttr("id");
+    newgroup.removeClass("stealth");
+    newgroup.find(".panel-heading").removeAttr("id");
+    newgroup.find(".panel-heading").uniqueId();
+    newgroup.find(".panel-heading").find(".panel-title").text("New group");
+
+    newgroup.droppable({
+        accept: "#atom_list .atom,#group_list .atom",
+        activeClass: "ui-state-highlight",
+        hoverClass: "ui-state-hover",
+        drop: function(event, ui) {
+            atom_to_list(ui.draggable, $(this));
+        }
+    });
+    group_list.append(newgroup.fadeIn(function(){}));
+}
+
+function rename_group(heading_id) {
+    var heading = $('#' + heading_id);
+    var new_name = $('#group_new_name').val();
+
+    if (new_name.length < 1) {
+        alert("Group names must be non-empty.");
+        return false;
+    }
+
+    heading.find(".panel-title").text(new_name);
+    $('#group_rename').modal("hide");
+}
+
+function submit_merge() {
+    /* Collect the free atoms. */
+    var free_atoms = [];
+    var atom_list = $('#atom_list');
+    atom_list.find('.atom-label').each(function(index, value) {
+        var li = $(value);
+        free_atoms.push($.trim(li.text()));
+    });
+
+    /* Collect the groups and their contents. */
+    var groups = {};
+    var group_list = $('#group_list');
+    var bailout = false;
+
+    group_list.find('.panel').not('.stealth').each(function(index, value) {
+        var panel = $(value);
+        var name = $.trim(panel.find('.panel-title').text());
+
+        if (name in groups) {
+            alert("Group names must be unique.");
+            bailout = true;
+            return false;
+        }
+
+        var atoms = panel.find('.atom-label');
+
+        /* Skip empty groups. */
+        if (atoms.length > 0) {
+            groups[name] = [];
+            atoms.each(function(a_index, a_value) {
+                var li = $(a_value);
+                groups[name].push($.trim(li.text()));
+            });
+        }
+    });
+
+    if (bailout) {
+        return false;
+    }
+
+    var submission = {
+        atoms: free_atoms,
+        groups: groups
+    }
+
+    console.log(JSON.stringify(submission));
+}
+
+/*
+TODO:
+remove a group
+get existing groups and draw them in ui
+submit w/ status
+finalize w/ status
+*/
+
+</script>
+
+
+{% endblock %}  {# block extra_js #}

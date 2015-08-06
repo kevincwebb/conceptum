@@ -1,0 +1,94 @@
+
+
+{% block content %}
+
+{% if staff %}
+
+<div id="adminadvance" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Are you sure you want to administratively advance this node?</h4>
+            </div>
+            <div class="modal-body">
+                <p>Some contributors have not yet finalized entries for this
+                node.  This will move the selected node to its next phase.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="advance();">Advance node</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-danger" id="adminpanel">
+    <div class="panel-heading">
+        <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#adminpanel" href="#adminbody">Admin options</a>
+        </h4>
+    </div>
+
+    <div id="adminbody" class="panel-collapse collapse">
+        <div class="panel-body">
+
+            <p>
+            The following users have submitted finalized entries for this node:
+            <br />
+            {{ staff.contributed|join:", " }}
+            </p>
+
+            <p>
+            The following users have <b>not</b> yet submitted finalized entries for this node:
+            <br />
+            {{ staff.notcontributed|join:", " }}
+            </p>
+
+            <button type="button" class="btn btn-danger" data-toggle="modal"
+                    data-target="#adminadvance">
+                Advance node
+            </button>
+
+        </div>
+    </div>
+
+</div>
+
+{% endif %}
+
+{% endblock %}  {# block content #}
+
+
+{% block extra_js %}
+
+<script>
+
+function advance() {
+    var result = $('#submit_result');
+
+    var url = "{% url 'nodemanager advance' node.id %}";
+    result.html('<div class="alert alert-info" role="alert">Advancing, please wait...</div>');
+
+    $.ajax({url: url, data: { csrfmiddlewaretoken: '{{ csrf_token }}' }, type: "POST",
+        success: function(data) {
+            var response = $.parseJSON(data);
+
+            if (response['success']) {
+                result.html('<div class="alert alert-success" role="alert">Success!' + close + '</div>');
+                show_node({{ node.id }}, '{{ node.content }}', false);
+            } else {
+                result.html('<div class="alert alert-danger" role="alert">' + response['reason'] + close + '</div>');
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            result.html('<div class="alert alert-danger" role="alert">' + errorThrown + close + '</div>');
+        }
+    });
+
+    return false;
+}
+
+</script>
+
+{% endblock %}  {# block extra_js #}

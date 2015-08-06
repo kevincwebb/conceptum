@@ -1,10 +1,9 @@
+from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from django.template import RequestContext, loader
 
-from nodemanager.models import CITreeInfo, ConceptNode
 from forms import Stage1Configure
 
+from nodemanager.models import CITreeInfo, ConceptNode
 from profiles.models import ContributorProfile
 
 def dispatch(request):
@@ -15,7 +14,7 @@ def dispatch(request):
 
     auth = ContributorProfile.auth_status(request.user)
     if not auth:
-        return render(request, 'cistage1/forbidden.html')
+        raise PermissionDenied
 
     if not CITreeInfo.get_master_tree_root() and auth == 'staff':
         return redirect('stage1 setup')
@@ -30,7 +29,7 @@ def setup(request):
 
     auth = ContributorProfile.auth_status(request.user)
     if auth != 'staff':
-        return render(request, 'cistage1/forbidden.html')
+        raise PermissionDenied
 
     # If the stage has already been set up, issue a warning to the user.
     root = CITreeInfo.get_master_tree_root()
@@ -50,51 +49,50 @@ def configure(request):
     """
 
     auth = ContributorProfile.auth_status(request.user)
-    if auth != 'staff':
-        return render(request, 'cistage1/forbidden.html')
+    if auth != 'staff' or request.method != 'POST':
+        raise PermissionDenied
 
-    if request.method == 'POST':
+    form = Stage1Configure(request.POST)
+    if form.is_valid():
 
-        form = Stage1Configure(request.POST)
-        if form.is_valid():
+        # If there is an old root, make it no longer the master.
+        old_master = CITreeInfo.get_master_tree_root()
+        if old_master is not None:
+            old_master.is_master = False
+            old_master.save()
 
-            # If there is an old root, make it no longer the master.
-            old_master = CITreeInfo.get_master_tree_root()
-            if old_master is not None:
-                old_master.is_master = False
-                old_master.save()
+        #Create the initial stage1 hierarchy from the submission
+        #form. We need the CI Tree Info as well as one root node
+        #to begin
+        master_tree_info = CITreeInfo(is_master=True)
+        master_tree_info.save()
 
-            #Create the initial stage1 hierarchy from the submission
-            #form. We need the CI Tree Info as well as one root node
-            #to begin
-            master_tree_info = CITreeInfo(is_master=True)
-            master_tree_info.save()
+        root_node = ConceptNode(
+            ci_tree_info = master_tree_info,
+            content = form.cleaned_data['root_name'],
+            max_children = form.cleaned_data['max_children'],
+            child_typename = form.cleaned_data['child_typename']
+        )
+        root_node.save()
 
-            root_node = ConceptNode(
-                ci_tree_info = master_tree_info,
-                content = form.cleaned_data['root_name'],
-                max_children = form.cleaned_data['max_children'],
-                child_typename = form.cleaned_data['child_typename']
-            )
-            root_node.save()
-
-            return redirect('stage1 dispatch')
-
-    return HttpResponse("Something went wrong.  Sorry!")
+        return redirect('stage1 dispatch')
+    else:
+        raise SuspiciousOperation
 
 def landing(request):
 
     auth = ContributorProfile.auth_status(request.user)
     if not auth:
-        return render(request, 'cistage1/forbidden.html')
+        raise PermissionDenied
 
     root = CITreeInfo.get_master_tree_root()
     if root:
         tree = root.get_descendants(include_self=True)
 
-        for node in tree:
-            if node.is_stage_finished():
-                node.transition_node_state()
+        # TODO: this probably shouldn't be here.  Move to nodemanager
+        #for node in tree:
+        #    if node.is_stage_finished():
+        #        node.transition_node_state()
 
         return render(request,
                       'cistage1/landing.html',

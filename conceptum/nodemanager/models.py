@@ -7,8 +7,6 @@ from django.contrib.contenttypes.models import ContentType
 
 from ranking.models import RankingProcess
 
-from profiles.models import ContributorProfile
-
 class CITreeInfo(models.Model):
     """
     CI Tree Info defines parameters that hold true throughout an
@@ -206,7 +204,6 @@ class ConceptNode(MPTTModel):
         else:
             return False
 
-# TODO: Show admins who has/hasn't contributed.  Allow advancing anyway.
     def get_contribution_sets(self):
         """
         Return a dictionary containing two keys: 'contributed' and 'notcontributed',

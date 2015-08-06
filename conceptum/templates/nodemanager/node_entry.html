@@ -1,0 +1,124 @@
+{% extends "nodemanager/node.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block content %}
+
+{{ block.super }}
+
+<div class="panel panel-primary">
+    <div class="panel-body">
+
+        <p>This node may have up to {{ node.max_children }} child nodes
+        underneath it.  Below, you can propose content for these children.
+        When you're finished, finalize your submission.  After all users have
+        finalized their entires, an administrator will combine equivalent
+        proposals (e.g., combine "BSTs" with "binary search trees") and enable
+        ranking.</p>
+
+    </div>
+</div>
+
+
+<form action="{% url 'nodemanager submit_entry' node.id %}" method="post" id="concept_form">
+  {% csrf_token %}
+
+  {{ formset.management_form }}
+
+  {% for form in formset %}
+    {{ form.pk }}
+    <div class="fieldWrapper">
+      {{ form.text.errors }}
+      <label for="{{ form.text.id_for_label }}">Proposed {{ node.child_typename }} text:</label>
+      <br />
+      {{ form.text }}
+    </div>
+    {% if formset.can_delete %}
+      <label for="{{ form.DELETE.id_for_label }}">Delete this entry:</label>
+      <input id="id_form-{{ forloop.counter0 }}-DELETE" name="form-{{ forloop.counter0 }}-DELETE"
+             type="checkbox" data-toggle="popover" data-placement="right"
+             data-content="Don't forget to click 'save entries' below to confirm deletion!">
+    {% endif %}
+    <br />
+    <br />
+  {% endfor %}
+</form>
+
+<button type="button" class="btn btn-default" onclick="form_submit();">
+    Save entries
+</button>
+
+<button type="button" class="btn btn-danger" onclick="finalize();">
+    Finalize submission
+</button>
+
+{% endblock %}  {# block content #}
+
+
+{% block extra_js %}
+
+{{ block.super }}
+
+<script>
+
+$(function () {
+  $('[data-toggle="popover"]').popover()
+})
+
+function form_submit() {
+    var form = $('#concept_form');
+    var result = $('#submit_result');
+
+    var url = "{% url 'nodemanager submit_entry' node.id %}";
+
+    result.html('<div class="alert alert-info" role="alert">Submitting form, please wait...</div>');
+
+    $.ajax({url: url, data: form.serialize(), type: "POST",
+        success: function(data) {
+            var response = $.parseJSON(data);
+
+            if (response['success']) {
+                result.html('<div class="alert alert-success" role="alert">Success!' + close + '</div>');
+                show_node({{ node.id }}, '{{ node.content }}', false);
+            } else {
+                result.html('<div class="alert alert-danger" role="alert">' + response['reason'] + close + '</div>');
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            result.html('<div class="alert alert-danger" role="alert">' + errorThrown + close + '</div>');
+        }
+    });
+
+    return false;
+}
+
+function finalize() {
+    var result = $('#submit_result');
+
+    var url = "{% url 'nodemanager finalize' node.id %}";
+    result.html('<div class="alert alert-info" role="alert">Finalizing, please wait...</div>');
+
+    $.ajax({url: url, data: { csrfmiddlewaretoken: '{{ csrf_token }}' }, type: "POST",
+        success: function(data) {
+            var response = $.parseJSON(data);
+
+            if (response['success']) {
+                result.html('<div class="alert alert-success" role="alert">Success!' + close + '</div>');
+                show_node({{ node.id }}, '{{ node.content }}', false);
+            } else {
+                result.html('<div class="alert alert-danger" role="alert">' + response['reason'] + close + '</div>');
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            result.html('<div class="alert alert-danger" role="alert">' + errorThrown + close + '</div>');
+        }
+    });
+
+    return false;
+}
+
+</script>
+
+{% endblock %}  {# block extra_js #}

@@ -1,57 +1,89 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.core.exceptions import PermissionDenied
+from django.forms.formsets import formset_factory
 from django.http import HttpResponse
-from django.template import RequestContext, loader
-from django.core.urlresolvers import reverse
+from django.shortcuts import get_object_or_404, redirect, render
 
-from nodemanager.models import CITreeInfo, ConceptNode, ConceptAtom
-from nodemanager.forms import AtomFormSet, CreateMergeForm, UpdateMergeFormSet
+from nodemanager.models import CITreeInfo, ConceptAtom, ConceptNode
+from nodemanager.forms import AtomForm, CreateMergeForm, UpdateMergeFormSet
+from profiles.models import ContributorProfile
 
-# TODO: If admin, send contribs/noncontribs
+def display(request, node_id):
+    auth = ContributorProfile.auth_status(request.user)
 
-# add/edit/remove interface for concept atoms
-def entry(request, node_id, redirected=False):
+    if not auth:
+        raise PermissionDenied
+
+    node = get_object_or_404(ConceptNode,pk=node_id)
+
+    context = {
+        'node': node,
+        'user': request.user
+    }
+
+    if auth == 'staff':
+        context['staff'] = node.get_contribution_sets()
+    else:
+        context['staff'] = False
+
+    return display_func[(node.node_type, auth)](request, node, context)
+
+def entry(request, node, context):
     """
     Dispatches a form to the user that allows them to enter in
     concepts freely. If they have already submitted choices, it
     returns a list of the choices.
     """
 
-    node = get_object_or_404(ConceptNode,pk=node_id)
-    user = request.user
-    atoms = ConceptAtom.objects.filter(user=user) #only get the user's
-                                                  #atoms
-    context = RequestContext(request,
-                             {'node': node,
-                              'user': user,
-                              'redirected': redirected},)
-
     # Only nodes in the "free entry" state can have nodes entered
-    if not node.node_type == 'F':
+    if node.node_type != 'F':
         return render(request, 'nodemanager/stage_error.html')
 
+    # Only get this user's atoms for the node.
+    atoms = ConceptAtom.objects.filter(concept_node=node.id).filter(user=request.user)
+
     # If the user has already visited, show them their picks
-    if user in node.users_contributed_set():
-        template = loader.get_template('nodemanager/atomlist.html')
+    if request.user in node.users_contributed_set():
         context['atoms'] = atoms
+        return render(request, 'nodemanager/node_finalizedentry.html', context)
 
     # Otherwise, give them a form (which will be populated with their
     # choices if they have already made some)
     else:
-        formset = AtomFormSet(initial=[{'text': atom.text,
-                                        'pk': atom.pk} for atom in atoms])
-        context['formset'] = formset
-        template = loader.get_template('nodemanager/entry.html')
+        AtomFormSet = formset_factory(AtomForm, can_delete=True,
+                                      max_num=node.max_children,
+                                      extra=node.max_children,
+                                      validate_max=True)
+        context['formset'] = AtomFormSet(initial=[{'text': atom.text, 'pk': atom.pk} for atom in atoms])
+        return render(request, 'nodemanager/node_entry.html', context)
 
-    return HttpResponse(template.render(context))
+def show_entries(request, node, context):
+    # Only get this user's atoms for the node.
+    atoms = ConceptAtom.objects.filter(concept_node=node.id).filter(user=request.user)
 
-# TODO: rename this something sensible like "submit entry"
-def get_entry(request, node_id):
+    context['node'] = node
+    context['user'] = request.user
+
+    context['atoms'] = atoms
+    return render(request, 'nodemanager/node_finalizedentry.html', context)
+
+def submit_entry(request, node_id):
     """
     This function processes a user-submitted form containing their
     brainstormed picks. It handles users deleting/modifying
     pre-entered picks, as well as entering new ones.
     """
+
+    auth = ContributorProfile.auth_status(request.user)
+
+    if not auth:
+        raise PermissionDenied
+
     if request.method == 'POST':
+        node = get_object_or_404(ConceptNode,pk=node_id)
+        AtomFormSet = formset_factory(AtomForm, can_delete=True,
+                                      max_num=node.max_children,
+                                      extra=node.max_children,
+                                      validate_max=True)
 
         formset = AtomFormSet(request.POST)
 
@@ -69,7 +101,7 @@ def get_entry(request, node_id):
 
                     if not pk:
                         new_atom = ConceptAtom(
-                            concept_node=get_object_or_404(ConceptNode,pk=node_id),
+                            concept_node=node,
                             user=request.user,
                             text=form_text,
                             final_choice=False
@@ -86,41 +118,82 @@ def get_entry(request, node_id):
                     if form in formset.deleted_forms: #or delete it
                         atom.delete()
 
-            return redirect('redirected free entry',
-                            node_id=node_id, redirected=True)
+            return HttpResponse('{"success": true}')
         else:
-            return redirect('free entry', node_id=node_id)
+            reason = ''
+            for (i, form) in enumerate(formset.errors):
+                for field, problems in form.iteritems():
+                    reason += 'Entry %d, %s:\\n'
+                    for problem in problems:
+                        reason += '  %s\\n' % problem
+            return HttpResponse('{"success": false, "reason": "%s"}' % reason)
+    else:
+        return redirect('stage1 dispatch')
 
-    return render(request, 'nodemanager/entry.html',
-                  {'node': get_object_or_404(ConceptNode,pk=node_id),
-                   'user': request.user,
-                   'form': form})
+def finalize(request, node_id):
+    """
+    This function is called when a user makes a final submission, and
+    needs to be added to the list of users that have submitted items
+    """
 
-def merge(request, node_id):
+    auth = ContributorProfile.auth_status(request.user)
+
+    if not auth or request.method != 'POST':
+        raise PermissionDenied
+
+    node = get_object_or_404(ConceptNode,pk=node_id)
+    if not request.user in node.users_contributed_set(): #no duplicates
+        node.user.add(request.user)
+
+    if node.is_stage_finished():
+        node.transition_node_state()
+
+    return HttpResponse('{"success": true}')
+
+def advance(request, node_id):
+    """
+    Administratively advance a node to the next step.
+    """
+
+    auth = ContributorProfile.auth_status(request.user)
+
+    if auth != 'staff' or request.method != 'POST':
+        raise PermissionDenied
+
+    node = get_object_or_404(ConceptNode,pk=node_id)
+    node.transition_node_state()
+
+    return HttpResponse('{"success": true}')
+
+def merge(request, node, context):
     """
     This function gets all the concepts for a specified node and
     renders a form that allows an admin to merge/unmerge concept atoms
     """
 
-    user = request.user
-    node = get_object_or_404(ConceptNode,pk=node_id)
+    # Hack to disable the "admin" dropdown, since it makes no sense on the merge page.
+    context['staff'] = False
 
-    # only for the merging stage
-    if not node.node_type == 'M':
+    # Only if we're in the merging stage.
+    if node.node_type != 'M':
         return render(request, 'nodemanager/stage_error.html')
 
-    #populate the form with all the existing concept atoms for that
-    #node
+    #populate the form with all the existing concept atoms for that node
     create_form = CreateMergeForm(node=node)
     edit_formset = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms(node)])
 
-    template = loader.get_template('nodemanager/merge.html')
-    context = RequestContext(request,
-                             {'node': node,
-                              'user': request.user,
-                              'create_form': create_form,
-                              'edit_formset': edit_formset},)
-    return HttpResponse(template.render(context))
+    context['create_form'] = create_form
+    context['edit_formset'] = edit_formset
+
+    return render(request, 'nodemanager/node_merge.html', context)
+
+
+
+
+
+
+
+
 
 # TODO: Rename?
 def get_merge(request, node_id, merge_type=None):
@@ -198,9 +271,7 @@ def get_merge(request, node_id, merge_type=None):
                 #again, should never be here
                 print "ERROR unknown merge type"
 
-            template = loader.get_template('nodemanager/merge.html')
-            context = RequestContext(request, render_args)
-            return HttpResponse(template.render(context))
+            return render(request, 'nodemanager/merge.html', context)
 
 def finalize_merge(request, node_id):
     """
@@ -213,17 +284,16 @@ def finalize_merge(request, node_id):
         atom.final_choice = True
         atom.save()
 
-    return redirect(reverse('final sub', args=[node_id]))
+    #return redirect(reverse('final sub', args=[node_id]))
+    return HttpResponse('fix finalize_merge')
 
-def add_finished_user(request, node_id):
-    """
-    This function is called when a user makes a final submission, and
-    needs to be added to the list of users that have submitted items
-    """
 
-    node = get_object_or_404(ConceptNode,pk=node_id)
-    user = request.user
-    if not user in node.users_contributed_set(): #no duplicates
-        node.user.add(user)
 
-    return redirect(reverse('landing'))
+# Maps node state to the appropriate display function.
+display_func = {
+    ('F', 'staff'): entry,
+    ('F', 'contrib'): entry,
+
+    ('M', 'staff'): merge,
+    ('M', 'contrib'): show_entries,
+}

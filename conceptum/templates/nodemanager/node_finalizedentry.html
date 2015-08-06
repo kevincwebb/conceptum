@@ -1,0 +1,41 @@
+{% extends "nodemanager/node.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+
+{% block head_title %}{% trans "Final Atom List" %}{% endblock %}
+
+{% block extra_headers %}
+
+<link href="{% static 'css/form-page.css' %}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+{{ block.super }}
+
+<div class="panel panel-primary">
+    <div class="panel-body">
+
+        <p>You have proposed the content listed below and finalized your
+        submission.</p>
+
+        <p>After all other users have finalized their entires, an administrator
+        will combine equivalent proposals (e.g., combine "BSTs" with "binary
+        search trees") and enable ranking.</p>
+
+    </div>
+</div>
+
+<ul class="list-group">
+    <li class="list-group-item list-group-item-info">Your submissions:</li>
+    {% for atom in atoms %}
+        <li class="list-group-item"> {{ atom.text }} </li>
+    {% empty %}
+        <li class="list-group-item">(You didn't submit anything.)</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}  {# block content #}

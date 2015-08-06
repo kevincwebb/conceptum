@@ -20,12 +20,7 @@
 
     <div class="panel panel-default">
         <div class="panel-body">
-            <a href="javascript:void(0)" onclick="testfunc({{ node.id }}, '{{ node.content }}')">{{ node.content }}</a>
-            <!--
-            <button type="button" class="btn btn-default" onclick="testfunc({{ node.id }}, '{{ node.content }}')">
-            {{ node.content }}
-            </button>
-            -->
+            <a href="javascript:void(0)" onclick="show_node({{ node.id }}, '{{ node.content }}', true);">{{ node.content }}</a>
         </div>
     </div>
 
@@ -68,6 +63,9 @@
 
 {% endrecursetree %}
 
+<div id="submit_result">
+</div>
+
 <div class="panel panel-default">
     <div class="panel-heading" id="nodename">
     </div>
@@ -77,78 +75,6 @@
 
 </div>
 
-
-<!--
-<ul>
-    {% recursetree tree %}
-        <li>
-            {{ node.content }}
-            {% if not node.is_leaf_node %}
-                <ul class="children">
-                    {{ children }}
-                </ul>
-            {% endif %}
-        </li>
-    {% endrecursetree %}
-</ul>
--->
-
-<!--
-{% recursetree tree %}
-        <li>
-          <b>Content:</b> {{ node.content }}
-          <br>
-          <b> Id: </b> {{ node.id }}
-          <br>
-          <b>Voting Stage:</b> {{node.node_type}}
-          <br>
-          <b>Contributed Users:</b>
-                <ul>
-                  {% for user in node.users_contributed_set %}
-                  <li>{{ user }}</li>
-                  {% endfor %}
-                </ul>
-          <br>
-          {% if user in node.users_contributed_set %}
-          User has visited!
-          {% else %}
-          User has not visited here!
-          <br>
-          {% endif %}
-
-          {% ifequal node.node_type 'F' %}
-
-                <a href="{% url 'free entry' node.id %}">
-                {% if user in node.users_contributed_set %}
-                        View Final Choices for Node {{ node.id }}</a>
-                {% else %}
-                        Edit/Add Choices for Node {{ node.id }}</a><br>
-                {% endif %}
-
-          {% endifequal %}
-
-          {% ifequal node.node_type 'P' %}
-                {% if user in node.admin_set %}
-                        <a href="{% url 'merge' node.id %}"> Merge for Node {{ node.id }}</a>
-                {% else %}
-                        User is not admin, but node is in Merge state
-                {% endif %}
-          {% endifequal %}
-
-          {% ifequal node.node_type 'R' %}
-                <a href="{% url 'dispatch' node_id=node.id %}">Ranking for Node {{ node.id }}</a>
-          {% endifequal %}
-
-          <p>
-          {% if not node.is_leaf_node %}
-                <ul class="children">
-                  {{ children }}
-                </ul>
-          {% endif %}
-        </li>
-{% endrecursetree %}
--->
-
 </div> <!-- Container -->
 
 {% endblock %}
@@ -157,12 +83,26 @@
 
 <script>
 
-function testfunc(id, content) {
-    $("#nodename").html("<h4>" + content + "<h4>");
+var close = '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
 
-    $.ajax({async: true, url: "/stage1/node/" + id + "/entry", success: function(result){
-            $("#nodeinfo").html(result);
-        }});
+function show_node(id, content, clearstatus) {
+    var result = $('#submit_result');
+
+    $.ajax({url: "/stage1/node/" + id,
+        success: function(data){
+            if (clearstatus) {
+                result.html("");
+            }
+
+            $("#nodename").html("<h4>" + content + "<h4>");
+            $("#nodeinfo").html(data);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            result.html('<div class="alert alert-danger" role="alert">' + errorThrown + close + '</div>');
+            $("#nodename").html("");
+            $("#nodeinfo").html("");
+        }
+    });
 
     return false;
 }

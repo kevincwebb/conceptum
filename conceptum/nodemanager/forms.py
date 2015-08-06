@@ -3,25 +3,20 @@ from django.forms.formsets import formset_factory, BaseFormSet
 
 from nodemanager.models import ConceptAtom
 
-class AtomForm(forms.ModelForm):
+class AtomForm(forms.Form):
 
     pk = forms.IntegerField(widget=forms.HiddenInput(attrs={'readonly': True}),
                             required=False)
 
-    class Meta:
-        model = ConceptAtom
-        fields = ['text']
+    text = forms.CharField(max_length=140,
+                           widget=forms.Textarea(attrs={'cols': 70, 'rows': 2}))
 
     def clean_text(self):
         data = self.cleaned_data['text']
-        if not data:
+        if not data or len(data) < 1:
             raise forms.ValidationError("Can't have an empty Concept Atom!")
 
         return data
-
-AtomFormSet = formset_factory(AtomForm,
-                              can_delete=True,
-                              extra=5,)
 
 class CreateMergeForm(forms.Form):
 
