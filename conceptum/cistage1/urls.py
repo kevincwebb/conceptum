@@ -12,5 +12,7 @@ urlpatterns = patterns('',
             #/stage1/getsetup/
             url(r'^configure$', views.configure, name = 'stage1 configure'),
 
+            url(r'^edit_tree', views.edit_tree, name='stage1 edit_tree'),
+
             url(r'^node/', include('nodemanager.urls')),
         )

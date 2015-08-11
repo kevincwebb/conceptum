@@ -1,5 +1,7 @@
+import json
+
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 
 from forms import Stage1Configure
 
@@ -44,8 +46,6 @@ def setup(request):
 def configure(request):
     """
     Process the configuration form for a Stage 1 Process.
-
-    TODO: add form error checking/redirects
     """
 
     auth = ContributorProfile.auth_status(request.user)
@@ -80,10 +80,14 @@ def configure(request):
         raise SuspiciousOperation
 
 def landing(request):
-
     auth = ContributorProfile.auth_status(request.user)
     if not auth:
         raise PermissionDenied
+
+    if auth == 'staff':
+        isstaff = True
+    else:
+        isstaff = False
 
     root = CITreeInfo.get_master_tree_root()
     if root:
@@ -97,9 +101,95 @@ def landing(request):
         return render(request,
                       'cistage1/landing.html',
                       {'tree': tree,
-                       'user': request.user})
+                       'user': request.user,
+                       'staff': isstaff})
     else:
-        if auth == 'staff':
+        if isstaff:
             return redirect('stage1 setup')
         else:
             return render(request, 'cistage1/notstarted.html')
+
+def edit_tree(request):
+    auth = ContributorProfile.auth_status(request.user)
+    if auth != 'staff':
+        raise PermissionDenied
+
+    # If it's a GET, construct the editing page.
+    if request.method == 'GET':
+        root = CITreeInfo.get_master_tree_root()
+        if root:
+            tree = root.get_descendants(include_self=True)
+            context = {'tree': tree,
+                       'user': request.user,
+                       'open_ids': '[]'}
+
+            return render(request, 'cistage1/edit_tree.html', context)
+        else:
+            return redirect('stage1 setup')
+
+    # If it's a POST, handle the submission.
+    if request.method == 'POST':
+        print request.POST
+
+        if request.POST['operation'] == 'edit':
+            return edit_node(request)
+        elif request.POST['operation'] == 'addchild':
+            return add_child(request)
+        elif request.POST['operation'] == 'delete':
+            return delete_node(request)
+        else:
+            raise SuspiciousOperation
+
+def edit_node(request):
+    node = get_object_or_404(ConceptNode,pk=request.POST['node_id'])
+    root = CITreeInfo.get_master_tree_root()
+    if root:
+        node.content = request.POST['node_edit_content']
+        node.child_typename = request.POST['node_edit_childtype']
+        node.save()
+        tree = root.get_descendants(include_self=True)
+        context = {'tree': tree,
+                   'user': request.user,
+                   'open_ids': request.POST['openids']}
+
+        return render(request, 'cistage1/edit_tree.html', context)
+    else:
+        return redirect('stage1 setup')
+
+def add_child(request):
+    root = CITreeInfo.get_master_tree_root()
+    if not root:
+        return redirect('stage1 setup')
+    info = root.ci_tree_info
+
+    parent = get_object_or_404(ConceptNode,pk=request.POST['node_id'])
+    node = ConceptNode(ci_tree_info=info,
+                       parent=parent,
+                       content=request.POST['node_addchild_content'],
+                       child_typename=request.POST['node_addchild_childtype'])
+    node.save()
+
+    # Refresh handle to the root, in case adding our node changed it.
+    root = CITreeInfo.get_master_tree_root()
+
+    tree = root.get_descendants(include_self=True)
+    context = {'tree': tree,
+               'user': request.user,
+               'open_ids': request.POST['openids']}
+
+    return render(request, 'cistage1/edit_tree.html', context)
+
+def delete_node(request):
+    node = get_object_or_404(ConceptNode,pk=request.POST['node_id'])
+    node.delete()
+
+    root = CITreeInfo.get_master_tree_root()
+    if not root:
+        return redirect('stage1 setup')
+
+    tree = root.get_descendants(include_self=True)
+    context = {'tree': tree,
+               'user': request.user,
+               'open_ids': request.POST['openids']}
+
+    return render(request, 'cistage1/edit_tree.html', context)

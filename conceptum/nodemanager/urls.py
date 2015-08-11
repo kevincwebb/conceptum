@@ -7,6 +7,9 @@ urlpatterns = patterns('',
         url(r'^(?P<node_id>\d+)/$', views.display, name='nodemanager display'),
         url(r'^(?P<node_id>\d+)/submit_entry', views.submit_entry, name = 'nodemanager submit_entry'),
         url(r'^(?P<node_id>\d+)/finalize', views.finalize, name='nodemanager finalize'),
+        url(r'^(?P<node_id>\d+)/submit_merge', views.submit_merge, name='nodemanager submit_merge'),
+
+
 
         url(r'^(?P<node_id>\d+)/advance', views.advance, name='nodemanager advance'),
 

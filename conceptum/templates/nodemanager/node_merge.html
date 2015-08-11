@@ -262,6 +262,11 @@ function rename_group(heading_id) {
 }
 
 function submit_merge() {
+    var result = $('#submit_result');
+
+    var url = "{% url 'nodemanager submit_merge' node.id %}";
+    result.html('<div class="alert alert-info" role="alert">Submitting, please wait...</div>');
+
     /* Collect the free atoms. */
     var free_atoms = [];
     var atom_list = $('#atom_list');
@@ -306,7 +311,25 @@ function submit_merge() {
         groups: groups
     }
 
-    console.log(JSON.stringify(submission));
+    JSON.stringify(submission)
+
+    $.ajax({url: url, data: { csrfmiddlewaretoken: '{{ csrf_token }}', merge_data: JSON.stringify(submission)}, type: "POST",
+        success: function(data) {
+            var response = $.parseJSON(data);
+
+            if (response['success']) {
+                result.html('<div class="alert alert-success" role="alert">Success!' + close + '</div>');
+                show_node({{ node.id }}, '{{ node.content }}', false);
+            } else {
+                result.html('<div class="alert alert-danger" role="alert">' + response['reason'] + close + '</div>');
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            result.html('<div class="alert alert-danger" role="alert">' + errorThrown + close + '</div>');
+        }
+    });
+
+    return false;
 }
 
 /*

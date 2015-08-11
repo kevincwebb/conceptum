@@ -11,7 +11,22 @@
 <div class = "container">
 
 <div class="page-header">
-  <h1>Stage 1: Content Selection</h1>
+  <h1>Content Selection
+
+  {% if staff %}
+  <div class="btn-group pull-right">
+  <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Admin options <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu">
+    <li><a href="{% url 'stage1 edit_tree' %}">Edit tree contents</a></li>
+    <li role="separator" class="divider"></li>
+    <li><a href="{% url 'stage1 setup' %}">Delete & reconfigure tree (requires confirmation)</a></li>
+  </ul>
+  {% endif %}
+
+  </h1>
+</div>
 </div>
 
 {% recursetree tree %}

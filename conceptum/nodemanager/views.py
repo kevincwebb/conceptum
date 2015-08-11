@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import PermissionDenied
 from django.forms.formsets import formset_factory
 from django.http import HttpResponse
@@ -187,34 +189,23 @@ def merge(request, node, context):
 
     return render(request, 'nodemanager/node_merge.html', context)
 
-
-
-
-
-
-
-
-
-# TODO: Rename?
-def get_merge(request, node_id, merge_type=None):
+def submit_merge(request, node_id):
     """
     This function handles a submitted form containing information
     about merging concepts.
     """
 
-    node = get_object_or_404(ConceptNode,pk=node_id)
-    user = request.user
+    auth = ContributorProfile.auth_status(request.user)
+
+    if auth != 'staff':
+        raise PermissionDenied
 
     if request.method == 'POST':
+        node = get_object_or_404(ConceptNode,pk=node_id)
 
-        #differentiate between different forms
-        if merge_type == 'add merge':
-            form = CreateMergeForm(request.POST, node=node)
-        elif merge_type == 'subtract merge':
-            form = UpdateMergeFormSet(request.POST)
-        else:
-            #should never get here
-            print "ERROR No Merge type was called"
+        print request.POST
+        return HttpResponse('{"success": true}')
+
 
         # note that "form" could be either a single form or a formset
         # depending on whether the user did a 'add merge' or an
@@ -225,7 +216,7 @@ def get_merge(request, node_id, merge_type=None):
             # user merged under a new concept atom
             if hasattr(form,'add_merge_id') and form.add_merge_id in request.POST:
                 new_atom = ConceptAtom(concept_node=node,
-                                       user=user,
+                                       user=request.user,
                                        text=form.cleaned_data.get('new_atom_name'),
                                        final_choice=True,)
                 new_atom.save()
@@ -255,7 +246,7 @@ def get_merge(request, node_id, merge_type=None):
         #the form is invalid, and we redirect the errors to the user
         else:
             render_args = {'node': node,
-                           'user': user}
+                           'user': request.user}
 
             #need to set arguments differently based on whether it was
             #an add merge or subtract merge, since this chooses
@@ -272,6 +263,96 @@ def get_merge(request, node_id, merge_type=None):
                 print "ERROR unknown merge type"
 
             return render(request, 'nodemanager/merge.html', context)
+    else:
+        return redirect('stage1 dispatch')
+
+
+
+
+
+
+
+def get_merge(request, node_id, merge_type=None):
+    """
+    This function handles a submitted form containing information
+    about merging concepts.
+    """
+
+    auth = ContributorProfile.auth_status(request.user)
+
+    if auth != 'staff':
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        node = get_object_or_404(ConceptNode,pk=node_id)
+
+        #differentiate between different forms
+        if merge_type == 'add merge':
+            form = CreateMergeForm(request.POST, node=node)
+        elif merge_type == 'subtract merge':
+            form = UpdateMergeFormSet(request.POST)
+        else:
+            #should never get here
+            print "ERROR No Merge type was called"
+
+        # note that "form" could be either a single form or a formset
+        # depending on whether the user did a 'add merge' or an
+        # 'update merge'. For this reason, we have to do an additional
+        # attribute check
+        if form.is_valid(): #could be a form or a formset depending on request
+
+            # user merged under a new concept atom
+            if hasattr(form,'add_merge_id') and form.add_merge_id in request.POST:
+                new_atom = ConceptAtom(concept_node=node,
+                                       user=request.user,
+                                       text=form.cleaned_data.get('new_atom_name'),
+                                       final_choice=True,)
+                new_atom.save()
+                new_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
+            #user merged atoms to an existing concept atom
+            elif hasattr(form,'subtract_merge_id') and form.subtract_merge_id in request.POST:
+                curr_atom = form.cleaned_data.get('merged_atoms')
+
+                curr_atom.add_merge_atoms(form.cleaned_data.get('free_atoms'))
+
+            #user has edited an existing concept atom
+            else:
+                formset = form #small name-change to enhance clarity
+
+                for form in formset:
+
+                    if form.cleaned_data.get('delete'):
+                        atom = ConceptAtom.objects.filter(pk=form.cleaned_data.get('pk')).get()
+                        atom.delete()
+                    else:
+                        for atom in form.cleaned_data.get('choices'):
+                            atom.merged_atoms = None
+                            atom.save()
+
+            return redirect('merge', node_id=node.id)
+
+        #the form is invalid, and we redirect the errors to the user
+        else:
+            render_args = {'node': node,
+                           'user': request.user}
+
+            #need to set arguments differently based on whether it was
+            #an add merge or subtract merge, since this chooses
+            #between a form or formset
+            if merge_type == 'add merge':
+                render_args['create_form'] = form
+                render_args['edit_formset'] = UpdateMergeFormSet(initial=[{'pk': atom.pk} for atom in ConceptAtom.get_final_atoms(node)])
+
+            elif merge_type == 'subtract merge':
+                render_args['create_form'] = CreateMergeForm(node)
+                render_args['edit_formset'] = form
+            else:
+                #again, should never be here
+                print "ERROR unknown merge type"
+
+            return render(request, 'nodemanager/merge.html', context)
+    else:
+        return redirect('stage1 dispatch')
 
 def finalize_merge(request, node_id):
     """

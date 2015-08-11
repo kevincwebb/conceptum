@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% load url from future %}
+{% load i18n %}
+{% load static %}
+{% load mptt_tags %}
+
+{% block head_title %}{% trans "Concepts" %}{% endblock %}
+
+{% block content %}
+<div class = "container">
+
+<div class="page-header">
+<h2>Edit Concept Tree</h2>
+    <p>
+        On each node in the tree, you can edit the node's content or add children to it.
+    </p>
+</div>
+
+<div id="node_edit" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Edit node...</h4>
+      </div>
+      <form action="{% url 'stage1 edit_tree' %}" method="post">
+          <div class="modal-body">
+            <input type="hidden" name="operation" value="edit"/>
+            <input id="node_edit_id" type="hidden" name="node_id" value=""/>
+            <p>New content:</p>
+            <input id="node_edit_content" type="text" name="node_edit_content" value=""/>
+
+            <p>Child node type:</p>
+            <input id="node_edit_childtype" type="text" name="node_edit_childtype" value=""/>
+            This is simply a human-readable description of the meaning of this node's children.  For example, if this node's children represent modules, write "module" here.
+
+            <input id="node_edit_openids" type="hidden" name="openids" value=""/>
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Edit node</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="node_add_child" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Add child node...</h4>
+      </div>
+      <form action="{% url 'stage1 edit_tree' %}" method="post">
+          <div class="modal-body">
+            <input type="hidden" name="operation" value="addchild"/>
+            <input id="node_addchild_id" type="hidden" name="node_id" value=""/>
+            <p>New content:</p>
+            <input id="node_addchild_content" type="text" name="node_addchild_content" value=""/>
+
+            <p>Child node type:</p>
+            <input id="node_addchild_childtype" type="text" name="node_addchild_childtype" value=""/>
+            This is simply a human-readable description of the meaning of this node's children.  For example, if this node's children represent modules, write "module" here.
+
+            <input id="node_addchild_openids" type="hidden" name="openids" value=""/>
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add child node</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="node_delete" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Confirm delete node...</h4>
+      </div>
+      <form action="{% url 'stage1 edit_tree' %}" method="post">
+          <div class="modal-body">
+            <input type="hidden" name="operation" value="delete"/>
+            <input id="node_delete_id" type="hidden" name="node_id" value=""/>
+            <p>Are you sure you want to delete the node:</p>
+            <div id="node_delete_content">
+            </div>
+            <input id="node_delete_openids" type="hidden" name="openids" value=""/>
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Delete node</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% recursetree tree %}
+
+{% if node.is_leaf_node %}
+
+    <div class="panel panel-default">
+        <div class="panel-heading" node_id="{{ node.id }}" child_type="{{ node.child_typename }}">
+            <span class="panel-title">{{ node.content }}</span>
+            <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-primary dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span></button>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a href="#node_edit" data-toggle="modal">Edit node</a></li>
+                    <li><a href="#node_add_child" data-toggle="modal">Add a child node</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#node_delete" data-toggle="modal">Delete node</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+
+    {% if node.is_root_node %}
+
+    <div class="panel panel-default" id="rootpanel">
+        <div class="panel-heading" node_id="{{ node.id }}" child_type="{{ node.child_typename }}">
+            <span class="panel-title">{{ node.content }}</span>
+            <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-primary dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span></button>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a href="#node_edit" data-toggle="modal">Edit node</a></li>
+                    <li><a href="#node_add_child" data-toggle="modal">Add a child node</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="panel-group" id="accordion{{ node.id }}">
+                {{ children }}
+            </div>
+        </div>
+    </div>
+
+
+    {% else %}
+
+        <div class="panel panel-default">
+            <div class="panel-heading" node_id="{{ node.id }}" child_type="{{ node.child_typename }}">
+                <span class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordian{{ node.parent.id }}" href="#collapse{{ node.id }}">{{ node.content }}</a>
+                </span>
+                <div class="btn-group pull-right">
+                    <button class="btn btn-xs btn-primary dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span></button>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="#node_edit" data-toggle="modal">Edit node</a></li>
+                        <li><a href="#node_add_child" data-toggle="modal">Add a child node</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#node_delete" data-toggle="modal">Delete node</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div id="collapse{{ node.id }}" class="panel-collapse collapse" node_id="{{ node.id }}">
+                <div class="panel-body">
+                    <div class="panel-group" id="accordion{{ node.id }}">
+                        {{ children }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+
+{% endif %}
+
+{% endrecursetree %}
+
+</div> <!-- container -->
+
+{% endblock %} {# content #}
+
+{% block extra_js %}
+
+<script>
+
+var collapse_states = {};
+
+function get_collapses() {
+    console.log(collapse_states);
+    var collapses = [];
+    for (var nid in collapse_states) {
+        if (collapse_states[nid]) {
+            collapses.push(nid);
+        }
+    }
+    return collapses;
+}
+
+$(function() {
+    $('.panel-collapse').each(function(index, value) {
+        var collapse_id = $(value).attr('node_id');
+        collapse_states[collapse_id] = false;
+    });
+
+    $('.collapse').on('shown.bs.collapse', function(e) {
+        var collapse_id = $(this).attr('node_id');
+        collapse_states[collapse_id] = true;
+        e.stopPropagation();
+    });
+
+    $('.collapse').on('hidden.bs.collapse', function(e) {
+        var collapse_id = $(this).attr('node_id');
+        collapse_states[collapse_id] = false;
+        e.stopPropagation();
+    });
+
+    /* Re-open the previously opened panels on reload. */
+    var ids = {{ open_ids|safe }}
+    $.each(ids, function(index, value) {
+        $('#collapse' + value).collapse('show');
+    });
+
+    $("#node_edit").on('show.bs.modal', function(e) {
+        var heading = $(e.relatedTarget).closest('.panel-heading');
+        var node_id = heading.attr("node_id");
+        var child_typename = heading.attr("child_type");
+        var heading_text = $.trim(heading.find(".panel-title").text());
+
+        $('#node_edit_id').val(node_id);
+        $('#node_edit_content').val(heading_text);
+        $('#node_edit_childtype').val(child_typename);
+
+        var collapses = get_collapses();
+        $('#node_edit_openids').val(JSON.stringify(collapses));
+    });
+
+    $("#node_add_child").on('show.bs.modal', function(e) {
+        var heading = $(e.relatedTarget).closest('.panel-heading');
+        var node_id = heading.attr("node_id");
+
+        $('#node_addchild_id').val(node_id);
+        collapse_states[node_id] = true;
+
+        var collapses = get_collapses();
+        $('#node_addchild_openids').val(JSON.stringify(collapses));
+    });
+
+    $("#node_delete").on('show.bs.modal', function(e) {
+        var heading = $(e.relatedTarget).closest('.panel-heading');
+        var node_id = heading.attr("node_id");
+        var heading_text = $.trim(heading.find(".panel-title").text());
+
+        $('#node_delete_id').val(node_id);
+        $('#node_delete_content').html(heading_text);
+
+        var collapses = get_collapses();
+        $('#node_delete_openids').val(JSON.stringify(collapses));
+    });
+});
+
+</script>
+
+{% endblock %}
