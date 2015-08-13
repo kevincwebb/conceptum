@@ -1,0 +1,54 @@
+Goals:
+-Make ranking generic, could be applied to anything
+-Allow for different forms of ranking
+--Low/medium/high (discrete)
+--Total ordering
+
+Desired workflow: admin decides to create a ranking on something (e.g., node in the tree).  Admin needs to specify which items are fair game for ranking, at creation time.  Each user can then enter their ranking of each item for the current ranking process.
+
+Ranking process (abstract class?):
+-Generic key to entity that is being "ranked"
+-Type of ranking going on (e.g., discrete vs. ordering)
+-State of the process (open, closed)
+-Method: Get users -> Find all users who have finished ranking in this process
+
+
+Discrete ranking process
+-value choices and their numerical meaning (e.g., high is 10, medium is 5, low is 1)
+
+Ordered ranking process
+-Number of "winners" of the election / topK
+
+Ranking item:
+-Foreign key to the ranking process it belongs to
+-Generic key to the item that makes up one of the options to be ranked
+
+UserRanking:
+-Foreign key to the ranking process
+-Foreign key to the raking item
+-Foreign key to the user who is doing the ranking
+-The user's value
+
+
+Current models:
+-Ranking process has a generic key to the thing being ranked.
+-ValueCounter (rename?) has a generic key to the atom being ranked and the ranking process it belongs too.  Should probably track user too, right?
+
+
+Views seem to know about nodes?  Much of the view code needs to change.
+
+
+
+
+
+
+
+Querying using generic keys in the opposite direction:
+http://stackoverflow.com/questions/11960422/django-how-do-i-query-based-on-genericforeignkeys-fields
+
+example:
+
+from django.contrib.contenttypes.models import ContentType
+
+issue = Issue.objects.get(scan=scan_obj)
+tickets = Ticket.objects.filter(issue_id=issue.id, issue_ct=ContentType.objects.get_for_model(issue))

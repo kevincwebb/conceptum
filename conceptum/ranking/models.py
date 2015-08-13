@@ -3,7 +3,6 @@
 from django.db import models
 
 from authtools.models import User
-from operator import attrgetter
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 
@@ -16,7 +15,7 @@ class RankingProcess(models.Model):
     a ranking process.
 
     -Choices: a set of objects we are voting on (currently concept atoms)
-    
+
     -Parent: what this ranking process is attached to (currently a
     concept node. Note that this "parent" field is how we figure out
     who is voting and administrating, since that information is
@@ -80,7 +79,7 @@ class RankingProcess(models.Model):
         return "Ranking Process of " + unicode(self.parent)
 
 
-        
+
 class ValueCounter(models.Model):
     """
     The Value Counter model stores voting information entered by the
@@ -90,7 +89,7 @@ class ValueCounter(models.Model):
     The value counter currently has this information:
 
     - target: the object whose value it tracks
-    
+
     - ranking process: the parent ranking process this counter belongs
       to
 
